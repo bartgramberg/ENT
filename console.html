@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-green:      #48735B;
+      --color-creme:      #F2EFE9;
+      --color-magenta:    #D90D7D;
+      --color-blue:       #347EBF;
+      --color-text:       #1A1A1A;
+      --color-text-mid:   #4A4A4A;
+      --color-text-light: #7A7A7A;
+      --border-light:     #DEDAD4;
+      --shadow-card:      0 2px 8px rgba(72,115,91,0.10);
+      --shadow-md:        0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--color-creme);
+      color: var(--color-text);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .bg-layer {
+      position: fixed; inset: 0;
+      background-image: url('/background');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.06;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 52px;
+      border-bottom: 1px solid var(--border-light);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--color-green);
+      letter-spacing: -0.02em;
+    }
+
+    .nav-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--color-green);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 0;
+      border-bottom: 2px solid var(--color-green);
+    }
+
+    .btn-ghost {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 500;
+      color: var(--color-text-mid); background: transparent;
+      border: 1.5px solid var(--border-light); cursor: pointer;
+      padding: 6px 14px; border-radius: 999px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .btn-primary {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 600;
+      color: #fff; background: var(--color-green);
+      border: none; border-radius: 999px;
+      padding: 8px 18px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #3a5e49; }
+
+    /* PAGE */
+    .page {
+      position: relative; z-index: 2;
+      max-width: 1100px; margin: 0 auto;
+      padding: 56px 32px 80px;
+    }
+
+    .page-title {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: clamp(28px, 4.5vw, 48px);
+      color: var(--color-green);
+      margin-bottom: 12px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .page-title em {
+      font-style: normal;
+      color: var(--color-magenta);
+    }
+
+    .page-subtitle {
+      font-size: 15px; font-weight: 400;
+      color: var(--color-text-mid);
+      margin-bottom: 48px; line-height: 1.6;
+    }
+
+    /* GRID */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px; align-items: start;
+    }
+    @media (max-width: 768px) { .config-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .field-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-green);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* API input */
+    .api-input-wrap { position: relative; }
+    .api-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); font-size: 15px; opacity: 0.4;
+    }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--color-text);
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; padding: 13px 16px 13px 42px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="password"]:focus, input[type="text"]:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px rgba(72,115,91,0.12);
+    }
+    input::placeholder { color: var(--color-text-light); }
+
+    /* Select */
+    .select-wrap { position: relative; }
+    .select-icon {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%); font-size: 15px; pointer-events: none;
+    }
+    select {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--color-text);
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; padding: 13px 36px 13px 40px;
+      outline: none; appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2348735B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      background-color: var(--color-creme);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    select:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px rgba(72,115,91,0.12);
+    }
+    option:disabled { color: var(--color-text-light); }
+
+    /* Two-column row */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+
+    /* Location */
+    .location-wrap { position: relative; }
+    .location-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); font-size: 15px;
+      z-index: 1; pointer-events: none;
+    }
+    #locationInput { padding-left: 40px; }
+
+    .location-suggestions {
+      position: absolute; top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: #fff;
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      overflow: hidden; z-index: 100; display: none;
+      box-shadow: var(--shadow-md);
+    }
+    .location-suggestions.visible { display: block; }
+
+    .suggestion-item {
+      padding: 11px 16px; font-size: 13px;
+      color: var(--color-text); cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--color-creme); }
+
+    /* Upload */
+    .upload-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 500px) { .upload-grid { grid-template-columns: 1fr; } }
+
+    .upload-box {
+      background: var(--color-creme);
+      border: 1.5px dashed var(--border-light);
+      border-radius: 8px; padding: 22px 16px;
+      cursor: pointer; position: relative; text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-box:hover { border-color: var(--color-green); }
+    .upload-box.has-files { border-color: var(--color-green); border-style: solid; }
+
+    .upload-box input[type="file"] {
+      position: absolute; inset: 0; opacity: 0;
+      cursor: pointer; width: 100%; height: 100%; padding: 0;
+    }
+
+    .upload-icon-wrap {
+      width: 42px; height: 42px;
+      background: var(--border-light);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; font-size: 18px;
+    }
+
+    .upload-title { font-size: 13px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
+    .upload-desc { font-size: 11px; color: var(--color-text-light); line-height: 1.5; }
+    .upload-files-list { margin-top: 8px; font-size: 11px; color: var(--color-green); line-height: 1.7; font-weight: 500; }
+
+    /* Textarea */
+    textarea {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      color: var(--color-text);
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; padding: 14px 16px;
+      outline: none; resize: none; height: 180px; line-height: 1.6;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px rgba(72,115,91,0.12);
+    }
+    textarea::placeholder { color: var(--color-text-light); font-style: italic; }
+
+    /* Start button */
+    .start-btn {
+      width: 100%;
+      background: var(--color-green);
+      border: none; border-radius: 999px; color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 16px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .start-btn:hover { background: #3a5e49; }
+    .start-btn:active { transform: scale(0.99); }
+    .start-btn:disabled { background: var(--border-light); color: var(--color-text-light); cursor: not-allowed; }
+
+    .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .start-btn:hover .btn-arrow { transform: translateX(4px); }
+
+    .status {
+      text-align: center; font-size: 13px;
+      font-style: italic; margin-top: 10px; min-height: 20px;
+      color: var(--color-green);
+    }
+    .status.error { color: var(--color-magenta); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="logo">ENT</div>
+      <span class="nav-label">Console</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn-ghost" onclick="void(0)">Gesprek wissen</button>
+      <button class="btn-ghost" onclick="void(0)">Exporteren</button>
+      <button class="btn-primary" onclick="void(0)">Gesprek opslaan</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <h1 class="page-title">Start het <em>ENT Ecosysteem</em></h1>
+    <p class="page-subtitle">Configureer de parameters voor de ecologische intelligentie-sessie.</p>
+
+    <div class="config-grid">
+
+      <!-- LEFT -->
+      <div class="card">
+        <div>
+          <span class="field-label">API Sleutel</span>
+          <div class="api-input-wrap">
+            <span class="api-icon">🔑</span>
+            <input type="password" id="apiKeyInput" placeholder="• • • • • • • • • • • • • • • •" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div>
+            <span class="field-label">Kies Persona</span>
+            <div class="select-wrap">
+              <span class="select-icon">🌿</span>
+              <select id="personaSelect">
+                <option value="boom" selected>Boom/Tree</option>
+                <option value="egel">Egel</option>
+                <option value="steenuil" disabled>Steenuil — binnenkort</option>
+                <option value="regenwater" disabled>Regenwater — binnenkort</option>
+                <option value="zomertemperatuur" disabled>Temperatuur 2050 — binnenkort</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <span class="field-label">Project Locatie</span>
+            <div class="location-wrap">
+              <span class="location-icon">📍</span>
+              <input type="text" id="locationInput" placeholder="Buiksloterham, Amsterdam" autocomplete="off"
+                oninput="handleLocationInput()" onblur="hideSuggestions()">
+              <div class="location-suggestions" id="locationSuggestions"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-grid">
+          <div class="upload-box" id="entConfigBox">
+            <input type="file" id="entConfigFile" accept=".md,.txt" onchange="handleEntConfig()">
+            <div class="upload-icon-wrap">📋</div>
+            <div class="upload-title">ENT Instructies</div>
+            <div class="upload-desc">Sleep hier je MD bestand met persona en stem</div>
+            <div class="upload-files-list" id="entConfigList"></div>
+          </div>
+
+          <div class="upload-box" id="projectBox">
+            <input type="file" id="projectFiles" accept=".md,.txt" multiple onchange="handleProjectFiles()">
+            <div class="upload-icon-wrap">🗂️</div>
+            <div class="upload-title">Project Documenten</div>
+            <div class="upload-desc">Meerdere .md of .txt bestanden mogelijk</div>
+            <div class="upload-files-list" id="projectList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card">
+        <div>
+          <span class="field-label">Aanvullende Instructies</span>
+          <textarea id="projectInstructions" placeholder="Typ hier specifieke context voor het Mycelium netwerk..."></textarea>
+        </div>
+        <div>
+          <button class="start-btn" id="startBtn" onclick="startDemo()">
+            START GESPREK <span class="btn-arrow">→</span>
+          </button>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const fileContents = { entConfig: '', project: '' };
+    const fileNames    = { entConfig: '', project: '' };
+
+    /* ── Location autocomplete via Nominatim ── */
+    let suggestTimer = null;
+
+    function handleLocationInput() {
+      clearTimeout(suggestTimer);
+      const val = document.getElementById('locationInput').value.trim();
+      if (!val || val.length < 2) { hideSuggestions(); return; }
+      suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
+    }
+
+    async function fetchSuggestions(query) {
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=nl`,
+          { headers: { 'Accept-Language': 'nl' } }
+        );
+        if (!resp.ok) return;
+        const results = await resp.json();
+        if (!results.length) { hideSuggestions(); return; }
+        renderSuggestions(results.map(r => {
+          const parts = r.display_name.split(',').map(s => s.trim());
+          return { label: parts.slice(0, 3).join(', '), value: parts.slice(0, 2).join(', ') };
+        }));
+      } catch (e) { hideSuggestions(); }
+    }
+
+    function renderSuggestions(items) {
+      const box = document.getElementById('locationSuggestions');
+      box.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<span style="opacity:.4">📍</span>${item.label}`;
+        div.onmousedown = () => {
+          document.getElementById('locationInput').value = item.label;
+          hideSuggestions(true);
+        };
+        box.appendChild(div);
+      });
+      box.classList.add('visible');
+    }
+
+    function hideSuggestions(immediate) {
+      if (immediate) document.getElementById('locationSuggestions').classList.remove('visible');
+      else setTimeout(() => document.getElementById('locationSuggestions').classList.remove('visible'), 180);
+    }
+
+    /* ── File uploads ── */
+    function handleEntConfig() {
+      const file = document.getElementById('entConfigFile').files[0];
+      if (!file) return;
+      new FileReader().onload = e => { fileContents.entConfig = e.target.result; };
+      const r = new FileReader();
+      r.onload = e => { fileContents.entConfig = e.target.result; document.getElementById('entConfigBox').classList.add('has-files'); };
+      r.readAsText(file);
+      fileNames.entConfig = file.name;
+      document.getElementById('entConfigList').textContent = '✓ ' + file.name;
+    }
+
+    function handleProjectFiles() {
+      const files = Array.from(document.getElementById('projectFiles').files);
+      if (!files.length) return;
+      const list = document.getElementById('projectList');
+      list.innerHTML = '';
+      const texts = [];
+      let readCount = 0;
+      fileNames.project = files.map(f => f.name).join(', ');
+      files.forEach((file, i) => {
+        const r = new FileReader();
+        r.onload = e => {
+          texts[i] = `## ${file.name}\n\n${e.target.result}`;
+          if (++readCount === files.length) {
+            fileContents.project = texts.filter(Boolean).join('\n\n---\n\n');
+            document.getElementById('projectBox').classList.add('has-files');
+          }
+        };
+        r.readAsText(file);
+        list.innerHTML += `✓ ${file.name}<br>`;
+      });
+    }
+
+    /* ── Start ── */
+    function startDemo() {
+      const apiKey       = document.getElementById('apiKeyInput').value.trim();
+      const persona      = document.getElementById('personaSelect').value;
+      const instructions = document.getElementById('projectInstructions').value.trim();
+      const location     = document.getElementById('locationInput').value.trim();
+      const btn          = document.getElementById('startBtn');
+      const status       = document.getElementById('status');
+
+      if (!apiKey) {
+        status.textContent = 'Vul eerst de API key in.';
+        status.className = 'status error';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Configuratie versturen...';
+      status.className = 'status';
+
+      fetch('/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: apiKey,
+          ent_config: fileContents.entConfig,
+          ent_config_file: fileNames.entConfig,
+          project_files: fileContents.project,
+          project_file_names: fileNames.project,
+          project_instructions: instructions,
+          location,
+          persona
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          status.textContent = 'Gereed. Demo wordt geopend...';
+          setTimeout(() => { window.location.href = '/demo'; }, 600);
+        } else throw new Error('Onbekende fout');
+      })
+      .catch(err => {
+        status.textContent = 'Fout: ' + err.message;
+        status.className = 'status error';
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>

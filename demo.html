@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-green:      #48735B;
+      --color-green-dark: #3a5e49;
+      --color-creme:      #F2EFE9;
+      --color-magenta:    #D90D7D;
+      --color-blue:       #347EBF;
+      --color-green-light:#7BAF93;
+      --color-text:       #1A1A1A;
+      --color-text-mid:   #4A4A4A;
+      --color-text-light: #7A7A7A;
+      --border-light:     #DEDAD4;
+      --shadow-card:      0 2px 8px rgba(72,115,91,0.10);
+      --shadow-md:        0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--color-creme);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Background */
+    .bg-layer {
+      position: fixed; inset: 0;
+      background-image: url('/background');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.12; z-index: 0; pointer-events: none;
+    }
+    .bg-vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(242,239,233,0.3) 0%, rgba(242,239,233,0.6) 100%);
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: relative; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 52px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border-light);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+    .logo {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700; font-size: 20px;
+      color: var(--color-green); letter-spacing: -0.02em;
+    }
+
+    .topbar-btns { display: flex; gap: 8px; }
+
+    .btn-ghost {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 500;
+      color: var(--color-text-mid); background: transparent;
+      border: 1.5px solid var(--border-light); cursor: pointer;
+      padding: 6px 14px; border-radius: 999px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .btn-save {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 600;
+      color: #fff; background: var(--color-green);
+      border: none; border-radius: 999px;
+      padding: 7px 16px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-save:hover { background: var(--color-green-dark); }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      overflow: hidden;
+      position: relative; z-index: 2;
+    }
+
+    /* ── LEFT: CHAT ── */
+    .chat-col {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border-light);
+      overflow: hidden; position: relative;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 120px;
+      display: flex; flex-direction: column; gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+    }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+    /* Bubbles */
+    .bubble {
+      padding: 18px 22px;
+      border-radius: 16px;
+      font-size: 18px; font-weight: 400;
+      line-height: 1.65; max-width: 88%;
+      animation: fadeUp 0.3s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bubble.ent {
+      background: var(--color-creme);
+      border: 1px solid var(--border-light);
+      align-self: flex-start;
+      color: var(--color-text);
+      border-radius: 3px 16px 16px 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .bubble.user {
+      background: #fff;
+      border: 1.5px solid var(--color-green);
+      align-self: flex-end;
+      color: var(--color-text);
+      border-radius: 16px 3px 16px 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .bubble.ent.thinking {
+      color: var(--color-text-light);
+      font-style: italic; font-size: 15px;
+    }
+    .thinking-dots::after {
+      content: '.'; animation: dots 1.2s infinite;
+    }
+    @keyframes dots {
+      0%,33%  { content: '.'; }
+      34%,66% { content: '..'; }
+      67%,100%{ content: '...'; }
+    }
+    .typing-cursor::after {
+      content: '▋';
+      animation: blink 0.65s step-end infinite;
+      color: var(--color-green); font-size: 13px; margin-left: 1px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── ERROR SCREEN (replaces chat panel on 503) ── */
+    .chat-error {
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      flex: 1; padding: 40px 32px; text-align: center;
+    }
+    .chat-error.visible { display: flex; }
+
+    .chat-error-img {
+      width: 80px; height: 80px; border-radius: 12px; object-fit: cover;
+      border: 1px solid var(--border-light);
+      margin-bottom: 20px; opacity: 0.5;
+    }
+    .chat-error-title {
+      font-size: 20px; font-weight: 600;
+      color: var(--color-green); margin-bottom: 8px;
+    }
+    .chat-error-body {
+      font-size: 14px; color: var(--color-text-light);
+      line-height: 1.6; margin-bottom: 24px; max-width: 320px;
+    }
+    .chat-error-retry {
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--color-green); color: #fff;
+      border: none; border-radius: 999px;
+      padding: 12px 28px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-error-retry:hover { background: var(--color-green-dark); }
+
+    /* ── FLOATING INPUT ── */
+    .floating-input {
+      position: absolute;
+      bottom: 24px; left: 24px; right: 24px;
+      z-index: 10;
+    }
+    .input-inner {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.96);
+      border: 1.5px solid var(--border-light);
+      border-radius: 999px;
+      padding: 8px 8px 8px 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-inner:focus-within {
+      border-color: var(--color-green);
+      box-shadow: 0 4px 16px rgba(72,115,91,0.15);
+    }
+    textarea#messageInput {
+      flex: 1;
+      background: transparent; border: none; outline: none;
+      color: var(--color-text);
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px; font-weight: 400;
+      line-height: 1.5; resize: none; overflow: hidden;
+      max-height: 80px;
+    }
+    textarea#messageInput::placeholder { color: var(--color-text-light); font-style: italic; }
+    .send-btn {
+      background: var(--color-green); border: none; border-radius: 999px;
+      color: #fff; width: 38px; height: 38px; flex-shrink: 0;
+      cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .send-btn:hover { background: var(--color-green-dark); }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { background: var(--border-light); cursor: not-allowed; }
+
+    /* ── RIGHT: PERSONA + OVERWEGINGEN ── */
+    .right-col {
+      display: flex; flex-direction: column;
+      overflow: hidden; background: #fff;
+    }
+
+    .persona-card {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0; position: relative;
+    }
+    .persona-img-frame {
+      width: 100%; aspect-ratio: 1;
+      max-width: 180px; margin: 0 auto 16px;
+      border-radius: 16px; overflow: hidden;
+      position: relative;
+      background: var(--color-creme);
+      border: 1px solid var(--border-light);
+    }
+    .persona-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; transition: opacity 0.08s;
+    }
+    .thinking-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at center, rgba(72,115,91,0.10) 0%, transparent 70%);
+      opacity: 0; transition: opacity 0.6s; pointer-events: none;
+      border-radius: 16px;
+    }
+    .thinking-glow.active { opacity: 1; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    .persona-name {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600; font-size: 18px;
+      color: var(--color-green);
+      text-align: center; margin-bottom: 6px;
+    }
+    .persona-location {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-light);
+    }
+    .persona-location-dot { font-size: 10px; }
+
+    /* Overwegingen */
+    .overw-section {
+      flex: 1; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .overw-header {
+      padding: 14px 24px 10px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-light);
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .overw-icon { font-size: 12px; }
+    .overw-content {
+      flex: 1; overflow-y: auto;
+      padding: 14px 16px 28px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-light) transparent;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .overw-content::-webkit-scrollbar { width: 3px; }
+    .overw-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+    .overw-empty {
+      font-size: 13px; color: var(--color-text-light);
+      font-style: italic; line-height: 1.7;
+    }
+    :root {
+      --ow-color-0: #48735B;
+      --ow-color-1: #D90D7D;
+      --ow-color-2: #347EBF;
+      --ow-color-3: #7BAF93;
+    }
+    .overw-block {
+      background: var(--color-creme);
+      border-radius: 8px;
+      border-left: 3px solid var(--ow-color-0);
+      padding: 12px 14px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .overw-block:nth-child(4n+1) { border-left-color: var(--ow-color-0); }
+    .overw-block:nth-child(4n+2) { border-left-color: var(--ow-color-1); }
+    .overw-block:nth-child(4n+3) { border-left-color: var(--ow-color-2); }
+    .overw-block:nth-child(4n+0) { border-left-color: var(--ow-color-3); }
+    .overw-block-title {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .overw-block-body {
+      font-size: 12px; line-height: 1.65;
+      color: var(--color-text-mid);
+    }
+
+    /* Klimaatimpact */
+    .klimaat-section {
+      padding: 14px 24px 18px;
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .klimaat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .klimaat-label {
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-light);
+    }
+    .klimaat-tooltip-wrap {
+      position: relative; display: inline-flex;
+    }
+    .klimaat-tooltip-trigger {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--border-light);
+      color: var(--color-text-light);
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: default; user-select: none; flex-shrink: 0;
+    }
+    .klimaat-tooltip-text {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px); right: 0;
+      width: 280px; background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 11px; line-height: 1.65; font-weight: 400;
+      color: var(--color-text-mid);
+      box-shadow: var(--shadow-md); z-index: 100;
+      text-transform: none; letter-spacing: 0;
+    }
+    .klimaat-tooltip-wrap:hover .klimaat-tooltip-text { display: block; }
+    .klimaat-bar-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+    }
+    .klimaat-bar-wrap {
+      flex: 1; height: 6px;
+      background: var(--border-light);
+      border-radius: 999px; overflow: hidden;
+    }
+    .klimaat-bar {
+      height: 100%; background: var(--color-green);
+      border-radius: 999px; width: 0%;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.6s ease;
+    }
+    .klimaat-bar.over { background: var(--color-magenta); }
+    .klimaat-pct {
+      font-size: 11px; font-weight: 600;
+      color: var(--color-text-light);
+      min-width: 34px; text-align: right;
+    }
+    .klimaat-counters {
+      font-size: 11px; color: var(--color-text-light); margin-bottom: 4px;
+    }
+    .klimaat-over-msg {
+      display: none;
+      font-size: 11px; line-height: 1.6;
+      color: var(--color-text-mid); margin-top: 6px;
+    }
+    .klimaat-over-msg.visible { display: block; }
+    .klimaat-over-link {
+      color: var(--color-magenta);
+      font-weight: 600; text-decoration: none;
+    }
+    .klimaat-over-link:hover { text-decoration: underline; }
+
+    @media (max-width: 700px) {
+      .main { grid-template-columns: 1fr; }
+      .right-col { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="bg-vignette"></div>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">ENT</span>
+    </div>
+    <div class="topbar-btns">
+      <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust">Setup aanpassen</button>
+      <button class="btn-ghost" onclick="resetConversation()" id="btnReset">Gesprek wissen</button>
+      <button class="btn-save"  onclick="saveGesprek()" id="btnExport">Exporteren</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: CHAT -->
+    <div class="chat-col">
+
+      <!-- Normal chat view -->
+      <div class="chat-messages" id="chatMessages">
+        <div class="bubble ent" id="welcomeBubble">Ik ben hier. Stel mij voor aan het project, of stel je eerste vraag.</div>
+      </div>
+
+      <!-- Error screen (shown on 503) -->
+      <div class="chat-error" id="chatError">
+        <img class="chat-error-img" src="/image/boom-dicht" alt="De Boom">
+        <div class="chat-error-title" id="chatErrorTitle">De boom rust.</div>
+        <div class="chat-error-body"  id="chatErrorBody">Er is een verbindingsfout opgetreden. Probeer het opnieuw.</div>
+        <button class="chat-error-retry" onclick="retryLastMessage()" id="chatErrorRetry">Opnieuw proberen</button>
+      </div>
+
+      <!-- FLOATING INPUT -->
+      <div class="floating-input">
+        <div class="input-inner">
+          <textarea id="messageInput" placeholder="Stel een vraag of deel een stelling..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PERSONA + OVERWEGINGEN -->
+    <div class="right-col">
+
+      <div class="persona-card">
+        <div class="persona-img-frame">
+          <div class="thinking-glow" id="thinkingGlow"></div>
+          <img id="imgDicht" class="persona-img" src="" alt="Persona" style="opacity:1">
+          <img id="imgOpen"  class="persona-img" src="" alt="Persona praat" style="opacity:0">
+        </div>
+        <div class="persona-name" id="personaName">De Boom</div>
+        <div class="persona-location">
+          <span class="persona-location-dot">📍</span>
+          <span id="personaLocation"></span>
+        </div>
+      </div>
+
+      <div class="overw-section">
+        <div class="overw-header">
+          <span class="overw-icon">🗂</span>
+          OVERWEGINGEN
+        </div>
+        <div class="overw-content" id="overwContent">
+          <div class="overw-empty" id="overwEmpty">Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.</div>
+        </div>
+      </div>
+
+      <!-- Klimaatimpact -->
+      <div class="klimaat-section">
+        <div class="klimaat-header">
+          <span class="klimaat-label">Klimaatimpact gesprek</span>
+          <div class="klimaat-tooltip-wrap">
+            <div class="klimaat-tooltip-trigger">?</div>
+            <div class="klimaat-tooltip-text">
+              Eén boom-dag = de hoeveelheid CO₂ die een gemiddelde
+              volwassen boom in één dag opneemt (≈ 60 gram).
+              Deze indicator toont hoeveel boom-dagen aan CO₂ dit
+              gesprek heeft veroorzaakt via de Claude API.
+            </div>
+          </div>
+        </div>
+        <div class="klimaat-bar-row">
+          <div class="klimaat-bar-wrap">
+            <div class="klimaat-bar" id="klimaatBar"></div>
+          </div>
+          <span class="klimaat-pct" id="klimaatPct">0%</span>
+        </div>
+        <div class="klimaat-counters" id="klimaatCounters">0,0 g CO₂e · 0 m autorijden</div>
+        <div class="klimaat-over-msg" id="klimaatOverMsg">
+          Dit gesprek heeft een volledige boom-dag aan CO₂ gekost.<br>
+          <a class="klimaat-over-link" href="https://treesforall.nl/en/plant-your-tree-in-and-around-amsterdam/" target="_blank" rel="noopener">Plant een boom ter compensatie →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ══════════════════════════════════════
+       GUARD — redirect if not authenticated or no intake
+    ══════════════════════════════════════ */
+    (function guard() {
+      if (localStorage.getItem('ent_password_verified') !== 'true') {
+        window.location.replace('/');
+        throw new Error('guard');
+      }
+      if (!localStorage.getItem('ent_intake_config')) {
+        window.location.replace('/');
+        throw new Error('guard');
+      }
+    })();
+
+    /* ══════════════════════════════════════
+       STATE — loaded from localStorage
+    ══════════════════════════════════════ */
+    const intakeConfig  = JSON.parse(localStorage.getItem('ent_intake_config') || '{}');
+    const systemPrompt  = localStorage.getItem('ent_system_prompt') || '';
+    const password      = localStorage.getItem('ent_password') || '';
+    let   conversation  = JSON.parse(localStorage.getItem('ent_conversation') || '[]');
+    let   usage         = JSON.parse(localStorage.getItem('ent_usage') || '{"input_tokens":0,"output_tokens":0,"requests":0}');
+
+    let isThinking    = false;
+    let mouthInterval = null;
+    let lastUserMessage = '';   // for retry
+
+    const currentPersona = intakeConfig.voice_subject || 'boom';
+    const currentLang    = intakeConfig.lang || 'nl';
+
+    /* ══════════════════════════════════════
+       STRINGS (bilingual)
+    ══════════════════════════════════════ */
+    const STRINGS = {
+      nl: {
+        adjust:        'Setup aanpassen',
+        reset:         'Gesprek wissen',
+        export:        'Exporteren',
+        error_title:   'De boom rust.',
+        error_body:    'Er is een tijdelijke fout opgetreden. Probeer het opnieuw.',
+        error_retry:   'Opnieuw proberen',
+        thinking:      'Boom overweegt',
+        welcome:       'Ik sta hier al langer dan dit plan bestaat. Stel mij voor aan de plek, of stel je eerste vraag.',
+        overw_empty:   'Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.',
+        input_placeholder: 'Stel een vraag of deel een stelling...',
+      },
+      en: {
+        adjust:        'Adjust setup',
+        reset:         'Clear conversation',
+        export:        'Export',
+        error_title:   'The tree is resting.',
+        error_body:    'A temporary error occurred. Please try again.',
+        error_retry:   'Retry',
+        thinking:      'Tree is considering',
+        welcome:       "I have stood here longer than this plan has existed. Introduce me to the place, or ask your first question.",
+        overw_empty:   'Ecological facts and considerations appear here once the Tree has responded.',
+        input_placeholder: 'Ask a question or share a thought...',
+      }
+    };
+
+    function t(key) { return (STRINGS[currentLang] || STRINGS.nl)[key] || key; }
+
+    /* ══════════════════════════════════════
+       PERSONA CONFIG
+    ══════════════════════════════════════ */
+    const PERSONA = {
+      egel: {
+        title:       'ENT — Egel',
+        personaName: 'De Egel',
+        imgDicht:    '/image/egel-dicht',
+        imgOpen:     '/image/egel-open',
+      },
+      boom: {
+        title:       'ENT — Boom als vertegenwoordiger van de natuur',
+        personaName: currentLang === 'en' ? 'The Tree' : 'De Boom',
+        imgDicht:    '/image/boom-dicht',
+        imgOpen:     '/image/boom-open',
+      }
+    };
+
+    /* ══════════════════════════════════════
+       INIT
+    ══════════════════════════════════════ */
+    (function init() {
+      // Apply language strings to topbar
+      document.getElementById('btnAdjust').textContent = t('adjust');
+      document.getElementById('btnReset').textContent  = t('reset');
+      document.getElementById('btnExport').textContent = t('export');
+      document.getElementById('messageInput').placeholder = t('input_placeholder');
+      document.getElementById('chatErrorTitle').textContent = t('error_title');
+      document.getElementById('chatErrorBody').textContent  = t('error_body');
+      document.getElementById('chatErrorRetry').textContent = t('error_retry');
+
+      // Apply persona
+      const cfg = PERSONA[currentPersona] || PERSONA.boom;
+      document.title = cfg.title;
+      document.getElementById('personaName').textContent = cfg.personaName;
+      document.getElementById('imgDicht').src = cfg.imgDicht;
+      document.getElementById('imgOpen').src  = cfg.imgOpen;
+      document.getElementById('chatError').querySelector('.chat-error-img').src = cfg.imgDicht;
+      document.getElementById('overwEmpty').textContent = t('overw_empty');
+
+      // Location
+      const loc = intakeConfig.location || '';
+      document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
+
+      // Welcome message
+      document.getElementById('welcomeBubble').textContent = t('welcome');
+
+      // Restore conversation from localStorage
+      if (conversation.length > 0) {
+        document.getElementById('welcomeBubble').remove();
+        for (const msg of conversation) {
+          if (msg.role === 'user') {
+            _addUserBubbleStatic(msg.content);
+          } else if (msg.role === 'assistant') {
+            _addEntBubbleStatic(parseFullText(msg.content));
+          }
+        }
+        scrollChat();
+      }
+
+      // Render current usage
+      updateKlimaatimpact(usage);
+    })();
+
+    /* Parse full text (with optional [OVERWEGINGEN]) for display */
+    function parseFullText(fullText) {
+      if (fullText.includes('[OVERWEGINGEN]')) {
+        return fullText.split('[OVERWEGINGEN]', 2)[0].trim();
+      }
+      return fullText.trim();
+    }
+
+    /* ══════════════════════════════════════
+       ADJUST SETUP
+    ══════════════════════════════════════ */
+    function adjustSetup() {
+      // Store config in sessionStorage so onboarding can pick it up
+      try { sessionStorage.setItem('ent_intake', localStorage.getItem('ent_intake_config') || '{}'); } catch(e) {}
+      window.location.href = '/?adjust=true';
+    }
+
+    /* ══════════════════════════════════════
+       RESET CONVERSATION
+    ══════════════════════════════════════ */
+    function resetConversation() {
+      conversation = [];
+      usage        = { input_tokens: 0, output_tokens: 0, requests: 0 };
+      localStorage.setItem('ent_conversation', JSON.stringify(conversation));
+      localStorage.setItem('ent_usage',        JSON.stringify(usage));
+      window.location.reload();
+    }
+
+    /* ══════════════════════════════════════
+       MOUTH ANIMATION
+    ══════════════════════════════════════ */
+    function startMouth() {
+      let open = false;
+      mouthInterval = setInterval(() => {
+        open = !open;
+        document.getElementById('imgDicht').style.opacity = open ? '0' : '1';
+        document.getElementById('imgOpen').style.opacity  = open ? '1' : '0';
+      }, 200);
+    }
+    function stopMouth() {
+      if (mouthInterval) { clearInterval(mouthInterval); mouthInterval = null; }
+      document.getElementById('imgDicht').style.opacity = '1';
+      document.getElementById('imgOpen').style.opacity  = '0';
+    }
+
+    /* ══════════════════════════════════════
+       UTILS
+    ══════════════════════════════════════ */
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+    }
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+    function scrollChat() {
+      const w = document.getElementById('chatMessages');
+      w.scrollTop = w.scrollHeight;
+    }
+    function setThinking(val) {
+      isThinking = val;
+      document.getElementById('sendBtn').disabled = val;
+      document.getElementById('thinkingGlow').className = 'thinking-glow' + (val ? ' active' : '');
+    }
+
+    /* ══════════════════════════════════════
+       BUBBLE HELPERS
+    ══════════════════════════════════════ */
+    function _addUserBubbleStatic(text) {
+      const div = document.createElement('div');
+      div.className = 'bubble user';
+      div.textContent = text;
+      document.getElementById('chatMessages').appendChild(div);
+    }
+
+    function _addEntBubbleStatic(stem) {
+      const div = document.createElement('div');
+      div.className = 'bubble ent';
+      div.textContent = stem;
+      document.getElementById('chatMessages').appendChild(div);
+    }
+
+    function addUserBubble(text) {
+      _addUserBubbleStatic(text);
+      scrollChat();
+    }
+
+    let thinkingCounter = 0;
+    function addThinkingBubble() {
+      const id = 'thinking-' + (++thinkingCounter);
+      const div = document.createElement('div');
+      div.className = 'bubble ent thinking thinking-dots';
+      div.id = id;
+      div.textContent = t('thinking');
+      document.getElementById('chatMessages').appendChild(div);
+      scrollChat();
+      return id;
+    }
+    function removeThinkingBubble(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function typeEntBubble(text, onDone) {
+      const div = document.createElement('div');
+      div.className = 'bubble ent typing-cursor';
+      document.getElementById('chatMessages').appendChild(div);
+      let i = 0;
+      const interval = setInterval(() => {
+        div.textContent = text.slice(0, ++i);
+        scrollChat();
+        if (i >= text.length) {
+          clearInterval(interval);
+          div.classList.remove('typing-cursor');
+          if (onDone) onDone();
+        }
+      }, 16);
+    }
+
+    function addEntBubble(text) {
+      const div = document.createElement('div');
+      div.className = 'bubble ent';
+      div.textContent = text;
+      document.getElementById('chatMessages').appendChild(div);
+      scrollChat();
+    }
+
+    const OW_COLORS = ['#48735B', '#D90D7D', '#347EBF', '#7BAF93'];
+    let overwColorIndex = 0;
+
+    function typeOverwegingen(blocks) {
+      const container = document.getElementById('overwContent');
+      const empty = container.querySelector('.overw-empty');
+      if (empty) empty.remove();
+
+      if (!Array.isArray(blocks) || blocks.length === 0) return;
+
+      blocks.forEach((block, idx) => {
+        const color = OW_COLORS[overwColorIndex % OW_COLORS.length];
+        overwColorIndex++;
+        setTimeout(() => {
+          const b = document.createElement('div');
+          b.className = 'overw-block';
+          b.style.borderLeftColor = color;
+          b.style.animationDelay = (idx * 0.1) + 's';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'overw-block-title';
+          titleEl.style.color = color;
+          titleEl.textContent = block.title || 'Overweging';
+
+          const bodyEl = document.createElement('div');
+          bodyEl.className = 'overw-block-body';
+          bodyEl.textContent = block.body || '';
+
+          b.appendChild(titleEl); b.appendChild(bodyEl);
+          container.appendChild(b);
+        }, idx * 200);
+      });
+    }
+
+    /* ══════════════════════════════════════
+       ERROR SCREEN
+    ══════════════════════════════════════ */
+    function showErrorScreen() {
+      document.getElementById('chatMessages').style.display = 'none';
+      document.getElementById('chatError').classList.add('visible');
+    }
+    function hideErrorScreen() {
+      document.getElementById('chatMessages').style.display = '';
+      document.getElementById('chatError').classList.remove('visible');
+    }
+
+    function retryLastMessage() {
+      if (!lastUserMessage) return;
+      hideErrorScreen();
+      _doSend(lastUserMessage);
+    }
+
+    /* ══════════════════════════════════════
+       SEND MESSAGE
+    ══════════════════════════════════════ */
+    function sendMessage() {
+      if (isThinking) return;
+      const input   = document.getElementById('messageInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+
+      hideErrorScreen();
+      addUserBubble(message);
+      _doSend(message);
+    }
+
+    function _doSend(message) {
+      lastUserMessage = message;
+
+      // Build messages array: existing conversation + new user message
+      const messages = [
+        ...conversation,
+        { role: 'user', content: message }
+      ];
+
+      const thinkingId = addThinkingBubble();
+      setThinking(true);
+
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, messages, system: systemPrompt })
+      })
+      .then(async res => {
+        removeThinkingBubble(thinkingId);
+        setThinking(false);
+
+        if (res.status === 503 || res.status === 500) {
+          showErrorScreen();
+          return;
+        }
+
+        if (res.status === 401) {
+          // Password no longer valid — send back to gate
+          localStorage.removeItem('ent_password_verified');
+          window.location.replace('/');
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          addEntBubble('Er ging iets mis: ' + (data.error || res.status));
+          return;
+        }
+
+        // Append to conversation
+        conversation.push({ role: 'user', content: message });
+        conversation.push({ role: 'assistant', content: (data.stem || '') + (data.overwegingen?.length ? '\n\n[OVERWEGINGEN]\n' + JSON.stringify(data.overwegingen) : '') });
+
+        // Update usage
+        const newUsage = data.usage || {};
+        usage.input_tokens  += newUsage.input_tokens  || 0;
+        usage.output_tokens += newUsage.output_tokens || 0;
+        usage.requests      += 1;
+
+        // Persist
+        localStorage.setItem('ent_conversation', JSON.stringify(conversation));
+        localStorage.setItem('ent_usage',        JSON.stringify(usage));
+
+        // Update CO2 indicator
+        updateKlimaatimpact(usage);
+
+        // Render response
+        startMouth();
+        typeEntBubble(data.stem || '', () => {
+          stopMouth();
+          if (data.overwegingen && data.overwegingen.length) {
+            typeOverwegingen(data.overwegingen);
+          }
+        });
+      })
+      .catch(() => {
+        removeThinkingBubble(thinkingId);
+        setThinking(false);
+        showErrorScreen();
+      });
+    }
+
+    /* ══════════════════════════════════════
+       CO₂ CONSTANTS & INDICATOR
+    ══════════════════════════════════════ */
+    const INPUT_TOKEN_WH       = 0.00039;
+    const OUTPUT_TOKEN_WH      = 0.00195;
+    const GRID_LOW             = 240;
+    const GRID_HIGH            = 430;
+    const CAR_M_PER_GRAM       = 8;
+    const NETFLIX_MIN_PER_GRAM = 1;
+    const TREE_DAY_GRAMS       = 60;
+
+    function updateKlimaatimpact(u) {
+      const inputTokens  = u.input_tokens  || 0;
+      const outputTokens = u.output_tokens || 0;
+
+      const energyWh  = (inputTokens * INPUT_TOKEN_WH) + (outputTokens * OUTPUT_TOKEN_WH);
+      const energyKWh = energyWh / 1000;
+      const co2Low    = energyKWh * GRID_LOW;
+      const co2High   = energyKWh * GRID_HIGH;
+      const co2Avg    = (co2Low + co2High) / 2;
+
+      const pct    = (co2Avg / TREE_DAY_GRAMS) * 100;
+      const barPct = Math.min(100, pct);
+      const isOver = pct >= 100;
+
+      const bar = document.getElementById('klimaatBar');
+      bar.style.width = barPct + '%';
+      bar.classList.toggle('over', isOver);
+
+      document.getElementById('klimaatPct').textContent = Math.round(pct) + '%';
+
+      const nlDec = (n, d=1) => n.toFixed(d).replace('.', ',');
+      const drivingMeters = Math.round(co2Avg * CAR_M_PER_GRAM);
+      const drivingStr = drivingMeters >= 1000
+        ? nlDec(drivingMeters / 1000) + ' km autorijden'
+        : drivingMeters + ' m autorijden';
+
+      document.getElementById('klimaatCounters').textContent =
+        nlDec(co2Avg) + ' g CO₂e · ' + drivingStr;
+
+      document.getElementById('klimaatOverMsg').classList.toggle('visible', isOver);
+    }
+
+    /* ══════════════════════════════════════
+       EXPORT / SAVE
+    ══════════════════════════════════════ */
+    function saveGesprek() {
+      const cfg   = PERSONA[currentPersona] || PERSONA.boom;
+      const datum = new Date().toLocaleDateString('nl-NL', { day:'2-digit', month:'long', year:'numeric' });
+      const tijd  = new Date().toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+      const lijn  = '─'.repeat(37);
+      const loc   = document.getElementById('personaLocation').textContent;
+
+      let txt = `ENT — Gespreksverslag\n${datum} — ${tijd}\nPersona: ${cfg.personaName}\nLocatie: ${loc}\n${'─'.repeat(60)}\n\nGESPREK\n\n`;
+
+      if (!conversation.length) {
+        txt += '(geen berichten)\n';
+      } else {
+        for (const msg of conversation) {
+          const label = msg.role === 'user' ? 'Deelnemer' : cfg.personaName;
+          const text  = msg.role === 'assistant' ? parseFullText(msg.content) : msg.content;
+          txt += `${label}\n${text}\n\n`;
+        }
+      }
+
+      // Append CO2 block using localStorage usage
+      const u = usage;
+      const inputTokens  = u.input_tokens  || 0;
+      const outputTokens = u.output_tokens || 0;
+      const requests     = u.requests      || 0;
+
+      const energyWh  = (inputTokens * INPUT_TOKEN_WH) + (outputTokens * OUTPUT_TOKEN_WH);
+      const energyKWh = energyWh / 1000;
+      const co2Low    = energyKWh * GRID_LOW;
+      const co2High   = energyKWh * GRID_HIGH;
+      const co2Avg    = (co2Low + co2High) / 2;
+      const drivingMeters = Math.round(co2Avg * CAR_M_PER_GRAM);
+      const netflixMin    = Math.round(co2Avg * NETFLIX_MIN_PER_GRAM);
+
+      const nl    = n => n.toLocaleString('nl-NL');
+      const nlDec = (n, d=1) => n.toFixed(d).replace('.', ',');
+
+      txt += `${lijn}\nDUURZAAMHEIDSINDICATIE\n\n`;
+      txt += `Verzoeken aan ENT: ${requests}\n`;
+      txt += `Tokens (input / output): ${nl(inputTokens)} / ${nl(outputTokens)}\n`;
+      txt += `Geschat energieverbruik: ~${nlDec(energyWh)} Wh\n`;
+      txt += `Geschatte CO₂e: ${nlDec(co2Low)} – ${nlDec(co2High)} gram\n\n`;
+      txt += `Ter vergelijking: ongeveer gelijk aan ${nl(drivingMeters)} meter\n`;
+      txt += `autorijden in een gemiddelde personenauto, of ${netflixMin} minuut\n`;
+      txt += `Netflix kijken.\n\n`;
+      txt += `Methode: schatting op basis van publieke benchmarks\n`;
+      txt += `(~0,4 mWh per input-token, ~2 mWh per output-token), met een\n`;
+      txt += `bandbreedte van 240–430 gCO₂e/kWh voor de netintensiteit\n`;
+      txt += `(IEA 2025). Anthropic publiceert geen exacte per-verzoek\n`;
+      txt += `cijfers; dit is een orde-van-grootte schatting.\n`;
+      txt += lijn;
+
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `ENT-gesprek-${new Date().toISOString().slice(0,10)}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

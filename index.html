@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&display=swap" rel="stylesheet">
+  <!-- PDF.js for client-side PDF text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-green:       #48735B;
+      --color-green-dark:  #3a5e49;
+      --color-green-faint: rgba(72,115,91,0.07);
+      --color-green-ring:  rgba(72,115,91,0.18);
+      --color-creme:       #F2EFE9;
+      --color-magenta:     #D90D7D;
+      --color-text:        #1A1A1A;
+      --color-text-mid:    #4A4A4A;
+      --color-text-light:  #7A7A7A;
+      --color-white:       #FFFFFF;
+      --border-light:      #DEDAD4;
+      --shadow-card:       0 2px 8px rgba(72,115,91,0.10);
+      --shadow-md:         0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--color-creme);
+      font-family: 'Poppins', sans-serif;
+      color: var(--color-text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    /* ── PASSWORD GATE OVERLAY ── */
+    .gate-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: var(--color-creme);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      transition: opacity 0.3s;
+    }
+    .gate-overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .gate-card {
+      background: var(--color-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      padding: 40px 44px;
+      width: 100%; max-width: 440px;
+      text-align: center;
+    }
+
+    .gate-logo {
+      font-weight: 700; font-size: 28px;
+      color: var(--color-green); letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .gate-subtitle {
+      font-size: 13px; color: var(--color-text-light);
+      margin-bottom: 32px; line-height: 1.5;
+    }
+
+    .gate-label {
+      display: block; text-align: left;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-green); margin-bottom: 8px;
+    }
+
+    .gate-input {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px; color: var(--color-text);
+      padding: 13px 16px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .gate-input:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .gate-input.error { border-color: var(--color-magenta); }
+
+    .gate-btn {
+      width: 100%; padding: 14px;
+      background: var(--color-green); border: none; border-radius: 999px;
+      color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .gate-btn:hover { background: var(--color-green-dark); }
+    .gate-btn:disabled { background: var(--border-light); cursor: not-allowed; }
+
+    .gate-error {
+      font-size: 13px; color: var(--color-magenta);
+      margin-top: 12px; min-height: 18px;
+      font-style: italic;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 52px;
+      border-bottom: 1px solid var(--border-light);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo { font-weight: 700; font-size: 20px; color: var(--color-green); letter-spacing: -0.02em; }
+
+    .lang-toggle {
+      display: flex; gap: 2px;
+      background: var(--color-creme);
+      border-radius: 999px; padding: 3px;
+      border: 1px solid var(--border-light);
+    }
+
+    .lang-btn {
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 600;
+      color: var(--color-text-light);
+      background: transparent; border: none;
+      border-radius: 999px; padding: 4px 12px;
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.05em;
+    }
+    .lang-btn.active { background: var(--color-green); color: var(--color-white); }
+
+    /* ── PAGE ── */
+    .page-wrap {
+      flex: 1;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 48px 20px 80px;
+    }
+
+    .card {
+      background: var(--color-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      width: 100%; max-width: 600px;
+      padding: 40px 44px 44px;
+    }
+
+    @media (max-width: 600px) {
+      .card { padding: 28px 20px 32px; }
+      .page-wrap { padding: 24px 12px 60px; }
+      .gate-card { padding: 28px 20px 32px; }
+    }
+
+    /* ── PROGRESS ── */
+    .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+    .progress-dots { display: flex; gap: 6px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-light); transition: background 0.25s; }
+    .dot.active { background: var(--color-green); }
+    .dot.done   { background: var(--color-green-dark); }
+    .progress-label { font-size: 11px; font-weight: 600; color: var(--color-text-light); letter-spacing: 0.05em; }
+
+    /* ── BACK ── */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: var(--color-text-light);
+      background: none; border: none; cursor: pointer;
+      padding: 0; margin-bottom: 24px;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--color-green); }
+    .back-btn[hidden] { display: none; }
+
+    /* ── QUESTION ── */
+    .q-title {
+      font-size: 26px; font-weight: 700;
+      color: var(--color-green);
+      letter-spacing: -0.02em; line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .q-subtitle {
+      font-size: 14px; font-weight: 400;
+      color: var(--color-text-mid);
+      margin-bottom: 28px; line-height: 1.5;
+    }
+
+    /* ── OPTION TILES ── */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 8px;
+    }
+    .options-grid.single-col { grid-template-columns: 1fr; }
+
+    @media (max-width: 440px) { .options-grid { grid-template-columns: 1fr; } }
+
+    .option-tile {
+      display: flex; flex-direction: column; align-items: flex-start;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px; padding: 14px 16px;
+      text-align: left; cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    .option-tile:hover, .option-tile:focus-visible {
+      border-color: var(--color-green); outline: none;
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .option-tile.selected {
+      border-color: var(--color-green);
+      background: var(--color-green-faint);
+    }
+    .option-label    { font-size: 14px; font-weight: 600; color: var(--color-text); line-height: 1.3; }
+    .option-sublabel { font-size: 12px; font-weight: 400; color: var(--color-text-light); margin-top: 3px; line-height: 1.4; }
+
+    /* Other open text */
+    .other-input {
+      width: 100%; margin-top: 10px;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; color: var(--color-text);
+      padding: 10px 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .other-input:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .other-input::placeholder { color: var(--color-text-light); font-style: italic; }
+    .other-input[hidden] { display: none; }
+
+    /* ── Q2b SUB-STEP ── */
+    .q2b-section { margin-top: 28px; }
+    .q2b-section[hidden] { display: none; }
+
+    .q2b-divider {
+      height: 1px; background: var(--border-light);
+      margin-bottom: 24px;
+    }
+
+    .q2b-subtitle {
+      font-size: 14px; font-weight: 600;
+      color: var(--color-text-mid);
+      margin-bottom: 14px;
+    }
+
+    .q2b-details-field { margin-top: 16px; }
+    .q2b-details-field[hidden] { display: none; }
+
+    .q2b-continue {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin-top: 16px;
+      background: var(--color-green);
+      border: none; border-radius: 999px; color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 14px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .q2b-continue:hover { background: var(--color-green-dark); }
+    .q2b-continue[hidden] { display: none; }
+
+    /* ── VOICE TILES (Q4) ── */
+    .voice-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 24px;
+    }
+
+    .voice-tile {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px; padding: 16px 12px;
+      cursor: pointer; font-family: 'Poppins', sans-serif;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .voice-tile:focus-visible {
+      border-color: var(--color-green); outline: none;
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .voice-tile.selected {
+      border-color: var(--color-green);
+      background: var(--color-green-faint);
+    }
+    .voice-tile.coming-soon {
+      opacity: 0.45; cursor: default;
+      border-style: dashed;
+    }
+    .voice-tile.coming-soon:focus-visible { box-shadow: none; border-color: var(--border-light); }
+
+    .voice-img {
+      width: 80px; height: 80px;
+      border-radius: 8px; object-fit: cover;
+      margin-bottom: 10px;
+      border: 1px solid var(--border-light);
+      background: var(--color-creme);
+    }
+
+    .voice-placeholder {
+      width: 80px; height: 80px;
+      border-radius: 8px;
+      border: 1.5px dashed var(--border-light);
+      background: var(--color-creme);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .voice-placeholder-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--border-light);
+    }
+
+    .voice-name { font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 3px; }
+    .voice-sub  { font-size: 11px; font-weight: 400; color: var(--color-text-light); text-align: center; line-height: 1.4; }
+
+    /* ── FIELD LABEL / GROUP ── */
+    .field-label {
+      display: block;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-green); margin-bottom: 8px;
+    }
+    .field-group { margin-bottom: 20px; }
+    .field-group:last-child { margin-bottom: 0; }
+
+    /* ── TEXT INPUTS (Q4) ── */
+    .text-input {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; color: var(--color-text);
+      padding: 12px 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .text-input:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .text-input::placeholder { color: var(--color-text-light); font-style: italic; }
+    textarea.text-input { resize: none; height: 90px; line-height: 1.55; }
+
+    /* Location autocomplete */
+    .location-wrap { position: relative; }
+    .location-suggestions {
+      position: absolute; top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      overflow: hidden; z-index: 200; display: none;
+      box-shadow: var(--shadow-md);
+    }
+    .location-suggestions.visible { display: block; }
+    .suggestion-item {
+      padding: 10px 14px; font-size: 13px;
+      color: var(--color-text); cursor: pointer;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.12s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--color-creme); }
+
+    /* ── CONTINUE BUTTON ── */
+    .continue-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; margin-top: 28px;
+      background: var(--color-green);
+      border: none; border-radius: 999px; color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 15px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .continue-btn:hover { background: var(--color-green-dark); }
+    .continue-btn:active { transform: scale(0.99); }
+    .continue-btn .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .continue-btn:hover .btn-arrow { transform: translateX(4px); }
+
+    /* ── SKIP ── */
+    .skip-link {
+      display: block; text-align: center; margin-top: 20px;
+      font-size: 12px; color: var(--color-text-light);
+      cursor: pointer; background: none; border: none;
+      font-family: 'Poppins', sans-serif;
+      transition: color 0.15s;
+    }
+    .skip-link:hover { color: var(--color-green); }
+
+    .skip-panel { margin-top: 24px; padding: 20px; background: var(--color-creme); border: 1.5px solid var(--border-light); border-radius: 8px; }
+    .skip-panel[hidden] { display: none; }
+    .skip-panel textarea { width: 100%; height: 120px; resize: none; font-family: 'Poppins', monospace; font-size: 12px; line-height: 1.5; }
+    .skip-panel-btns { display: flex; gap: 10px; margin-top: 12px; }
+
+    .btn-sm {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 600;
+      border-radius: 999px; padding: 8px 18px;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+      border: 1.5px solid var(--border-light);
+    }
+    .btn-sm.primary { background: var(--color-green); color: var(--color-white); border-color: var(--color-green); }
+    .btn-sm.primary:hover { background: var(--color-green-dark); border-color: var(--color-green-dark); }
+    .btn-sm.ghost  { background: transparent; color: var(--color-text-mid); }
+    .btn-sm.ghost:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .skip-error { font-size: 12px; color: var(--color-magenta); margin-top: 8px; font-style: italic; }
+    .skip-error[hidden] { display: none; }
+
+    /* ── CONFIRM ── */
+    .confirm-summary {
+      font-size: 18px; font-weight: 300; font-style: italic;
+      color: var(--color-green); line-height: 1.6;
+      padding: 24px 0;
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      margin: 8px 0 8px;
+    }
+
+    .confirm-docs-note {
+      font-size: 13px; color: var(--color-text-mid);
+      font-style: italic; margin-bottom: 20px;
+      padding-top: 10px;
+    }
+    .confirm-docs-note[hidden] { display: none; }
+
+    .confirm-btns { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+    .btn-start {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      background: var(--color-green); border: none; border-radius: 999px;
+      color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 15px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-start:hover { background: var(--color-green-dark); }
+    .btn-start:active { transform: scale(0.99); }
+    .btn-start .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .btn-start:hover .btn-arrow { transform: translateX(4px); }
+
+    .btn-edit {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; background: transparent;
+      border: 1.5px solid var(--border-light); border-radius: 999px;
+      color: var(--color-text-mid);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 500;
+      padding: 13px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-edit:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .confirm-status {
+      text-align: center; font-size: 13px; font-style: italic;
+      color: var(--color-green); margin-top: 12px; min-height: 20px;
+    }
+    .confirm-status.error { color: var(--color-magenta); }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-section { margin-top: 4px; }
+    .upload-section[hidden] { display: none; }
+
+    .upload-zone {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--color-creme);
+      border: 2px dashed var(--border-light);
+      border-radius: 8px; padding: 28px 20px;
+      cursor: pointer; text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      margin-top: 20px;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--color-green);
+      background: var(--color-green-faint);
+    }
+    .upload-zone-icon {
+      font-size: 24px; color: var(--color-green);
+      margin-bottom: 8px; line-height: 1;
+    }
+    .upload-zone-text {
+      font-size: 13px; font-weight: 500; color: var(--color-text-mid);
+      margin-bottom: 4px;
+    }
+    .upload-zone-hint {
+      font-size: 11px; color: var(--color-text-light);
+    }
+
+    .upload-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+
+    .upload-item {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 6px; padding: 10px 14px;
+      font-size: 13px;
+    }
+    .upload-item.uploading { opacity: 0.65; }
+    .upload-item.error     { border-color: var(--color-magenta); }
+
+    .upload-item-name {
+      font-weight: 500; color: var(--color-text);
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-right: 12px;
+    }
+    .upload-item-status {
+      font-size: 11px; color: var(--color-text-light);
+      white-space: nowrap; margin-right: 10px;
+    }
+    .upload-item-status.ok  { color: var(--color-green); }
+    .upload-item-status.err { color: var(--color-magenta); }
+
+    .upload-item-remove {
+      background: none; border: none; cursor: pointer;
+      font-size: 14px; color: var(--color-text-light);
+      padding: 0 2px; line-height: 1;
+      transition: color 0.15s;
+    }
+    .upload-item-remove:hover { color: var(--color-magenta); }
+
+    .upload-status {
+      font-size: 12px; font-style: italic; color: var(--color-text-light);
+      text-align: center; margin-top: 8px; min-height: 18px;
+    }
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: var(--color-creme);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .loading-overlay.visible { opacity: 1; pointer-events: all; }
+
+    .loading-voice-img {
+      width: 100px; height: 100px;
+      border-radius: 12px; object-fit: cover;
+      border: 1px solid var(--border-light);
+      margin-bottom: 20px;
+      animation: breathe 2s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(1.03);opacity:1} }
+
+    .loading-text { font-size: 16px; font-weight: 300; font-style: italic; color: var(--color-green); }
+  </style>
+</head>
+<body>
+
+  <!-- ── PASSWORD GATE ── -->
+  <div class="gate-overlay" id="gateOverlay">
+    <div class="gate-card">
+      <div class="gate-logo">ENT</div>
+      <p class="gate-subtitle" id="gateSubtitle">Engage Nature Tool — Protopia Studio</p>
+      <label class="gate-label" for="gateInput" id="gateLabel">Toegangscode / Access code</label>
+      <input class="gate-input" type="password" id="gateInput"
+             placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') verifyPassword()">
+      <button class="gate-btn" id="gateBtn" onclick="verifyPassword()" data-i18n-gate="gate_btn">Toegang</button>
+      <div class="gate-error" id="gateError"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="logo">ENT</div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-nl" onclick="setLang('nl')">NL</button>
+      <button class="lang-btn"        id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
+    <img class="loading-voice-img" id="loadingImg" src="/image/boom-dicht" alt="">
+    <div class="loading-text"      id="loadingText">Luistert...</div>
+  </div>
+
+  <div class="page-wrap">
+    <div class="card" id="mainCard">
+
+      <!-- ── SCREEN 1: Q1 Who are you ── -->
+      <div id="screen-1">
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot active"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+          <span class="progress-label" data-i18n="q1_step">Stap 1 van 5</span>
+        </div>
+
+        <button class="back-btn" hidden></button>
+
+        <h1 class="q-title"    data-i18n="q1_title">Wie ben jij?</h1>
+        <p  class="q-subtitle" data-i18n="q1_subtitle">Dit helpt ENT de juiste toon te vinden.</p>
+
+        <div class="options-grid" role="radiogroup" id="q1-options" aria-label="Wie ben jij">
+          <button class="option-tile" data-value="designer"     role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_designer">Ontwerper / architect</span>
+            <span class="option-sublabel" data-i18n="q1_opt_designer_sub">Ruimtelijk ontwerp, stedenbouw, landschap</span>
+          </button>
+          <button class="option-tile" data-value="ecologist"    role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_ecologist">Ecoloog / natuurprofessional</span>
+            <span class="option-sublabel" data-i18n="q1_opt_ecologist_sub">Natuur, soorten, ecosystemen</span>
+          </button>
+          <button class="option-tile" data-value="civil_servant" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_civil">Ambtenaar / beleidsmaker</span>
+            <span class="option-sublabel" data-i18n="q1_opt_civil_sub">Gemeente, provincie, rijk</span>
+          </button>
+          <button class="option-tile" data-value="developer"    role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_developer">Ontwikkelaar / opdrachtgever</span>
+            <span class="option-sublabel" data-i18n="q1_opt_developer_sub">Vastgoed, gebiedsontwikkeling</span>
+          </button>
+          <button class="option-tile" data-value="resident"     role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_resident">Bewoner / burger</span>
+            <span class="option-sublabel" data-i18n="q1_opt_resident_sub">Betrokken bij de omgeving</span>
+          </button>
+          <button class="option-tile" data-value="facilitator"  role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_facilitator">Facilitator / procesbegeleider</span>
+            <span class="option-sublabel" data-i18n="q1_opt_facilitator_sub">Sessies, participatie, co-creatie</span>
+          </button>
+          <button class="option-tile" data-value="researcher"   role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_researcher">Onderzoeker / journalist / student</span>
+            <span class="option-sublabel" data-i18n="q1_opt_researcher_sub">Kennis, media, onderwijs</span>
+          </button>
+          <button class="option-tile" data-value="other"        role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label" data-i18n="q1_opt_other">Anders</span>
+          </button>
+        </div>
+        <input class="other-input" id="q1-other-input" type="text" hidden
+               data-i18n-placeholder="q1_opt_other_placeholder"
+               placeholder="Omschrijf je rol..." maxlength="120">
+
+        <button class="skip-link" onclick="toggleSkipPanel()" data-i18n="skip">Intake overslaan (config plakken)</button>
+
+        <div class="skip-panel" id="skipPanel" hidden>
+          <span class="field-label" data-i18n="skip_paste_label">Plak een eerder geëxporteerde config:</span>
+          <textarea class="text-input" id="skipPasteArea"
+                    data-i18n-placeholder="skip_paste_placeholder"
+                    placeholder='{"user_role": "designer", ...}'></textarea>
+          <div class="skip-error" id="skipError" hidden data-i18n="error_json">Ongeldige config — controleer het JSON formaat.</div>
+          <div class="skip-panel-btns">
+            <button class="btn-sm primary" onclick="loadPastedConfig()" data-i18n="skip_load">Laden</button>
+            <button class="btn-sm ghost"   onclick="toggleSkipPanel()"  data-i18n="skip_cancel">Annuleren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 2: Q2 + Q2b ── -->
+      <div id="screen-2" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div><div class="dot active"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+          <span class="progress-label" data-i18n="q2_step">Stap 2 van 5</span>
+        </div>
+
+        <button class="back-btn" id="back-btn-2" onclick="backFromScreen2()" data-i18n="back">&#8592; Terug</button>
+
+        <div id="q2-main">
+          <h1 class="q-title"    data-i18n="q2_title">Voor wie is dit?</h1>
+          <p  class="q-subtitle" data-i18n="q2_subtitle">ENT stemt zijn boodschap af op het publiek.</p>
+
+          <div class="options-grid single-col" role="radiogroup" id="q2-options" aria-label="Voor wie">
+            <button class="option-tile" data-value="self"  role="radio" aria-checked="false" onclick="selectQ2(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2_opt_self">Voor mezelf</span>
+              <span class="option-sublabel" data-i18n="q2_opt_self_sub">Ik verken zelfstandig</span>
+            </button>
+            <button class="option-tile" data-value="group" role="radio" aria-checked="false" onclick="selectQ2(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2_opt_group">Voor een publiek</span>
+              <span class="option-sublabel" data-i18n="q2_opt_group_sub">Ik gebruik dit met anderen</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="q2b-section" id="q2b-section" hidden>
+          <div class="q2b-divider"></div>
+          <p class="q2b-subtitle" data-i18n="q2b_subtitle">Welk publiek?</p>
+
+          <div class="options-grid" role="radiogroup" id="q2b-options" aria-label="Welk publiek">
+            <button class="option-tile" data-value="residents"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_residents">Bewoners</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_residents_sub">Buurtparticipatie</span>
+            </button>
+            <button class="option-tile" data-value="designers"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_designers">Ontwerpers / architecten</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_designers_sub">Ruimtelijk ontwerp</span>
+            </button>
+            <button class="option-tile" data-value="ecologists"   role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_ecologists">Ecologen</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_ecologists_sub">Natuur en soorten</span>
+            </button>
+            <button class="option-tile" data-value="civil_servant" role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_civil">Ambtenaren / beleidsmakers</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_civil_sub">Gemeente, provincie</span>
+            </button>
+            <button class="option-tile" data-value="developer"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_developer">Ontwikkelaars</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_developer_sub">Vastgoed, opdrachtgevers</span>
+            </button>
+            <button class="option-tile" data-value="mixed"        role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_mixed">Gemengd publiek</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_mixed_sub">Meerdere typen in de zaal</span>
+            </button>
+            <button class="option-tile" data-value="other"        role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_other">Anders</span>
+            </button>
+          </div>
+          <input class="other-input" id="q2b-other-input" type="text" hidden
+                 data-i18n-placeholder="q2b_opt_other_placeholder"
+                 placeholder="Omschrijf het publiek..." maxlength="120">
+
+          <div class="q2b-details-field" id="q2b-details-field" hidden>
+            <label class="field-label" for="q2b-audience-details" data-i18n="q2b_details_label">Wie zit er in de zaal?</label>
+            <textarea class="text-input" id="q2b-audience-details"
+                      data-i18n-placeholder="q2b_details_placeholder"
+                      placeholder="Wie zijn ze, wat boeit ze, wat zien ze nog niet..."></textarea>
+          </div>
+
+          <button class="q2b-continue" id="q2b-continue-btn" onclick="advanceFromQ2b()" hidden>
+            <span data-i18n="q2b_continue">Ga verder</span>
+            <span>&#8594;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 3: Q3 What for ── -->
+      <div id="screen-3" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+          <span class="progress-label" data-i18n="q3_step">Stap 3 van 5</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(2)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title"    data-i18n="q3_title">Waarvoor gebruik je ENT vandaag?</h1>
+        <p  class="q-subtitle" data-i18n="q3_subtitle">Dit bepaalt de vorm en het ritme van de stem.</p>
+
+        <div class="options-grid" role="radiogroup" id="q3-options" aria-label="Waarvoor">
+          <button class="option-tile" data-value="open"     role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_open">Gesprek openen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_open_sub">1-3 min gesproken opener</span>
+          </button>
+          <button class="option-tile" data-value="respond"  role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_respond">Reageren op een plan</span>
+            <span class="option-sublabel" data-i18n="q3_opt_respond_sub">Wat betekent dit ontwerp voor mij?</span>
+          </button>
+          <button class="option-tile" data-value="story"    role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_story">Mijn verhaal vertellen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_story_sub">Langere verhalende vorm</span>
+          </button>
+          <button class="option-tile" data-value="provoke"  role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_provoke">Provoceren / verstoren</span>
+            <span class="option-sublabel" data-i18n="q3_opt_provoke_sub">Benoem wat niet gezegd wordt</span>
+          </button>
+          <button class="option-tile" data-value="codesign" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_codesign">Co-ontwerpen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_codesign_sub">Stel vragen terug, bied alternatieven</span>
+          </button>
+          <button class="option-tile" data-value="closing"  role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_closing">Afsluiten</span>
+            <span class="option-sublabel" data-i18n="q3_opt_closing_sub">Stille reflectie aan het einde</span>
+          </button>
+          <button class="option-tile" data-value="explore"  role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_explore">Verkennen / spelen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_explore_sub">Vrij, geen vaste vorm</span>
+          </button>
+          <button class="option-tile" data-value="other"    role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label" data-i18n="q3_opt_other">Anders</span>
+          </button>
+        </div>
+        <input class="other-input" id="q3-other-input" type="text" hidden
+               data-i18n-placeholder="q3_opt_other_placeholder"
+               placeholder="Omschrijf het doel..." maxlength="120">
+      </div>
+
+      <!-- ── SCREEN 4: Q4 Context ── -->
+      <div id="screen-4" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+          </div>
+          <span class="progress-label" data-i18n="q4_step">Stap 4 van 5</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(3)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title"    data-i18n="q4_title">De context</h1>
+        <p  class="q-subtitle" data-i18n="q4_subtitle">Hoe specifieker, hoe sterker de stem.</p>
+
+        <div class="field-group">
+          <span class="field-label" data-i18n="q4_voice_label">Welke stem?</span>
+          <div class="voice-grid">
+            <div class="voice-tile selected" role="radio" aria-checked="true" tabindex="0">
+              <img class="voice-img" src="/image/boom-dicht" alt="De Boom">
+              <span class="voice-name" data-i18n="q4_boom">De Boom</span>
+              <span class="voice-sub"  data-i18n="q4_boom_sub">Geworteld, systemisch, geduldig</span>
+            </div>
+            <div class="voice-tile coming-soon" role="presentation" aria-disabled="true" tabindex="-1">
+              <div class="voice-placeholder"><div class="voice-placeholder-dot"></div></div>
+              <span class="voice-name" data-i18n="q4_more">Meer natuur</span>
+              <span class="voice-sub"  data-i18n="q4_more_sub">Binnenkort</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="q4-location" data-i18n="q4_location_label">Waar?</label>
+          <div class="location-wrap">
+            <input class="text-input" id="q4-location" type="text"
+                   data-i18n-placeholder="q4_location_placeholder"
+                   placeholder="Locatie, type plek..."
+                   oninput="handleLocationInput()" onblur="hideSuggestions()" autocomplete="off">
+            <div class="location-suggestions" id="locationSuggestions"></div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="q4-situation" data-i18n="q4_situation_label">Wat speelt er?</label>
+          <textarea class="text-input" id="q4-situation"
+                    data-i18n-placeholder="q4_situation_placeholder"
+                    placeholder="Het plan, project of de vraag die op tafel ligt..."></textarea>
+        </div>
+
+        <button class="continue-btn" onclick="goToQ5()">
+          <span data-i18n="q4_continue">Ga verder</span>
+          <span class="btn-arrow">&#8594;</span>
+        </button>
+      </div>
+
+      <!-- ── SCREEN 5: Q5 Documents ── -->
+      <div id="screen-5" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot active"></div>
+          </div>
+          <span class="progress-label" data-i18n="q5_step">Stap 5 van 5</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title"    data-i18n="q5_title">Projectdocumenten</h1>
+        <p  class="q-subtitle" data-i18n="q5_subtitle">ENT gebruikt ze om specifieker te spreken. Optioneel.</p>
+
+        <div class="options-grid single-col" role="radiogroup" id="q5-options" aria-label="Documenten">
+          <button class="option-tile" data-value="yes" role="radio" aria-checked="false" onclick="selectQ5(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q5_opt_yes">Ja, ik voeg documenten toe</span>
+            <span class="option-sublabel" data-i18n="q5_opt_yes_sub">PDF of tekst — max 5 bestanden</span>
+          </button>
+          <button class="option-tile" data-value="no"  role="radio" aria-checked="false" onclick="selectQ5(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q5_opt_no">Nee, verder zonder documenten</span>
+            <span class="option-sublabel" data-i18n="q5_opt_no_sub">ENT spreekt vanuit zijn algemene kennis</span>
+          </button>
+        </div>
+
+        <div class="upload-section" id="upload-section" hidden>
+          <div class="q2b-divider" style="margin-top:24px;"></div>
+          <div class="upload-zone" id="uploadZone"
+               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+               ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".pdf,.txt" multiple hidden
+                   onchange="handleFileSelect(event)">
+            <div class="upload-zone-icon">&#8593;</div>
+            <p class="upload-zone-text"  data-i18n="q5_drop">Sleep bestanden hierheen of klik om te kiezen</p>
+            <p class="upload-zone-hint"  data-i18n="q5_drop_hint">PDF of TXT · max 5 bestanden</p>
+          </div>
+          <div class="upload-list"   id="uploadList"></div>
+          <div class="upload-status" id="uploadStatus"></div>
+          <button class="continue-btn" id="q5-continue-btn" onclick="buildConfirmSummary(); goTo('confirm');" style="margin-top:24px;">
+            <span data-i18n="q5_continue">Ga verder</span>
+            <span class="btn-arrow">&#8594;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SCREEN CONFIRM ── -->
+      <div id="screen-confirm" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot done"></div><div class="dot done"></div>
+            <div class="dot done"></div>
+          </div>
+        </div>
+
+        <button class="back-btn" onclick="goTo(5)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title" data-i18n="confirm_title">Klopt dit?</h1>
+
+        <div class="confirm-summary" id="confirmSummary" aria-live="polite"></div>
+        <div class="confirm-docs-note" id="confirmDocsNote" hidden></div>
+
+        <div class="confirm-btns">
+          <button class="btn-start" onclick="startSession()">
+            <span data-i18n="confirm_yes">Ja, start de sessie</span>
+            <span class="btn-arrow">&#8594;</span>
+          </button>
+          <button class="btn-edit" onclick="goTo(1)" data-i18n="confirm_edit">Antwoorden aanpassen</button>
+        </div>
+        <div class="confirm-status" id="confirmStatus"></div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /page-wrap -->
+
+  <!-- Load compose.js as ES module, expose to global scope -->
+  <script type="module">
+    import { compose } from '/compose.js';
+    window._compose = compose;
+  </script>
+
+  <script>
+    /* ══════════════════════════════════════
+       STATE
+    ══════════════════════════════════════ */
+    const intake = {
+      lang:             'nl',
+      user_role:        null,
+      user_role_other:  '',
+      audience_mode:    null,
+      audience_type:    null,
+      audience_details: '',
+      purpose:          null,
+      purpose_other:    '',
+      voice_subject:    'boom',
+      location:         '',
+      situation:        '',
+      documents:        []
+    };
+
+    let currentScreen = 1;
+    let q2bVisible    = false;
+    const isAdjustMode = new URLSearchParams(window.location.search).has('adjust');
+
+    /* ══════════════════════════════════════
+       PASSWORD GATE
+    ══════════════════════════════════════ */
+    (function checkGate() {
+      if (localStorage.getItem('ent_password_verified') === 'true') {
+        document.getElementById('gateOverlay').classList.add('hidden');
+      } else {
+        setTimeout(() => document.getElementById('gateInput').focus(), 100);
+      }
+    })();
+
+    async function verifyPassword() {
+      const btn   = document.getElementById('gateBtn');
+      const input = document.getElementById('gateInput');
+      const errEl = document.getElementById('gateError');
+      const pw    = input.value.trim();
+
+      if (!pw) { input.classList.add('error'); return; }
+
+      btn.disabled = true;
+      errEl.textContent = '';
+      input.classList.remove('error');
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw, messages: [] })
+        });
+
+        if (res.ok) {
+          localStorage.setItem('ent_password_verified', 'true');
+          localStorage.setItem('ent_password', pw);
+          document.getElementById('gateOverlay').classList.add('hidden');
+        } else if (res.status === 401) {
+          errEl.textContent = t('gate_error_wrong');
+          input.classList.add('error');
+          input.select();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errEl.textContent = data.error || t('gate_error_server');
+        }
+      } catch {
+        errEl.textContent = t('gate_error_network');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    /* ══════════════════════════════════════
+       TRANSLATIONS
+    ══════════════════════════════════════ */
+    const STRINGS = {
+      nl: {
+        gate_btn: 'Toegang',
+        gate_error_wrong: 'Onjuiste toegangscode. Probeer opnieuw.',
+        gate_error_server: 'Server niet bereikbaar. Probeer het later.',
+        gate_error_network: 'Geen verbinding. Controleer je internet.',
+
+        q1_step: 'Stap 1 van 5', q1_title: 'Wie ben jij?',
+        q1_subtitle: 'Dit helpt ENT de juiste toon te vinden.',
+        q1_opt_designer: 'Ontwerper / architect',       q1_opt_designer_sub: 'Ruimtelijk ontwerp, stedenbouw, landschap',
+        q1_opt_ecologist: 'Ecoloog / natuurprofessional', q1_opt_ecologist_sub: 'Natuur, soorten, ecosystemen',
+        q1_opt_civil: 'Ambtenaar / beleidsmaker',       q1_opt_civil_sub: 'Gemeente, provincie, rijk',
+        q1_opt_developer: 'Ontwikkelaar / opdrachtgever', q1_opt_developer_sub: 'Vastgoed, gebiedsontwikkeling',
+        q1_opt_resident: 'Bewoner / burger',             q1_opt_resident_sub: 'Betrokken bij de omgeving',
+        q1_opt_facilitator: 'Facilitator / procesbegeleider', q1_opt_facilitator_sub: 'Sessies, participatie, co-creatie',
+        q1_opt_researcher: 'Onderzoeker / journalist / student', q1_opt_researcher_sub: 'Kennis, media, onderwijs',
+        q1_opt_other: 'Anders', q1_opt_other_placeholder: 'Omschrijf je rol...',
+
+        q2_step: 'Stap 2 van 5', q2_title: 'Voor wie is dit?',
+        q2_subtitle: 'ENT stemt zijn boodschap af op het publiek.',
+        q2_opt_self: 'Voor mezelf',       q2_opt_self_sub: 'Ik verken zelfstandig',
+        q2_opt_group: 'Voor een publiek', q2_opt_group_sub: 'Ik gebruik dit met anderen',
+
+        q2b_subtitle: 'Welk publiek?',
+        q2b_opt_residents: 'Bewoners',                  q2b_opt_residents_sub: 'Buurtparticipatie',
+        q2b_opt_designers: 'Ontwerpers / architecten',  q2b_opt_designers_sub: 'Ruimtelijk ontwerp',
+        q2b_opt_ecologists: 'Ecologen',                 q2b_opt_ecologists_sub: 'Natuur en soorten',
+        q2b_opt_civil: 'Ambtenaren / beleidsmakers',    q2b_opt_civil_sub: 'Gemeente, provincie',
+        q2b_opt_developer: 'Ontwikkelaars',             q2b_opt_developer_sub: 'Vastgoed, opdrachtgevers',
+        q2b_opt_mixed: 'Gemengd publiek',               q2b_opt_mixed_sub: 'Meerdere typen in de zaal',
+        q2b_opt_other: 'Anders',                        q2b_opt_other_placeholder: 'Omschrijf het publiek...',
+        q2b_details_label: 'Wie zit er in de zaal?',
+        q2b_details_placeholder: 'Wie zijn ze, wat boeit ze, wat zien ze nog niet...',
+        q2b_continue: 'Ga verder',
+
+        q3_step: 'Stap 3 van 5', q3_title: 'Waarvoor gebruik je ENT vandaag?',
+        q3_subtitle: 'Dit bepaalt de vorm en het ritme van de stem.',
+        q3_opt_open: 'Gesprek openen',        q3_opt_open_sub: '1-3 min gesproken opener',
+        q3_opt_respond: 'Reageren op een plan', q3_opt_respond_sub: 'Wat betekent dit ontwerp voor mij?',
+        q3_opt_story: 'Mijn verhaal vertellen', q3_opt_story_sub: 'Langere verhalende vorm',
+        q3_opt_provoke: 'Provoceren / verstoren', q3_opt_provoke_sub: 'Benoem wat niet gezegd wordt',
+        q3_opt_codesign: 'Co-ontwerpen',       q3_opt_codesign_sub: 'Stel vragen terug, bied alternatieven',
+        q3_opt_closing: 'Afsluiten',           q3_opt_closing_sub: 'Stille reflectie aan het einde',
+        q3_opt_explore: 'Verkennen / spelen',  q3_opt_explore_sub: 'Vrij, geen vaste vorm',
+        q3_opt_other: 'Anders',                q3_opt_other_placeholder: 'Omschrijf het doel...',
+
+        q4_step: 'Stap 4 van 5', q4_title: 'De context',
+        q4_subtitle: 'Hoe specifieker, hoe sterker de stem.',
+        q4_voice_label: 'Welke stem?',
+        q4_boom: 'De Boom', q4_boom_sub: 'Geworteld, systemisch, geduldig',
+        q4_more: 'Meer natuur', q4_more_sub: 'Binnenkort',
+        q4_location_label: 'Waar?',       q4_location_placeholder: 'Locatie, type plek...',
+        q4_situation_label: 'Wat speelt er?', q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
+        q4_continue: 'Ga verder',
+
+        q5_step: 'Stap 5 van 5', q5_title: 'Projectdocumenten',
+        q5_subtitle: 'ENT gebruikt ze om specifieker te spreken. Optioneel.',
+        q5_opt_yes: 'Ja, ik voeg documenten toe', q5_opt_yes_sub: 'PDF of tekst — max 5 bestanden',
+        q5_opt_no: 'Nee, verder zonder documenten', q5_opt_no_sub: 'ENT spreekt vanuit zijn algemene kennis',
+        q5_drop: 'Sleep bestanden hierheen of klik om te kiezen',
+        q5_drop_hint: 'PDF of TXT · max 5 bestanden',
+        q5_continue: 'Ga verder',
+        q5_extracting: 'Tekst lezen…',
+        q5_extracted: 'Toegevoegd',
+        q5_extract_error: 'Fout bij lezen',
+
+        confirm_title: 'Klopt dit?',
+        confirm_yes: 'Ja, start de sessie', confirm_edit: 'Antwoorden aanpassen',
+        back: '← Terug',
+        skip: 'Intake overslaan (config plakken)',
+        skip_paste_label: 'Plak een eerder geëxporteerde config:',
+        skip_paste_placeholder: '{"user_role": "designer", ...}',
+        skip_load: 'Laden', skip_cancel: 'Annuleren',
+        error_composing: 'Kon de sessie niet samenstellen. Probeer opnieuw.',
+        error_json: 'Ongeldige config — controleer het JSON formaat.',
+        skip_docs_notice: 'Eerder geüploade documenten zijn niet opgeslagen en moeten opnieuw worden toegevoegd.',
+
+        voice_boom: 'de boom',
+        aud_self_prefix: 'spreekt met jou',
+        aud_group_residents: 'spreekt tot bewoners',
+        aud_group_designers: 'spreekt tot ontwerpers en architecten',
+        aud_group_ecologists: 'spreekt tot ecologen',
+        aud_group_civil_servant: 'spreekt tot ambtenaren en beleidsmakers',
+        aud_group_developer: 'spreekt tot projectontwikkelaars',
+        aud_group_mixed: 'spreekt tot een gemengd publiek',
+        aud_group_other: 'spreekt tot een specifiek publiek',
+        purpose_open: 'om het gesprek te openen',
+        purpose_respond: 'om te reageren op een plan',
+        purpose_story: 'om zijn verhaal te vertellen',
+        purpose_provoke: 'om te provoceren',
+        purpose_codesign: 'om mee te co-ontwerpen',
+        purpose_closing: 'voor een afsluitende reflectie',
+        purpose_explore: 'om te verkennen',
+        purpose_other: 'voor een vrij gesprek',
+        loading_boom: 'De boom luistert…',
+        confirm_docs: '+ {n} projectdocument(en) geladen',
+      },
+      en: {
+        gate_btn: 'Enter',
+        gate_error_wrong: 'Wrong access code. Please try again.',
+        gate_error_server: 'Server unavailable. Try again later.',
+        gate_error_network: 'No connection. Check your internet.',
+
+        q1_step: 'Step 1 of 5', q1_title: 'Who are you?',
+        q1_subtitle: 'This helps ENT find the right tone.',
+        q1_opt_designer: 'Designer / architect',        q1_opt_designer_sub: 'Spatial design, urbanism, landscape',
+        q1_opt_ecologist: 'Ecologist / nature professional', q1_opt_ecologist_sub: 'Nature, species, ecosystems',
+        q1_opt_civil: 'Civil servant / policy maker',   q1_opt_civil_sub: 'Municipality, province, government',
+        q1_opt_developer: 'Developer / client',         q1_opt_developer_sub: 'Real estate, area development',
+        q1_opt_resident: 'Resident / citizen',          q1_opt_resident_sub: 'Involved in the neighbourhood',
+        q1_opt_facilitator: 'Facilitator / process lead', q1_opt_facilitator_sub: 'Sessions, participation, co-creation',
+        q1_opt_researcher: 'Researcher / journalist / student', q1_opt_researcher_sub: 'Knowledge, media, education',
+        q1_opt_other: 'Something else',                 q1_opt_other_placeholder: 'Describe your role...',
+
+        q2_step: 'Step 2 of 5', q2_title: 'Who is this for?',
+        q2_subtitle: 'ENT adjusts its message to the audience.',
+        q2_opt_self: 'Just me',            q2_opt_self_sub: 'Exploring on my own',
+        q2_opt_group: 'For an audience',   q2_opt_group_sub: "I'll use this with others",
+
+        q2b_subtitle: 'Which audience?',
+        q2b_opt_residents: 'Residents',                 q2b_opt_residents_sub: 'Neighbourhood participation',
+        q2b_opt_designers: 'Designers / architects',    q2b_opt_designers_sub: 'Spatial design',
+        q2b_opt_ecologists: 'Ecologists',               q2b_opt_ecologists_sub: 'Nature and species',
+        q2b_opt_civil: 'Civil servants / policy makers', q2b_opt_civil_sub: 'Municipality, province',
+        q2b_opt_developer: 'Developers',                q2b_opt_developer_sub: 'Real estate, clients',
+        q2b_opt_mixed: 'Mixed audience',                q2b_opt_mixed_sub: 'Multiple types in the room',
+        q2b_opt_other: 'Something else',                q2b_opt_other_placeholder: 'Describe the audience...',
+        q2b_details_label: "Who's in the room?",
+        q2b_details_placeholder: "Who they are, what they care about, what they don't yet see...",
+        q2b_continue: 'Continue',
+
+        q3_step: 'Step 3 of 5', q3_title: 'What will you use ENT for today?',
+        q3_subtitle: 'This determines the shape and rhythm of the voice.',
+        q3_opt_open: 'Open a conversation',   q3_opt_open_sub: '1–3 min spoken opener',
+        q3_opt_respond: 'Respond to a plan',  q3_opt_respond_sub: 'What does this design mean for me?',
+        q3_opt_story: 'Tell my story',        q3_opt_story_sub: 'Longer narrative form',
+        q3_opt_provoke: 'Provoke / disrupt',  q3_opt_provoke_sub: "Name what isn't being said",
+        q3_opt_codesign: 'Co-design',         q3_opt_codesign_sub: 'Ask questions back, offer alternatives',
+        q3_opt_closing: 'Closing reflection', q3_opt_closing_sub: 'Quiet reflection at the end',
+        q3_opt_explore: 'Explore / play',     q3_opt_explore_sub: 'Loose, no fixed shape',
+        q3_opt_other: 'Something else',       q3_opt_other_placeholder: 'Describe the purpose...',
+
+        q4_step: 'Step 4 of 5', q4_title: 'Context',
+        q4_subtitle: 'The more specific, the stronger the voice.',
+        q4_voice_label: 'Which voice?',
+        q4_boom: 'The Tree',   q4_boom_sub: 'Rooted, systemic, patient',
+        q4_more: 'More nature', q4_more_sub: 'Coming soon',
+        q4_location_label: 'Where?',          q4_location_placeholder: 'Location, type of site...',
+        q4_situation_label: "What's happening there?", q4_situation_placeholder: 'The plan, project, or question on the table...',
+        q4_continue: 'Continue',
+
+        q5_step: 'Step 5 of 5', q5_title: 'Project documents',
+        q5_subtitle: 'ENT uses them to speak more specifically. Optional.',
+        q5_opt_yes: "Yes, I'll add documents", q5_opt_yes_sub: 'PDF or text — up to 5 files',
+        q5_opt_no: 'No, continue without documents', q5_opt_no_sub: 'ENT speaks from its general knowledge',
+        q5_drop: 'Drag files here or click to browse',
+        q5_drop_hint: 'PDF or TXT · up to 5 files',
+        q5_continue: 'Continue',
+        q5_extracting: 'Reading text…',
+        q5_extracted: 'Added',
+        q5_extract_error: 'Read error',
+
+        confirm_title: 'Does this look right?',
+        confirm_yes: 'Yes, start the session', confirm_edit: 'Edit answers',
+        back: '← Back',
+        skip: 'Skip intake (paste config)',
+        skip_paste_label: 'Paste a previously exported config:',
+        skip_paste_placeholder: '{"user_role": "designer", ...}',
+        skip_load: 'Load', skip_cancel: 'Cancel',
+        error_composing: 'Could not compose the session. Please try again.',
+        error_json: 'Invalid config — check the JSON format.',
+        skip_docs_notice: 'Previously uploaded documents are not saved and must be re-uploaded.',
+
+        voice_boom: 'the tree',
+        aud_self_prefix: 'speaks with you',
+        aud_group_residents: 'speaks to residents',
+        aud_group_designers: 'speaks to designers and architects',
+        aud_group_ecologists: 'speaks to ecologists',
+        aud_group_civil_servant: 'speaks to civil servants and policy makers',
+        aud_group_developer: 'speaks to project developers',
+        aud_group_mixed: 'speaks to a mixed audience',
+        aud_group_other: 'speaks to a specific audience',
+        purpose_open: 'to open a conversation',
+        purpose_respond: 'to respond to a plan',
+        purpose_story: 'to tell its story',
+        purpose_provoke: 'to provoke',
+        purpose_codesign: 'to co-design',
+        purpose_closing: 'for a closing reflection',
+        purpose_explore: 'to explore',
+        purpose_other: 'for a free conversation',
+        loading_boom: 'The tree is listening…',
+        confirm_docs: '+ {n} project document(s) loaded',
+      }
+    };
+
+    function t(key) { return (STRINGS[intake.lang] || STRINGS.nl)[key] || key; }
+
+    /* ══════════════════════════════════════
+       LANGUAGE
+    ══════════════════════════════════════ */
+    function setLang(lang) {
+      intake.lang = lang;
+      document.documentElement.lang = lang;
+      document.getElementById('btn-nl').classList.toggle('active', lang === 'nl');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      applyTranslations();
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+      // Gate button
+      const gateBtn = document.getElementById('gateBtn');
+      if (gateBtn) gateBtn.textContent = t('gate_btn');
+    }
+
+    /* ══════════════════════════════════════
+       SCREEN NAVIGATION
+    ══════════════════════════════════════ */
+    const SCREEN_IDS = ['screen-1','screen-2','screen-3','screen-4','screen-5','screen-confirm'];
+
+    function showScreen(id) {
+      SCREEN_IDS.forEach(s => { document.getElementById(s).hidden = true; });
+      document.getElementById(id).hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id).querySelector('button:not([hidden]), input:not([hidden]), textarea, [tabindex="0"]');
+        if (el) el.focus();
+      });
+    }
+
+    function goTo(screen) {
+      currentScreen = screen;
+      q2bVisible = false;
+      showScreen(screen === 'confirm' ? 'screen-confirm' : 'screen-' + screen);
+    }
+
+    /* ══════════════════════════════════════
+       Q1
+    ══════════════════════════════════════ */
+    function selectQ1(tile) {
+      clearSelection('q1-options');
+      markSelected(tile);
+      intake.user_role = tile.dataset.value;
+      const otherInput = document.getElementById('q1-other-input');
+      if (intake.user_role === 'other') {
+        otherInput.hidden = false;
+        otherInput.focus();
+        otherInput.oninput = () => { intake.user_role_other = otherInput.value; };
+      } else {
+        otherInput.hidden = true;
+        intake.user_role_other = '';
+        setTimeout(() => goTo(2), 180);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q2 + Q2b
+    ══════════════════════════════════════ */
+    function selectQ2(tile) {
+      clearSelection('q2-options');
+      markSelected(tile);
+      intake.audience_mode = tile.dataset.value;
+
+      const q2bSection = document.getElementById('q2b-section');
+      if (intake.audience_mode === 'group') {
+        q2bSection.hidden = false;
+        q2bVisible = true;
+        clearSelection('q2b-options');
+        intake.audience_type    = null;
+        intake.audience_details = '';
+        document.getElementById('q2b-details-field').hidden = true;
+        document.getElementById('q2b-continue-btn').hidden  = true;
+        document.getElementById('q2b-other-input').hidden   = true;
+        document.getElementById('q2b-audience-details').value = '';
+        const first = document.querySelector('#q2b-options .option-tile');
+        if (first) setTimeout(() => first.focus(), 50);
+      } else {
+        q2bSection.hidden = true;
+        q2bVisible = false;
+        intake.audience_type    = null;
+        intake.audience_details = '';
+        setTimeout(() => goTo(3), 180);
+      }
+    }
+
+    function selectQ2b(tile) {
+      clearSelection('q2b-options');
+      markSelected(tile);
+      intake.audience_type = tile.dataset.value;
+
+      const detailsField = document.getElementById('q2b-details-field');
+      const otherInput   = document.getElementById('q2b-other-input');
+      const continueBtn  = document.getElementById('q2b-continue-btn');
+
+      const needsDetails = intake.audience_type === 'mixed' || intake.audience_type === 'other';
+
+      if (needsDetails) {
+        detailsField.hidden = false;
+        continueBtn.hidden  = false;
+        if (intake.audience_type === 'other') {
+          otherInput.hidden = false;
+          otherInput.focus();
+        } else {
+          otherInput.hidden = true;
+          document.getElementById('q2b-audience-details').focus();
+        }
+      } else {
+        detailsField.hidden = true;
+        otherInput.hidden   = true;
+        continueBtn.hidden  = true;
+        intake.audience_details = '';
+        setTimeout(() => goTo(3), 180);
+      }
+    }
+
+    function advanceFromQ2b() {
+      intake.audience_details = document.getElementById('q2b-audience-details').value.trim();
+      if (intake.audience_type === 'other') {
+        const oi = document.getElementById('q2b-other-input').value.trim();
+        if (oi) intake.audience_details = oi + (intake.audience_details ? ' — ' + intake.audience_details : '');
+      }
+      goTo(3);
+    }
+
+    function backFromScreen2() {
+      const q2bSection = document.getElementById('q2b-section');
+      if (!q2bSection.hidden) {
+        q2bSection.hidden = true;
+        q2bVisible = false;
+        clearSelection('q2-options');
+        intake.audience_mode    = null;
+        intake.audience_type    = null;
+        intake.audience_details = '';
+      } else {
+        goTo(1);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q3
+    ══════════════════════════════════════ */
+    function selectQ3(tile) {
+      clearSelection('q3-options');
+      markSelected(tile);
+      intake.purpose = tile.dataset.value;
+      const otherInput = document.getElementById('q3-other-input');
+      if (intake.purpose === 'other') {
+        otherInput.hidden = false;
+        otherInput.focus();
+        otherInput.oninput = () => { intake.purpose_other = otherInput.value; };
+      } else {
+        otherInput.hidden = true;
+        intake.purpose_other = '';
+        setTimeout(() => goTo(4), 180);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q4
+    ══════════════════════════════════════ */
+    function goToQ5() {
+      intake.location  = document.getElementById('q4-location').value.trim();
+      intake.situation = document.getElementById('q4-situation').value.trim();
+      clearSelection('q5-options');
+      document.getElementById('upload-section').hidden = true;
+      goTo(5);
+    }
+
+    /* ══════════════════════════════════════
+       Q5 — client-side document extraction
+    ══════════════════════════════════════ */
+    function selectQ5(tile) {
+      clearSelection('q5-options');
+      markSelected(tile);
+      const uploadSection = document.getElementById('upload-section');
+      if (tile.dataset.value === 'yes') {
+        uploadSection.hidden = false;
+        setTimeout(() => document.getElementById('uploadZone').focus(), 50);
+      } else {
+        uploadSection.hidden = true;
+        intake.documents = [];
+        buildConfirmSummary();
+        setTimeout(() => goTo('confirm'), 180);
+      }
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('uploadZone').classList.add('dragover');
+    }
+    function handleDragLeave(e) {
+      document.getElementById('uploadZone').classList.remove('dragover');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('uploadZone').classList.remove('dragover');
+      processFiles(Array.from(e.dataTransfer.files));
+    }
+    function handleFileSelect(e) {
+      processFiles(Array.from(e.target.files));
+      e.target.value = '';
+    }
+
+    const MAX_FILES      = 5;
+    const MAX_CHARS_FILE = 20000;
+    const uploadItems    = [];
+
+    function processFiles(files) {
+      const remaining = MAX_FILES - uploadItems.filter(i => i.status !== 'error').length;
+      files.slice(0, remaining).forEach(file => extractFile(file));
+    }
+
+    async function extractFile(file) {
+      const id   = Date.now() + Math.random();
+      const item = { id, filename: file.name, status: 'extracting' };
+      uploadItems.push(item);
+      renderUploadList();
+
+      try {
+        let text = '';
+        if (file.name.toLowerCase().endsWith('.pdf')) {
+          text = await extractPdfText(file);
+        } else {
+          text = await readTextFile(file);
+        }
+        text = text.trim();
+        if (text.length > MAX_CHARS_FILE) {
+          text = text.slice(0, MAX_CHARS_FILE) + '\n[Tekst ingekort vanwege lengte]';
+        }
+        intake.documents.push({ filename: file.name, text });
+        item.status = 'ok';
+      } catch {
+        item.status = 'error';
+      }
+      renderUploadList();
+    }
+
+    async function extractPdfText(file) {
+      if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        fullText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      return fullText;
+    }
+
+    function readTextFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('Read error'));
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
+
+    function removeUploadItem(id) {
+      const idx = uploadItems.findIndex(i => i.id === id);
+      if (idx === -1) return;
+      const filename = uploadItems[idx].filename;
+      uploadItems.splice(idx, 1);
+      intake.documents = intake.documents.filter(d => d.filename !== filename);
+      renderUploadList();
+    }
+
+    function renderUploadList() {
+      const list = document.getElementById('uploadList');
+      list.innerHTML = '';
+      uploadItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'upload-item'
+          + (item.status === 'extracting' ? ' uploading' : '')
+          + (item.status === 'error' ? ' error' : '');
+
+        const name = document.createElement('span');
+        name.className   = 'upload-item-name';
+        name.textContent = item.filename;
+
+        const status = document.createElement('span');
+        status.className = 'upload-item-status '
+          + (item.status === 'ok' ? 'ok' : item.status === 'error' ? 'err' : '');
+        status.textContent = item.status === 'extracting' ? t('q5_extracting')
+                           : item.status === 'ok'         ? t('q5_extracted')
+                           :                                t('q5_extract_error');
+
+        const rm = document.createElement('button');
+        rm.className   = 'upload-item-remove';
+        rm.textContent = '×';
+        rm.title       = 'Verwijderen';
+        rm.onclick     = (e) => { e.stopPropagation(); removeUploadItem(item.id); };
+
+        row.appendChild(name); row.appendChild(status); row.appendChild(rm);
+        list.appendChild(row);
+      });
+    }
+
+    function buildConfirmSummary() {
+      const voice   = t('voice_boom');
+      const purpose = t('purpose_' + (intake.purpose || 'explore'));
+      const loc     = intake.location ? ` in ${intake.location}` : '';
+      const sitSnip = intake.situation
+        ? (intake.situation.length > 60 ? intake.situation.slice(0, 57) + '…' : intake.situation)
+        : '';
+      const sitPart = sitSnip ? ` — "${sitSnip}"` : '';
+
+      let audPart;
+      if (intake.audience_mode === 'self') {
+        audPart = t('aud_self_prefix');
+      } else {
+        const key = 'aud_group_' + (intake.audience_type || 'mixed');
+        audPart = t(key);
+      }
+
+      const summary = (intake.lang === 'nl' ? 'Zo: ' : 'So: ')
+        + `${voice}${loc} ${audPart}${sitPart} ${purpose}.`;
+
+      document.getElementById('confirmSummary').textContent = summary;
+
+      const docsNote = document.getElementById('confirmDocsNote');
+      if (intake.documents && intake.documents.length > 0) {
+        docsNote.hidden = false;
+        docsNote.textContent = t('confirm_docs').replace('{n}', intake.documents.length);
+      } else {
+        docsNote.hidden = true;
+      }
+    }
+
+    /* ══════════════════════════════════════
+       START SESSION — localStorage + compose.js
+    ══════════════════════════════════════ */
+    async function startSession() {
+      const btn    = document.querySelector('.btn-start');
+      const status = document.getElementById('confirmStatus');
+      btn.disabled       = true;
+      status.textContent = '';
+      status.className   = 'confirm-status';
+
+      document.getElementById('loadingText').textContent = t('loading_boom');
+      document.getElementById('loadingOverlay').classList.add('visible');
+
+      const config = {
+        user_role:        intake.user_role,
+        user_role_other:  intake.user_role_other,
+        audience_mode:    intake.audience_mode,
+        audience_type:    intake.audience_type,
+        audience_details: intake.audience_details,
+        purpose:          intake.purpose,
+        purpose_other:    intake.purpose_other,
+        voice_subject:    intake.voice_subject,
+        location:         intake.location,
+        situation:        intake.situation,
+        documents:        intake.documents,
+        lang:             intake.lang,
+      };
+
+      try {
+        // Wait for compose module to be ready (it's a module import — usually instant)
+        let attempts = 0;
+        while (!window._compose && attempts++ < 20) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+        if (!window._compose) throw new Error('compose not loaded');
+
+        const systemPrompt = await window._compose(config);
+
+        // Store to localStorage
+        localStorage.setItem('ent_intake_config',  JSON.stringify(config));
+        localStorage.setItem('ent_system_prompt',  systemPrompt);
+        localStorage.setItem('ent_session_id',     crypto.randomUUID ? crypto.randomUUID() : Date.now().toString());
+        localStorage.setItem('ent_password_verified', 'true');
+
+        // On adjust mode: keep existing conversation. On fresh start: clear it.
+        if (!isAdjustMode) {
+          localStorage.setItem('ent_conversation', JSON.stringify([]));
+          localStorage.setItem('ent_usage', JSON.stringify({ input_tokens: 0, output_tokens: 0, requests: 0 }));
+        }
+
+        window.location.href = '/demo';
+      } catch (err) {
+        document.getElementById('loadingOverlay').classList.remove('visible');
+        btn.disabled       = false;
+        status.textContent = t('error_composing');
+        status.className   = 'confirm-status error';
+        console.error('startSession error:', err);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       SKIP / PASTE CONFIG
+    ══════════════════════════════════════ */
+    function toggleSkipPanel() {
+      const panel = document.getElementById('skipPanel');
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) document.getElementById('skipPasteArea').focus();
+    }
+
+    function loadPastedConfig() {
+      const raw   = document.getElementById('skipPasteArea').value.trim();
+      const errEl = document.getElementById('skipError');
+      errEl.hidden = true;
+      let cfg;
+      try { cfg = JSON.parse(raw); }
+      catch(e) { errEl.hidden = false; return; }
+
+      if (cfg.documents && cfg.documents.length > 0) {
+        cfg.documents = [];
+        document.getElementById('confirmStatus').textContent = t('skip_docs_notice');
+      }
+      applyConfig(cfg);
+      document.getElementById('skipPanel').hidden = true;
+    }
+
+    function applyConfig(cfg) {
+      if (cfg.user_role)        intake.user_role        = cfg.user_role;
+      if (cfg.audience_mode)    intake.audience_mode    = cfg.audience_mode;
+      if (cfg.audience_type)    intake.audience_type    = cfg.audience_type;
+      if (cfg.audience_details) intake.audience_details = cfg.audience_details;
+      if (cfg.purpose)          intake.purpose          = cfg.purpose;
+      if (cfg.location)         intake.location         = cfg.location;
+      if (cfg.situation)        intake.situation        = cfg.situation;
+      if (cfg.lang)             setLang(cfg.lang);
+
+      document.getElementById('q4-location').value  = intake.location;
+      document.getElementById('q4-situation').value = intake.situation;
+
+      _preselect('q1-options', intake.user_role);
+      _preselect('q2-options', intake.audience_mode);
+      _preselect('q2b-options', intake.audience_type);
+      _preselect('q3-options', intake.purpose);
+
+      buildConfirmSummary();
+      goTo('confirm');
+    }
+
+    function _preselect(groupId, value) {
+      if (!value) return;
+      document.querySelectorAll(`#${groupId} .option-tile`).forEach(tile => {
+        if (tile.dataset.value === value) markSelected(tile);
+      });
+    }
+
+    /* ══════════════════════════════════════
+       ADJUST MODE — reads from localStorage
+    ══════════════════════════════════════ */
+    function checkAdjustMode() {
+      if (!isAdjustMode) return;
+      try {
+        const stored = localStorage.getItem('ent_intake_config');
+        if (stored) {
+          applyConfig(JSON.parse(stored));
+          return;
+        }
+      } catch(e) {}
+      // Fallback: try sessionStorage (legacy)
+      try {
+        const stored = sessionStorage.getItem('ent_intake');
+        if (stored) applyConfig(JSON.parse(stored));
+      } catch(e) {}
+    }
+
+    /* ══════════════════════════════════════
+       LOCATION AUTOCOMPLETE
+    ══════════════════════════════════════ */
+    let suggestTimer = null;
+
+    function handleLocationInput() {
+      clearTimeout(suggestTimer);
+      const val = document.getElementById('q4-location').value.trim();
+      if (!val || val.length < 2) { hideSuggestions(); return; }
+      suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
+    }
+
+    async function fetchSuggestions(query) {
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=nl`,
+          { headers: { 'Accept-Language': intake.lang } }
+        );
+        if (!resp.ok) return;
+        const results = await resp.json();
+        if (!results.length) { hideSuggestions(); return; }
+        renderSuggestions(results.map(r => {
+          const parts = r.display_name.split(',').map(s => s.trim());
+          return { label: parts.slice(0,3).join(', '), value: parts.slice(0,2).join(', ') };
+        }));
+      } catch(e) { hideSuggestions(); }
+    }
+
+    function renderSuggestions(items) {
+      const box = document.getElementById('locationSuggestions');
+      box.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.textContent = item.label;
+        div.onmousedown = () => {
+          document.getElementById('q4-location').value = item.value;
+          intake.location = item.value;
+          hideSuggestions(true);
+        };
+        box.appendChild(div);
+      });
+      box.classList.add('visible');
+    }
+
+    function hideSuggestions(immediate) {
+      const box = document.getElementById('locationSuggestions');
+      if (immediate) box.classList.remove('visible');
+      else setTimeout(() => box.classList.remove('visible'), 180);
+    }
+
+    /* ══════════════════════════════════════
+       KEYBOARD NAVIGATION
+    ══════════════════════════════════════ */
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (q2bVisible) { backFromScreen2(); return; }
+        if (currentScreen > 1) goTo(currentScreen - 1);
+        return;
+      }
+
+      if (['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)) {
+        const focused = document.activeElement;
+        if (!focused || !focused.classList.contains('option-tile')) return;
+        e.preventDefault();
+        const parent = focused.closest('[role="radiogroup"]');
+        if (!parent) return;
+        const tiles = Array.from(parent.querySelectorAll('.option-tile'));
+        const idx   = tiles.indexOf(focused);
+        const next  = (e.key === 'ArrowDown' || e.key === 'ArrowRight')
+          ? (idx + 1) % tiles.length
+          : (idx - 1 + tiles.length) % tiles.length;
+        tiles[next].focus();
+      }
+
+      if (e.key === 'Enter' && document.activeElement.classList.contains('option-tile')) {
+        document.activeElement.click();
+      }
+    });
+
+    document.getElementById('q1-other-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) { intake.user_role_other = e.target.value.trim(); goTo(2); }
+    });
+    document.getElementById('q3-other-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) { intake.purpose_other = e.target.value.trim(); goTo(4); }
+    });
+    document.getElementById('q2b-other-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) advanceFromQ2b();
+    });
+
+    /* ══════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════ */
+    function clearSelection(groupId) {
+      document.querySelectorAll(`#${groupId} .option-tile`).forEach(tile => {
+        tile.classList.remove('selected');
+        tile.setAttribute('aria-checked', 'false');
+      });
+    }
+
+    function markSelected(tile) {
+      tile.classList.add('selected');
+      tile.setAttribute('aria-checked', 'true');
+    }
+
+    /* ══════════════════════════════════════
+       INIT
+    ══════════════════════════════════════ */
+    checkAdjustMode();
+  </script>
+</body>
+</html>
