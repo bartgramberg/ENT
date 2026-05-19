@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 import urllib.request
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(os.path.dirname(BASE_DIR), "assets")
 PORT = 8766
 
 PERSONA_DEFAULTS = {
@@ -67,11 +68,11 @@ class Handler(BaseHTTPRequestHandler):
             "/": ("ENT_console_v8.html", "text/html"),
             "/console": ("ENT_console_v8.html", "text/html"),
             "/demo": ("ENT_demo_v8.html", "text/html"),
-            "/image/egel-dicht": ("Egel_mond_dicht.png", "image/png"),
-            "/image/egel-open": ("Egel_mond_open.png", "image/png"),
-            "/image/boom-dicht": ("Boom_mond_dicht.png", "image/png"),
-            "/image/boom-open": ("Boom_mond_open.png", "image/png"),
-            "/background": ("ENT_background.png", "image/png"),
+            "/image/egel-dicht": ("images/Egel_mond_dicht.png", "image/png"),
+            "/image/egel-open": ("images/Egel_mond_open.png", "image/png"),
+            "/image/boom-dicht": ("images/Boom_mond_dicht.png", "image/png"),
+            "/image/boom-open": ("images/Boom_mond_open.png", "image/png"),
+            "/background": ("images/ENT_background.png", "image/png"),
         }
 
         if path in routes:
@@ -208,7 +209,8 @@ Het deel NA [OVERWEGINGEN] = de feiten.""")
 
     def serve_file(self, filename, content_type):
         try:
-            with open(os.path.join(BASE_DIR, filename), "rb") as f:
+            base = ASSETS_DIR if filename.startswith("images/") else BASE_DIR
+            with open(os.path.join(base, filename), "rb") as f:
                 content = f.read()
             self.send_response(200)
             self.send_header("Content-Type", content_type)
