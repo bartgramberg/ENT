@@ -411,9 +411,52 @@
     }
     .klimaat-over-link:hover { text-decoration: underline; }
 
+    /* ── MOBILE TAB SWITCHER ── */
+    .mobile-tabs {
+      display: none;
+      flex-shrink: 0;
+      position: relative; z-index: 15;
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mobile-tab {
+      flex: 1; padding: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--color-text-light);
+      background: transparent; border: none;
+      border-bottom: 2.5px solid transparent;
+      cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    }
+    .mobile-tab.active {
+      color: var(--color-green);
+      border-bottom-color: var(--color-green);
+    }
+
+    /* Short topbar labels (hidden by default) */
+    .label-short { display: none; }
+
     @media (max-width: 700px) {
+      /* Show mobile tabs */
+      .mobile-tabs { display: flex; }
+
+      /* Two-column layout collapses */
       .main { grid-template-columns: 1fr; }
+
+      /* Right panel hidden by default — shown when ENT tab active */
       .right-col { display: none; }
+      .right-col.mobile-active { display: flex; }
+      .chat-col.mobile-hidden  { display: none; }
+
+      /* Smaller chat bubbles on mobile */
+      .bubble { font-size: 15px; }
+
+      /* Compact topbar */
+      .topbar { padding: 0 12px; }
+      .topbar-btns { gap: 5px; }
+      .label-full  { display: none; }
+      .label-short { display: inline; }
     }
   </style>
 </head>
@@ -428,11 +471,23 @@
       <span class="logo">ENT</span>
     </div>
     <div class="topbar-btns">
-      <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust">Setup aanpassen</button>
-      <button class="btn-ghost" onclick="resetConversation()" id="btnReset">Gesprek wissen</button>
-      <button class="btn-save"  onclick="saveGesprek()" id="btnExport">Exporteren</button>
+      <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust" aria-label="Setup aanpassen">
+        <span class="label-full">Setup aanpassen</span><span class="label-short">⚙</span>
+      </button>
+      <button class="btn-ghost" onclick="resetConversation()" id="btnReset" aria-label="Gesprek wissen">
+        <span class="label-full">Gesprek wissen</span><span class="label-short">↺</span>
+      </button>
+      <button class="btn-save"  onclick="saveGesprek()" id="btnExport" aria-label="Exporteren">
+        <span class="label-full">Exporteren</span><span class="label-short">↓</span>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile tab bar (only visible ≤ 700px) -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="mobile-tab active" id="tabGesprek" onclick="switchTab('gesprek')">Gesprek</button>
+    <button class="mobile-tab"        id="tabEnt"     onclick="switchTab('ent')">ENT</button>
+  </div>
 
   <!-- MAIN -->
   <div class="main">
@@ -618,10 +673,13 @@
        INIT
     ══════════════════════════════════════ */
     (function init() {
-      // Apply language strings to topbar
-      document.getElementById('btnAdjust').textContent = t('adjust');
-      document.getElementById('btnReset').textContent  = t('reset');
-      document.getElementById('btnExport').textContent = t('export');
+      // Apply language strings to topbar (targets label-full span for responsive labels)
+      document.getElementById('btnAdjust').querySelector('.label-full').textContent = t('adjust');
+      document.getElementById('btnReset').querySelector('.label-full').textContent  = t('reset');
+      document.getElementById('btnExport').querySelector('.label-full').textContent = t('export');
+      document.getElementById('btnAdjust').setAttribute('aria-label', t('adjust'));
+      document.getElementById('btnReset').setAttribute('aria-label',  t('reset'));
+      document.getElementById('btnExport').setAttribute('aria-label', t('export'));
       document.getElementById('messageInput').placeholder = t('input_placeholder');
       document.getElementById('chatErrorTitle').textContent = t('error_title');
       document.getElementById('chatErrorBody').textContent  = t('error_body');
@@ -1020,6 +1078,27 @@
       a.download = `ENT-gesprek-${new Date().toISOString().slice(0,10)}.txt`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    /* ══════════════════════════════════════
+       MOBILE TAB SWITCHER
+    ══════════════════════════════════════ */
+    function switchTab(tab) {
+      const chatCol  = document.querySelector('.chat-col');
+      const rightCol = document.querySelector('.right-col');
+      const tabG = document.getElementById('tabGesprek');
+      const tabE = document.getElementById('tabEnt');
+      if (tab === 'gesprek') {
+        chatCol.classList.remove('mobile-hidden');
+        rightCol.classList.remove('mobile-active');
+        tabG.classList.add('active');
+        tabE.classList.remove('active');
+      } else {
+        chatCol.classList.add('mobile-hidden');
+        rightCol.classList.add('mobile-active');
+        tabG.classList.remove('active');
+        tabE.classList.add('active');
+      }
     }
   </script>
 </body>
