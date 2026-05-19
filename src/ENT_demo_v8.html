@@ -351,47 +351,104 @@
       color: var(--color-text-mid);
     }
 
-    /* Mycelium status */
-    .mycelium-section {
+    /* Klimaatimpact section */
+    .klimaat-section {
       padding: 14px 24px 18px;
       border-top: 1px solid var(--border-light);
       flex-shrink: 0;
     }
 
-    .mycelium-header {
-      display: flex; align-items: center; gap: 8px;
+    .klimaat-header {
+      display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 10px;
     }
 
-    .mycelium-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--color-green);
-      animation: mycelium-pulse 2s ease-in-out infinite;
-    }
-    @keyframes mycelium-pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
-
-    .mycelium-label {
+    .klimaat-label {
       font-size: 9px; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--color-text-light);
     }
 
-    .mycelium-bar-wrap {
-      height: 4px; background: var(--border-light);
-      border-radius: 999px; overflow: hidden; margin-bottom: 6px;
+    /* Tooltip */
+    .klimaat-tooltip-wrap {
+      position: relative;
+      display: inline-flex;
     }
-    .mycelium-bar {
+
+    .klimaat-tooltip-trigger {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--border-light);
+      color: var(--color-text-light);
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      cursor: default; user-select: none; flex-shrink: 0;
+    }
+
+    .klimaat-tooltip-text {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px); right: 0;
+      width: 280px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11px; line-height: 1.65; font-weight: 400;
+      color: var(--color-text-mid);
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+      text-transform: none; letter-spacing: 0;
+    }
+
+    .klimaat-tooltip-wrap:hover .klimaat-tooltip-text { display: block; }
+
+    /* Bar row */
+    .klimaat-bar-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .klimaat-bar-wrap {
+      flex: 1; height: 6px;
+      background: var(--border-light);
+      border-radius: 999px; overflow: hidden;
+    }
+
+    .klimaat-bar {
       height: 100%;
       background: var(--color-green);
       border-radius: 999px;
       width: 0%;
-      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.6s ease;
+    }
+    .klimaat-bar.over { background: var(--color-magenta); }
+
+    .klimaat-pct {
+      font-size: 11px; font-weight: 600;
+      color: var(--color-text-light);
+      min-width: 34px; text-align: right;
     }
 
-    .mycelium-pct {
+    /* Counters */
+    .klimaat-counters {
       font-size: 11px; color: var(--color-text-light);
-      text-align: right;
+      margin-bottom: 4px;
     }
+
+    /* Over-threshold message */
+    .klimaat-over-msg {
+      display: none;
+      font-size: 11px; line-height: 1.6;
+      color: var(--color-text-mid);
+      margin-top: 6px;
+    }
+    .klimaat-over-msg.visible { display: block; }
+
+    .klimaat-over-link {
+      color: var(--color-magenta);
+      font-weight: 600; text-decoration: none;
+    }
+    .klimaat-over-link:hover { text-decoration: underline; }
 
     /* Responsive */
     @media (max-width: 700px) {
@@ -466,16 +523,31 @@
         </div>
       </div>
 
-      <!-- Mycelium status -->
-      <div class="mycelium-section">
-        <div class="mycelium-header">
-          <div class="mycelium-dot"></div>
-          <span class="mycelium-label">Mycelium Netwerk Status</span>
+      <!-- Klimaatimpact -->
+      <div class="klimaat-section">
+        <div class="klimaat-header">
+          <span class="klimaat-label">Klimaatimpact gesprek</span>
+          <div class="klimaat-tooltip-wrap">
+            <div class="klimaat-tooltip-trigger">?</div>
+            <div class="klimaat-tooltip-text">
+              Eén boom-dag = de hoeveelheid CO₂ die een gemiddelde
+              volwassen boom in één dag opneemt (≈ 60 gram).
+              Deze indicator toont hoeveel boom-dagen aan CO₂ dit
+              gesprek heeft veroorzaakt via de Claude API.
+            </div>
+          </div>
         </div>
-        <div class="mycelium-bar-wrap">
-          <div class="mycelium-bar" id="myceliumBar"></div>
+        <div class="klimaat-bar-row">
+          <div class="klimaat-bar-wrap">
+            <div class="klimaat-bar" id="klimaatBar"></div>
+          </div>
+          <span class="klimaat-pct" id="klimaatPct">0%</span>
         </div>
-        <div class="mycelium-pct" id="myceliumPct">Verbinding met lokaal ecosysteem: <span id="myceliumValue">0</span>%</div>
+        <div class="klimaat-counters" id="klimaatCounters">0,0 g CO₂e · 0 m autorijden</div>
+        <div class="klimaat-over-msg" id="klimaatOverMsg">
+          Dit gesprek heeft een volledige boom-dag aan CO₂ gekost.<br>
+          <a class="klimaat-over-link" href="https://treesforall.nl/en/plant-your-tree-in-and-around-amsterdam/" target="_blank" rel="noopener">Plant een boom ter compensatie →</a>
+        </div>
       </div>
 
     </div>
@@ -485,7 +557,6 @@
     let isThinking = false;
     let mouthInterval = null;
     let currentPersona = 'boom';
-    let messageCount = 0;
 
     const sessie = {
       persona: '', entConfigFile: '', projectFiles: '',
@@ -517,25 +588,8 @@
       }
     };
 
-    /* ── Mycelium progress ── */
-    function updateMycelium() {
-      const target = Math.min(95, Math.round(100 * (1 - Math.exp(-messageCount * 0.18))));
-      document.getElementById('myceliumBar').style.width = target + '%';
-      const el = document.getElementById('myceliumValue');
-      const current = parseInt(el.textContent) || 0;
-      if (current === target) return;
-      const step = target > current ? 1 : -1;
-      let val = current;
-      const timer = setInterval(() => {
-        val += step;
-        el.textContent = val;
-        if (val === target) clearInterval(timer);
-      }, 30);
-    }
-
     /* ── Adjust setup — go back to onboarding without losing history ── */
     function adjustSetup() {
-      // Store current config in sessionStorage so onboarding can pre-fill
       fetch('/session-config')
         .then(r => r.json())
         .then(cfg => {
@@ -547,6 +601,8 @@
 
     /* ── Init ── */
     const skipIntake = new URLSearchParams(window.location.search).has('skip');
+    fetch('/usage').then(r => r.json()).then(updateKlimaatimpact).catch(() => {});
+
     fetch('/state')
       .then(r => r.json())
       .then(data => {
@@ -746,8 +802,7 @@
         if (data.error) { addEntBubble('Er ging iets mis: ' + data.error); return; }
         if (data.persona) currentPersona = data.persona;
 
-        messageCount++;
-        updateMycelium();
+        fetch('/usage').then(r => r.json()).then(updateKlimaatimpact).catch(() => {});
 
         startMouth();
         typeEntBubble(data.stem || '', () => {
@@ -770,15 +825,57 @@
       scrollChat();
     }
 
+    /* ── CO₂ constants ── */
+    const INPUT_TOKEN_WH       = 0.00039;  // Wh per input token (Couch 2026)
+    const OUTPUT_TOKEN_WH      = 0.00195;  // Wh per output token (~5× input cost)
+    const GRID_LOW             = 240;      // gCO2e/kWh — renewable-heavy cloud
+    const GRID_HIGH            = 430;      // gCO2e/kWh — IEA 2025 global average
+    const CAR_M_PER_GRAM       = 8;        // ~120 gCO2/km modern car → 1g ≈ 8 m
+    const NETFLIX_MIN_PER_GRAM = 1;        // ~60 gCO2/hour streaming → ~1g per minute
+    const TREE_DAY_GRAMS       = 60;       // gCO2e absorbed by a mature tree per day
+
+    /* ── Klimaatimpact indicator ── */
+    function updateKlimaatimpact(usage) {
+      const inputTokens  = usage.input_tokens  || 0;
+      const outputTokens = usage.output_tokens || 0;
+
+      const energyWh  = (inputTokens * INPUT_TOKEN_WH) + (outputTokens * OUTPUT_TOKEN_WH);
+      const energyKWh = energyWh / 1000;
+      const co2Low    = energyKWh * GRID_LOW;
+      const co2High   = energyKWh * GRID_HIGH;
+      const co2Avg    = (co2Low + co2High) / 2;
+
+      const pct    = (co2Avg / TREE_DAY_GRAMS) * 100;
+      const barPct = Math.min(100, pct);
+      const isOver = pct >= 100;
+
+      const bar = document.getElementById('klimaatBar');
+      bar.style.width = barPct + '%';
+      bar.classList.toggle('over', isOver);
+
+      document.getElementById('klimaatPct').textContent = Math.round(pct) + '%';
+
+      const nlDec = (n, d=1) => n.toFixed(d).replace('.', ',');
+      const drivingMeters = Math.round(co2Avg * CAR_M_PER_GRAM);
+      const drivingStr = drivingMeters >= 1000
+        ? nlDec(drivingMeters / 1000) + ' km autorijden'
+        : drivingMeters + ' m autorijden';
+
+      document.getElementById('klimaatCounters').textContent =
+        nlDec(co2Avg) + ' g CO₂e · ' + drivingStr;
+
+      document.getElementById('klimaatOverMsg').classList.toggle('visible', isOver);
+    }
+
     /* ── Save ── */
     function saveGesprek() {
-      const cfg = PERSONA[currentPersona] || PERSONA['boom'];
+      const cfg   = PERSONA[currentPersona] || PERSONA['boom'];
       const datum = new Date().toLocaleDateString('nl-NL', { day:'2-digit', month:'long', year:'numeric' });
       const tijd  = new Date().toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
-      const lijn  = '─'.repeat(60);
+      const lijn  = '─'.repeat(37);
       const loc   = document.getElementById('personaLocation').textContent;
 
-      let txt = `ENT — Gespreksverslag\n${datum} — ${tijd}\nPersona: ${cfg.personaName}\nLocatie: ${loc}\n${lijn}\n\nGESPREK\n\n`;
+      let txt = `ENT — Gespreksverslag\n${datum} — ${tijd}\nPersona: ${cfg.personaName}\nLocatie: ${loc}\n${'─'.repeat(60)}\n\nGESPREK\n\n`;
       if (!sessie.berichten.length) {
         txt += '(geen berichten)\n';
       } else {
@@ -788,6 +885,49 @@
         }
       }
 
+      // Fetch usage then append sustainability block and trigger download
+      fetch('/usage')
+        .then(r => r.json())
+        .then(usage => {
+          const inputTokens  = usage.input_tokens  || 0;
+          const outputTokens = usage.output_tokens || 0;
+          const requests     = usage.requests      || 0;
+
+          const energyWh  = (inputTokens * INPUT_TOKEN_WH) + (outputTokens * OUTPUT_TOKEN_WH);
+          const energyKWh = energyWh / 1000;
+          const co2Low    = energyKWh * GRID_LOW;
+          const co2High   = energyKWh * GRID_HIGH;
+          const co2Avg    = (co2Low + co2High) / 2;
+          const drivingMeters = Math.round(co2Avg * CAR_M_PER_GRAM);
+          const netflixMin    = Math.round(co2Avg * NETFLIX_MIN_PER_GRAM);
+
+          const nl = n => n.toLocaleString('nl-NL');
+          const nlDec = (n, d=1) => n.toFixed(d).replace('.', ',');
+
+          txt += `${lijn}\nDUURZAAMHEIDSINDICATIE\n\n`;
+          txt += `Verzoeken aan ENT: ${requests}\n`;
+          txt += `Tokens (input / output): ${nl(inputTokens)} / ${nl(outputTokens)}\n`;
+          txt += `Geschat energieverbruik: ~${nlDec(energyWh)} Wh\n`;
+          txt += `Geschatte CO₂e: ${nlDec(co2Low)} – ${nlDec(co2High)} gram\n\n`;
+          txt += `Ter vergelijking: ongeveer gelijk aan ${nl(drivingMeters)} meter\n`;
+          txt += `autorijden in een gemiddelde personenauto, of ${netflixMin} minuut\n`;
+          txt += `Netflix kijken.\n\n`;
+          txt += `Methode: schatting op basis van publieke benchmarks\n`;
+          txt += `(~0,4 mWh per input-token, ~2 mWh per output-token), met een\n`;
+          txt += `bandbreedte van 240–430 gCO₂e/kWh voor de netintensiteit\n`;
+          txt += `(IEA 2025). Anthropic publiceert geen exacte per-verzoek\n`;
+          txt += `cijfers; dit is een orde-van-grootte schatting.\n`;
+          txt += lijn;
+
+          download(txt);
+        })
+        .catch(() => {
+          // If /usage fails, export without the block
+          download(txt);
+        });
+    }
+
+    function download(txt) {
       const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');

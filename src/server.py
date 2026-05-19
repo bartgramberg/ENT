@@ -338,6 +338,7 @@ class Handler(BaseHTTPRequestHandler):
 
             state["system_prompt"]        = "\n\n---\n\n".join(parts)
             state["conversation_history"] = []
+            state["usage"] = {"input_tokens": 0, "output_tokens": 0, "requests": 0}
             self.send_json({"status": "ok", "persona": state["persona"]})
 
         # ── /chat ──
