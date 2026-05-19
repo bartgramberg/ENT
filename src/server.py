@@ -32,7 +32,8 @@ state = {
         "project_instructions": "",
         "persona_label": "",
         "location": ""
-    }
+    },
+    "usage": {"input_tokens": 0, "output_tokens": 0, "requests": 0}
 }
 
 
@@ -86,6 +87,8 @@ class Handler(BaseHTTPRequestHandler):
             })
         elif path == "/sessie-meta":
             self.send_json(state["meta"])
+        elif path == "/usage":
+            self.send_json(state["usage"])
         else:
             self.send_response(404)
             self.end_headers()
@@ -146,6 +149,7 @@ Het deel NA [OVERWEGINGEN] = de feiten.""")
 
             state["system_prompt"] = "\n\n---\n\n".join(parts)
             state["conversation_history"] = []
+            state["usage"] = {"input_tokens": 0, "output_tokens": 0, "requests": 0}
             self.send_json({"status": "ok", "persona": state["persona"]})
 
         elif path == "/chat":
@@ -182,6 +186,10 @@ Het deel NA [OVERWEGINGEN] = de feiten.""")
             try:
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     result = json.loads(resp.read())
+                    usage = result.get("usage", {})
+                    state["usage"]["input_tokens"]  += usage.get("input_tokens", 0)
+                    state["usage"]["output_tokens"] += usage.get("output_tokens", 0)
+                    state["usage"]["requests"]      += 1
                     full_text = result["content"][0]["text"]
 
                     if "[OVERWEGINGEN]" in full_text:
@@ -202,6 +210,7 @@ Het deel NA [OVERWEGINGEN] = de feiten.""")
 
         elif path == "/reset":
             state["conversation_history"] = []
+            state["usage"] = {"input_tokens": 0, "output_tokens": 0, "requests": 0}
             self.send_json({"status": "reset"})
         else:
             self.send_response(404)
