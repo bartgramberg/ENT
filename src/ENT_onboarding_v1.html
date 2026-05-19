@@ -634,6 +634,10 @@
               <span class="option-label" data-i18n="q2b_opt_developer">Ontwikkelaars</span>
               <span class="option-sublabel" data-i18n="q2b_opt_developer_sub">Vastgoed, opdrachtgevers</span>
             </button>
+            <button class="option-tile" data-value="children"     role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label" data-i18n="q2b_opt_children">Kinderen / scholieren</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_children_sub">Schoolgroepen, jeugd</span>
+            </button>
             <button class="option-tile" data-value="mixed"        role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
               <span class="option-label" data-i18n="q2b_opt_mixed">Gemengd publiek</span>
               <span class="option-sublabel" data-i18n="q2b_opt_mixed_sub">Meerdere typen in de zaal</span>
@@ -902,6 +906,7 @@
         q2b_opt_ecologists: 'Ecologen',                 q2b_opt_ecologists_sub: 'Natuur en soorten',
         q2b_opt_civil: 'Ambtenaren / beleidsmakers',    q2b_opt_civil_sub: 'Gemeente, provincie',
         q2b_opt_developer: 'Ontwikkelaars',             q2b_opt_developer_sub: 'Vastgoed, opdrachtgevers',
+        q2b_opt_children: 'Kinderen / scholieren',       q2b_opt_children_sub: 'Schoolgroepen, jeugd',
         q2b_opt_mixed: 'Gemengd publiek',               q2b_opt_mixed_sub: 'Meerdere typen in de zaal',
         q2b_opt_other: 'Anders',                        q2b_opt_other_placeholder: 'Omschrijf het publiek...',
         q2b_details_label: 'Wie zit er in de zaal?',
@@ -958,6 +963,7 @@
         aud_group_ecologists: 'spreekt tot ecologen',
         aud_group_civil_servant: 'spreekt tot ambtenaren en beleidsmakers',
         aud_group_developer: 'spreekt tot projectontwikkelaars',
+        aud_group_children: 'spreekt tot kinderen en scholieren',
         aud_group_mixed: 'spreekt tot een gemengd publiek',
         aud_group_other: 'spreekt tot een specifiek publiek',
         purpose_open: 'om het gesprek te openen',
@@ -994,6 +1000,7 @@
         q2b_opt_ecologists: 'Ecologists',               q2b_opt_ecologists_sub: 'Nature and species',
         q2b_opt_civil: 'Civil servants / policy makers', q2b_opt_civil_sub: 'Municipality, province',
         q2b_opt_developer: 'Developers',                q2b_opt_developer_sub: 'Real estate, clients',
+        q2b_opt_children: 'Children / students',         q2b_opt_children_sub: 'School groups, youth',
         q2b_opt_mixed: 'Mixed audience',                q2b_opt_mixed_sub: 'Multiple types in the room',
         q2b_opt_other: 'Something else',                q2b_opt_other_placeholder: 'Describe the audience...',
         q2b_details_label: "Who's in the room?",
@@ -1049,6 +1056,7 @@
         aud_group_ecologists: 'speaks to ecologists',
         aud_group_civil_servant: 'speaks to civil servants and policy makers',
         aud_group_developer: 'speaks to project developers',
+        aud_group_children: 'speaks to children and students',
         aud_group_mixed: 'speaks to a mixed audience',
         aud_group_other: 'speaks to a specific audience',
         purpose_open: 'to open a conversation',
@@ -1472,7 +1480,7 @@
       document.getElementById('skipPanel').hidden = true;
     }
 
-    function applyConfig(cfg) {
+    function applyConfig(cfg, startFromQ1 = false) {
       if (cfg.user_role)        intake.user_role        = cfg.user_role;
       if (cfg.audience_mode)    intake.audience_mode    = cfg.audience_mode;
       if (cfg.audience_type)    intake.audience_type    = cfg.audience_type;
@@ -1491,8 +1499,12 @@
       _preselect('q2b-options', intake.audience_type);
       _preselect('q3-options', intake.purpose);
 
-      buildConfirmSummary();
-      goTo('confirm');
+      if (startFromQ1) {
+        goTo(1);
+      } else {
+        buildConfirmSummary();
+        goTo('confirm');
+      }
     }
 
     function _preselect(groupId, value) {
@@ -1509,11 +1521,11 @@
       if (!new URLSearchParams(window.location.search).has('adjust')) return;
       try {
         const stored = sessionStorage.getItem('ent_intake');
-        if (stored) { applyConfig(JSON.parse(stored)); return; }
+        if (stored) { applyConfig(JSON.parse(stored), true); return; }
       } catch(e) {}
       fetch('/session-config')
         .then(r => r.json())
-        .then(cfg => { if (cfg && cfg.user_role) applyConfig(cfg); })
+        .then(cfg => { if (cfg && cfg.user_role) applyConfig(cfg, true); })
         .catch(() => {});
     }
 

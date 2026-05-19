@@ -43,6 +43,7 @@ AUDIENCE_TYPE_TO_FILE = {
     "ecologists":    "ecologists",
     "civil_servant": "civil-servants",
     "developer":     "developers",
+    "children":      "children",
     "mixed":         "mixed",
     "other":         "mixed",
 }
