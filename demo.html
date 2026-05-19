@@ -38,7 +38,7 @@
     /* Background */
     .bg-layer {
       position: fixed; inset: 0;
-      background-image: url('/background');
+      background-image: url('/assets/images/ENT_background.png');
       background-size: cover;
       background-position: center;
       opacity: 0.12; z-index: 0; pointer-events: none;
@@ -447,7 +447,7 @@
 
       <!-- Error screen (shown on 503) -->
       <div class="chat-error" id="chatError">
-        <img class="chat-error-img" src="/image/boom-dicht" alt="De Boom">
+        <img class="chat-error-img" src="/assets/images/Boom_mond_dicht.png" alt="De Boom">
         <div class="chat-error-title" id="chatErrorTitle">De boom rust.</div>
         <div class="chat-error-body"  id="chatErrorBody">Er is een verbindingsfout opgetreden. Probeer het opnieuw.</div>
         <button class="chat-error-retry" onclick="retryLastMessage()" id="chatErrorRetry">Opnieuw proberen</button>
@@ -547,6 +547,20 @@
     let mouthInterval = null;
     let lastUserMessage = '';   // for retry
 
+    // CO₂ constants (must be declared before init IIFE that calls updateKlimaatimpact)
+    const INPUT_TOKEN_WH       = 0.00039;
+    const OUTPUT_TOKEN_WH      = 0.00195;
+    const GRID_LOW             = 240;
+    const GRID_HIGH            = 430;
+    const CAR_M_PER_GRAM       = 8;
+    const NETFLIX_MIN_PER_GRAM = 1;
+    const TREE_DAY_GRAMS       = 60;
+
+    // Bubble counters (must be initialized before chat functions run)
+    const OW_COLORS      = ['#48735B', '#D90D7D', '#347EBF', '#7BAF93'];
+    let thinkingCounter  = 0;
+    let overwColorIndex  = 0;
+
     const currentPersona = intakeConfig.voice_subject || 'boom';
     const currentLang    = intakeConfig.lang || 'nl';
 
@@ -589,14 +603,14 @@
       egel: {
         title:       'ENT — Egel',
         personaName: 'De Egel',
-        imgDicht:    '/image/egel-dicht',
-        imgOpen:     '/image/egel-open',
+        imgDicht:    '/assets/images/Egel_mond_dicht.png',
+        imgOpen:     '/assets/images/Egel_mond_open.png',
       },
       boom: {
         title:       'ENT — Boom als vertegenwoordiger van de natuur',
         personaName: currentLang === 'en' ? 'The Tree' : 'De Boom',
-        imgDicht:    '/image/boom-dicht',
-        imgOpen:     '/image/boom-open',
+        imgDicht:    '/assets/images/Boom_mond_dicht.png',
+        imgOpen:     '/assets/images/Boom_mond_open.png',
       }
     };
 
@@ -733,7 +747,6 @@
       scrollChat();
     }
 
-    let thinkingCounter = 0;
     function addThinkingBubble() {
       const id = 'thinking-' + (++thinkingCounter);
       const div = document.createElement('div');
@@ -772,9 +785,6 @@
       document.getElementById('chatMessages').appendChild(div);
       scrollChat();
     }
-
-    const OW_COLORS = ['#48735B', '#D90D7D', '#347EBF', '#7BAF93'];
-    let overwColorIndex = 0;
 
     function typeOverwegingen(blocks) {
       const container = document.getElementById('overwContent');
@@ -915,16 +925,8 @@
     }
 
     /* ══════════════════════════════════════
-       CO₂ CONSTANTS & INDICATOR
+       CO₂ INDICATOR
     ══════════════════════════════════════ */
-    const INPUT_TOKEN_WH       = 0.00039;
-    const OUTPUT_TOKEN_WH      = 0.00195;
-    const GRID_LOW             = 240;
-    const GRID_HIGH            = 430;
-    const CAR_M_PER_GRAM       = 8;
-    const NETFLIX_MIN_PER_GRAM = 1;
-    const TREE_DAY_GRAMS       = 60;
-
     function updateKlimaatimpact(u) {
       const inputTokens  = u.input_tokens  || 0;
       const outputTokens = u.output_tokens || 0;
