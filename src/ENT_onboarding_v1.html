@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-green:       #48735B;
+      --color-green-dark:  #3a5e49;
+      --color-green-faint: rgba(72,115,91,0.07);
+      --color-green-ring:  rgba(72,115,91,0.18);
+      --color-creme:       #F2EFE9;
+      --color-magenta:     #D90D7D;
+      --color-text:        #1A1A1A;
+      --color-text-mid:    #4A4A4A;
+      --color-text-light:  #7A7A7A;
+      --color-white:       #FFFFFF;
+      --border-light:      #DEDAD4;
+      --shadow-card:       0 2px 8px rgba(72,115,91,0.10);
+      --shadow-md:         0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--color-creme);
+      font-family: 'Poppins', sans-serif;
+      color: var(--color-text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 52px;
+      border-bottom: 1px solid var(--border-light);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo {
+      font-weight: 700; font-size: 20px;
+      color: var(--color-green); letter-spacing: -0.02em;
+    }
+
+    .lang-toggle {
+      display: flex; gap: 2px;
+      background: var(--color-creme);
+      border-radius: 999px; padding: 3px;
+      border: 1px solid var(--border-light);
+    }
+
+    .lang-btn {
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 600;
+      color: var(--color-text-light);
+      background: transparent; border: none;
+      border-radius: 999px; padding: 4px 12px;
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.05em;
+    }
+    .lang-btn.active {
+      background: var(--color-green);
+      color: var(--color-white);
+    }
+
+    /* ── PAGE WRAP ── */
+    .page-wrap {
+      flex: 1;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 48px 20px 80px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--color-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      box-shadow: var(--shadow-card);
+      width: 100%; max-width: 600px;
+      padding: 40px 44px 44px;
+    }
+
+    @media (max-width: 600px) {
+      .card { padding: 28px 20px 32px; }
+      .page-wrap { padding: 24px 12px 60px; }
+    }
+
+    /* ── PROGRESS ── */
+    .progress {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .progress-dots {
+      display: flex; gap: 6px;
+    }
+
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border-light);
+      transition: background 0.25s;
+    }
+    .dot.active { background: var(--color-green); }
+    .dot.done   { background: var(--color-green-dark); }
+
+    .progress-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--color-text-light);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── BACK BUTTON ── */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: var(--color-text-light);
+      background: none; border: none; cursor: pointer;
+      padding: 0; margin-bottom: 24px;
+      transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--color-green); }
+    .back-btn[hidden] { display: none; }
+
+    /* ── QUESTION TITLE ── */
+    .q-title {
+      font-size: 26px; font-weight: 700;
+      color: var(--color-green);
+      letter-spacing: -0.02em; line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .q-subtitle {
+      font-size: 14px; font-weight: 400;
+      color: var(--color-text-mid);
+      margin-bottom: 28px; line-height: 1.5;
+    }
+
+    /* ── OPTION TILES ── */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .options-grid.single-col {
+      grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 440px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    .option-tile {
+      display: flex; flex-direction: column; align-items: flex-start;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      padding: 14px 16px;
+      text-align: left; cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+
+    .option-tile:hover,
+    .option-tile:focus-visible {
+      border-color: var(--color-green);
+      outline: none;
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+
+    .option-tile.selected {
+      border-color: var(--color-green);
+      background: var(--color-green-faint);
+    }
+
+    .option-label {
+      font-size: 14px; font-weight: 600;
+      color: var(--color-text); line-height: 1.3;
+    }
+
+    .option-sublabel {
+      font-size: 12px; font-weight: 400;
+      color: var(--color-text-light);
+      margin-top: 3px; line-height: 1.4;
+    }
+
+    /* Other (open text) */
+    .other-input {
+      width: 100%; margin-top: 10px;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; color: var(--color-text);
+      padding: 10px 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .other-input:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .other-input::placeholder { color: var(--color-text-light); font-style: italic; }
+    .other-input[hidden] { display: none; }
+
+    /* ── VOICE TILES (Q4) — larger, with image ── */
+    .voice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 24px;
+    }
+
+    .voice-tile {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px; padding: 16px 12px;
+      cursor: pointer; font-family: 'Poppins', sans-serif;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .voice-tile:hover, .voice-tile:focus-visible {
+      border-color: var(--color-green); outline: none;
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .voice-tile.selected {
+      border-color: var(--color-green);
+      background: var(--color-green-faint);
+    }
+
+    .voice-img {
+      width: 80px; height: 80px;
+      border-radius: 8px; object-fit: cover;
+      margin-bottom: 10px;
+      border: 1px solid var(--border-light);
+      background: var(--color-creme);
+    }
+
+    .voice-name {
+      font-size: 15px; font-weight: 600;
+      color: var(--color-text); margin-bottom: 3px;
+    }
+
+    .voice-sub {
+      font-size: 11px; font-weight: 400;
+      color: var(--color-text-light); text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── FIELD LABEL ── */
+    .field-label {
+      display: block;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-green);
+      margin-bottom: 8px;
+    }
+
+    .field-group { margin-bottom: 20px; }
+    .field-group:last-child { margin-bottom: 0; }
+
+    /* ── TEXT INPUTS (Q4) ── */
+    .text-input {
+      width: 100%;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px; color: var(--color-text);
+      padding: 12px 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .text-input:focus {
+      border-color: var(--color-green);
+      box-shadow: 0 0 0 3px var(--color-green-ring);
+    }
+    .text-input::placeholder { color: var(--color-text-light); font-style: italic; }
+
+    textarea.text-input {
+      resize: none; height: 90px; line-height: 1.55;
+    }
+
+    /* Location autocomplete */
+    .location-wrap { position: relative; }
+    .location-suggestions {
+      position: absolute; top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--color-white);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+      overflow: hidden; z-index: 200; display: none;
+      box-shadow: var(--shadow-md);
+    }
+    .location-suggestions.visible { display: block; }
+    .suggestion-item {
+      padding: 10px 14px; font-size: 13px;
+      color: var(--color-text); cursor: pointer;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.12s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--color-creme); }
+
+    /* Conditional audience field */
+    .audience-field[hidden] { display: none; }
+
+    /* ── CONTINUE BUTTON ── */
+    .continue-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; margin-top: 28px;
+      background: var(--color-green);
+      border: none; border-radius: 999px; color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 15px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .continue-btn:hover { background: var(--color-green-dark); }
+    .continue-btn:active { transform: scale(0.99); }
+    .continue-btn .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .continue-btn:hover .btn-arrow { transform: translateX(4px); }
+
+    /* ── SKIP LINK ── */
+    .skip-link {
+      display: block; text-align: center; margin-top: 20px;
+      font-size: 12px; color: var(--color-text-light);
+      cursor: pointer; background: none; border: none;
+      font-family: 'Poppins', sans-serif;
+      transition: color 0.15s;
+    }
+    .skip-link:hover { color: var(--color-green); }
+
+    /* ── SKIP PASTE PANEL ── */
+    .skip-panel {
+      margin-top: 24px; padding: 20px;
+      background: var(--color-creme);
+      border: 1.5px solid var(--border-light);
+      border-radius: 8px;
+    }
+    .skip-panel[hidden] { display: none; }
+
+    .skip-panel .field-label { margin-bottom: 8px; }
+
+    .skip-panel textarea {
+      width: 100%; height: 120px; resize: none;
+      font-family: 'Poppins', monospace;
+      font-size: 12px; line-height: 1.5;
+    }
+
+    .skip-panel-btns {
+      display: flex; gap: 10px; margin-top: 12px;
+    }
+
+    .btn-sm {
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px; font-weight: 600;
+      border-radius: 999px; padding: 8px 18px;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+      border: 1.5px solid var(--border-light);
+    }
+    .btn-sm.primary {
+      background: var(--color-green); color: var(--color-white); border-color: var(--color-green);
+    }
+    .btn-sm.primary:hover { background: var(--color-green-dark); border-color: var(--color-green-dark); }
+    .btn-sm.ghost {
+      background: transparent; color: var(--color-text-mid);
+    }
+    .btn-sm.ghost:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .skip-error {
+      font-size: 12px; color: var(--color-magenta);
+      margin-top: 8px; font-style: italic;
+    }
+    .skip-error[hidden] { display: none; }
+
+    /* ── CONFIRMATION SCREEN ── */
+    .confirm-summary {
+      font-size: 18px; font-weight: 300; font-style: italic;
+      color: var(--color-green); line-height: 1.6;
+      padding: 24px 0; border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      margin: 8px 0 28px;
+    }
+
+    .confirm-btns {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .btn-start {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      background: var(--color-green); border: none; border-radius: 999px;
+      color: var(--color-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 15px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-start:hover { background: var(--color-green-dark); }
+    .btn-start:active { transform: scale(0.99); }
+    .btn-start .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .btn-start:hover .btn-arrow { transform: translateX(4px); }
+
+    .btn-edit {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; background: transparent;
+      border: 1.5px solid var(--border-light); border-radius: 999px;
+      color: var(--color-text-mid);
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; font-weight: 500;
+      padding: 13px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-edit:hover { color: var(--color-green); border-color: var(--color-green); }
+
+    .confirm-status {
+      text-align: center; font-size: 13px; font-style: italic;
+      color: var(--color-green); margin-top: 12px; min-height: 20px;
+    }
+    .confirm-status.error { color: var(--color-magenta); }
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: var(--color-creme);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .loading-overlay.visible {
+      opacity: 1; pointer-events: all;
+    }
+
+    .loading-voice-img {
+      width: 100px; height: 100px;
+      border-radius: 12px; object-fit: cover;
+      border: 1px solid var(--border-light);
+      margin-bottom: 20px;
+      animation: breathe 2s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50%       { transform: scale(1.03); opacity: 1; }
+    }
+
+    .loading-text {
+      font-size: 16px; font-weight: 300; font-style: italic;
+      color: var(--color-green);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo">ENT</div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-nl" onclick="setLang('nl')">NL</button>
+      <button class="lang-btn"        id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </header>
+
+  <!-- Loading overlay (shown while POSTing to /intake) -->
+  <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
+    <img class="loading-voice-img" id="loadingImg" src="" alt="">
+    <div class="loading-text" id="loadingText">Luistert...</div>
+  </div>
+
+  <div class="page-wrap">
+    <div class="card" id="mainCard">
+
+      <!-- ── SCREEN 1: Q1 Who are you ── -->
+      <div id="screen-1">
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot active" id="d1-1"></div>
+            <div class="dot"        id="d1-2"></div>
+            <div class="dot"        id="d1-3"></div>
+            <div class="dot"        id="d1-4"></div>
+          </div>
+          <span class="progress-label" data-i18n="q1_step">Stap 1 van 4</span>
+        </div>
+
+        <button class="back-btn" hidden></button>
+
+        <h1 class="q-title" data-i18n="q1_title">Wie ben jij?</h1>
+        <p  class="q-subtitle" data-i18n="q1_subtitle">Dit helpt ENT de juiste toon te vinden.</p>
+
+        <div class="options-grid" role="radiogroup" id="q1-options" aria-label="Wie ben jij">
+          <button class="option-tile" data-value="designer" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_designer">Ontwerper / architect</span>
+            <span class="option-sublabel" data-i18n="q1_opt_designer_sub">Ruimtelijk ontwerp, stedenbouw, landschap</span>
+          </button>
+          <button class="option-tile" data-value="ecologist" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_ecologist">Ecoloog / natuurprofessional</span>
+            <span class="option-sublabel" data-i18n="q1_opt_ecologist_sub">Natuur, soorten, ecosystemen</span>
+          </button>
+          <button class="option-tile" data-value="civil_servant" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_civil">Ambtenaar / beleidsmaker</span>
+            <span class="option-sublabel" data-i18n="q1_opt_civil_sub">Gemeente, provincie, rijk</span>
+          </button>
+          <button class="option-tile" data-value="developer" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_developer">Ontwikkelaar / opdrachtgever</span>
+            <span class="option-sublabel" data-i18n="q1_opt_developer_sub">Vastgoed, gebiedsontwikkeling</span>
+          </button>
+          <button class="option-tile" data-value="resident" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_resident">Bewoner / burger</span>
+            <span class="option-sublabel" data-i18n="q1_opt_resident_sub">Betrokken bij de omgeving</span>
+          </button>
+          <button class="option-tile" data-value="facilitator" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_facilitator">Facilitator / procesbegeleider</span>
+            <span class="option-sublabel" data-i18n="q1_opt_facilitator_sub">Sessies, participatie, co-creatie</span>
+          </button>
+          <button class="option-tile" data-value="researcher" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q1_opt_researcher">Onderzoeker / journalist / student</span>
+            <span class="option-sublabel" data-i18n="q1_opt_researcher_sub">Kennis, media, onderwijs</span>
+          </button>
+          <button class="option-tile" data-value="other" role="radio" aria-checked="false" onclick="selectQ1(this)" tabindex="0">
+            <span class="option-label" data-i18n="q1_opt_other">Anders</span>
+          </button>
+        </div>
+        <input class="other-input" id="q1-other-input" type="text" hidden
+               data-i18n-placeholder="q1_opt_other_placeholder"
+               placeholder="Omschrijf je rol..." maxlength="120">
+
+        <button class="skip-link" onclick="toggleSkipPanel()" data-i18n="skip">Intake overslaan (config plakken)</button>
+
+        <div class="skip-panel" id="skipPanel" hidden>
+          <span class="field-label" data-i18n="skip_paste_label">Plak een eerder geëxporteerde config:</span>
+          <textarea class="text-input" id="skipPasteArea"
+                    data-i18n-placeholder="skip_paste_placeholder"
+                    placeholder='{"user_role": "designer", ...}'></textarea>
+          <div class="skip-error" id="skipError" hidden data-i18n="error_json">Ongeldige config — controleer het JSON formaat.</div>
+          <div class="skip-panel-btns">
+            <button class="btn-sm primary" onclick="loadPastedConfig()" data-i18n="skip_load">Laden</button>
+            <button class="btn-sm ghost"   onclick="toggleSkipPanel()" data-i18n="skip_cancel">Annuleren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 2: Q2 Who is this for ── -->
+      <div id="screen-2" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"  id="d2-1"></div>
+            <div class="dot active" id="d2-2"></div>
+            <div class="dot"        id="d2-3"></div>
+            <div class="dot"        id="d2-4"></div>
+          </div>
+          <span class="progress-label" data-i18n="q2_step">Stap 2 van 4</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(1)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title" data-i18n="q2_title">Voor wie is dit?</h1>
+        <p  class="q-subtitle" data-i18n="q2_subtitle">ENT stemt zijn boodschap af op het publiek.</p>
+
+        <div class="options-grid single-col" role="radiogroup" id="q2-options" aria-label="Voor wie">
+          <button class="option-tile" data-value="self" role="radio" aria-checked="false" onclick="selectQ2(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q2_opt_self">Voor mezelf</span>
+            <span class="option-sublabel" data-i18n="q2_opt_self_sub">Ik verken zelfstandig</span>
+          </button>
+          <button class="option-tile" data-value="group" role="radio" aria-checked="false" onclick="selectQ2(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q2_opt_group">Voor een specifieke groep</span>
+            <span class="option-sublabel" data-i18n="q2_opt_group_sub">Ik deel de uitvoer met anderen</span>
+          </button>
+          <button class="option-tile" data-value="mixed" role="radio" aria-checked="false" onclick="selectQ2(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q2_opt_mixed">Voor een gemengd publiek</span>
+            <span class="option-sublabel" data-i18n="q2_opt_mixed_sub">Meerdere typen mensen in de zaal</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── SCREEN 3: Q3 What for ── -->
+      <div id="screen-3" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"  id="d3-1"></div>
+            <div class="dot done"  id="d3-2"></div>
+            <div class="dot active" id="d3-3"></div>
+            <div class="dot"        id="d3-4"></div>
+          </div>
+          <span class="progress-label" data-i18n="q3_step">Stap 3 van 4</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(2)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title" data-i18n="q3_title">Waarvoor gebruik je ENT vandaag?</h1>
+        <p  class="q-subtitle" data-i18n="q3_subtitle">Dit bepaalt de vorm en het ritme van de stem.</p>
+
+        <div class="options-grid" role="radiogroup" id="q3-options" aria-label="Waarvoor">
+          <button class="option-tile" data-value="open" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_open">Gesprek openen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_open_sub">1-3 min gesproken opener</span>
+          </button>
+          <button class="option-tile" data-value="respond" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_respond">Reageren op een plan</span>
+            <span class="option-sublabel" data-i18n="q3_opt_respond_sub">Wat betekent dit ontwerp voor mij?</span>
+          </button>
+          <button class="option-tile" data-value="story" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_story">Mijn verhaal vertellen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_story_sub">Langere verhalende vorm</span>
+          </button>
+          <button class="option-tile" data-value="provoke" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_provoke">Provoceren / verstoren</span>
+            <span class="option-sublabel" data-i18n="q3_opt_provoke_sub">Benoem wat niet gezegd wordt</span>
+          </button>
+          <button class="option-tile" data-value="codesign" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_codesign">Co-ontwerpen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_codesign_sub">Stel vragen terug, bied alternatieven</span>
+          </button>
+          <button class="option-tile" data-value="closing" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_closing">Afsluiten</span>
+            <span class="option-sublabel" data-i18n="q3_opt_closing_sub">Stille reflectie aan het einde</span>
+          </button>
+          <button class="option-tile" data-value="explore" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label"    data-i18n="q3_opt_explore">Verkennen / spelen</span>
+            <span class="option-sublabel" data-i18n="q3_opt_explore_sub">Vrij, geen vaste vorm</span>
+          </button>
+          <button class="option-tile" data-value="other" role="radio" aria-checked="false" onclick="selectQ3(this)" tabindex="0">
+            <span class="option-label" data-i18n="q3_opt_other">Anders</span>
+          </button>
+        </div>
+        <input class="other-input" id="q3-other-input" type="text" hidden
+               data-i18n-placeholder="q3_opt_other_placeholder"
+               placeholder="Omschrijf het doel..." maxlength="120">
+      </div>
+
+      <!-- ── SCREEN 4: Q4 Context ── -->
+      <div id="screen-4" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"  id="d4-1"></div>
+            <div class="dot done"  id="d4-2"></div>
+            <div class="dot done"  id="d4-3"></div>
+            <div class="dot active" id="d4-4"></div>
+          </div>
+          <span class="progress-label" data-i18n="q4_step">Stap 4 van 4</span>
+        </div>
+
+        <button class="back-btn" onclick="goTo(3)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title" data-i18n="q4_title">De context</h1>
+        <p  class="q-subtitle" data-i18n="q4_subtitle">Hoe specifieker, hoe sterker de stem.</p>
+
+        <!-- Voice selection -->
+        <div class="field-group">
+          <span class="field-label" data-i18n="q4_voice_label">Welke stem?</span>
+          <div class="voice-grid" role="radiogroup" id="q4-voice-options" aria-label="Welke stem">
+            <button class="voice-tile selected" data-value="boom" role="radio" aria-checked="true"
+                    onclick="selectVoice(this)" tabindex="0">
+              <img class="voice-img" src="/image/boom-dicht" alt="Boom">
+              <span class="voice-name" data-i18n="q4_boom">De Boom</span>
+              <span class="voice-sub"  data-i18n="q4_boom_sub">Geworteld, systemisch, geduldig</span>
+            </button>
+            <button class="voice-tile" data-value="egel" role="radio" aria-checked="false"
+                    onclick="selectVoice(this)" tabindex="0">
+              <img class="voice-img" src="/image/egel-dicht" alt="Egel">
+              <span class="voice-name" data-i18n="q4_egel">De Egel</span>
+              <span class="voice-sub"  data-i18n="q4_egel_sub">Klein, nachtelijk, eigenwijs</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="field-group">
+          <label class="field-label" for="q4-location" data-i18n="q4_location_label">Waar?</label>
+          <div class="location-wrap">
+            <input class="text-input" id="q4-location" type="text"
+                   data-i18n-placeholder="q4_location_placeholder"
+                   placeholder="Locatie, type plek..."
+                   oninput="handleLocationInput()" onblur="hideSuggestions()" autocomplete="off">
+            <div class="location-suggestions" id="locationSuggestions"></div>
+          </div>
+        </div>
+
+        <!-- Situation -->
+        <div class="field-group">
+          <label class="field-label" for="q4-situation" data-i18n="q4_situation_label">Wat speelt er?</label>
+          <textarea class="text-input" id="q4-situation"
+                    data-i18n-placeholder="q4_situation_placeholder"
+                    placeholder="Het plan, project of de vraag die op tafel ligt..."></textarea>
+        </div>
+
+        <!-- Audience details (conditional: shown when Q2 = group or mixed) -->
+        <div class="field-group audience-field" id="q4-audience-field" hidden>
+          <label class="field-label" for="q4-audience" data-i18n="q4_audience_label">Wie zit er in de zaal?</label>
+          <textarea class="text-input" id="q4-audience"
+                    data-i18n-placeholder="q4_audience_placeholder"
+                    placeholder="Wie zijn ze, wat boeit ze, wat zien ze nog niet..."></textarea>
+        </div>
+
+        <button class="continue-btn" onclick="goToConfirm()">
+          <span data-i18n="q4_continue">Ga verder</span>
+          <span class="btn-arrow">&#8594;</span>
+        </button>
+      </div>
+
+      <!-- ── SCREEN CONFIRM ── -->
+      <div id="screen-confirm" hidden>
+        <div class="progress">
+          <div class="progress-dots">
+            <div class="dot done"></div>
+            <div class="dot done"></div>
+            <div class="dot done"></div>
+            <div class="dot done"></div>
+          </div>
+        </div>
+
+        <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
+
+        <h1 class="q-title" data-i18n="confirm_title">Klopt dit?</h1>
+
+        <div class="confirm-summary" id="confirmSummary" aria-live="polite"></div>
+
+        <div class="confirm-btns">
+          <button class="btn-start" onclick="startSession()">
+            <span data-i18n="confirm_yes">Ja, start de sessie</span>
+            <span class="btn-arrow">&#8594;</span>
+          </button>
+          <button class="btn-edit" onclick="goTo(1)" data-i18n="confirm_edit">Antwoorden aanpassen</button>
+        </div>
+        <div class="confirm-status" id="confirmStatus"></div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /page-wrap -->
+
+  <script>
+    /* ══════════════════════════════════════
+       STATE
+    ══════════════════════════════════════ */
+    const intake = {
+      lang:             'nl',
+      user_role:        null,
+      user_role_other:  '',
+      audience_mode:    null,
+      purpose:          null,
+      purpose_other:    '',
+      voice_subject:    'boom',
+      location:         '',
+      situation:        '',
+      audience_details: ''
+    };
+
+    let currentScreen = 1;
+
+    /* ══════════════════════════════════════
+       TRANSLATIONS
+    ══════════════════════════════════════ */
+    const STRINGS = {
+      nl: {
+        q1_step: 'Stap 1 van 4',
+        q1_title: 'Wie ben jij?',
+        q1_subtitle: 'Dit helpt ENT de juiste toon te vinden.',
+        q1_opt_designer: 'Ontwerper / architect',
+        q1_opt_designer_sub: 'Ruimtelijk ontwerp, stedenbouw, landschap',
+        q1_opt_ecologist: 'Ecoloog / natuurprofessional',
+        q1_opt_ecologist_sub: 'Natuur, soorten, ecosystemen',
+        q1_opt_civil: 'Ambtenaar / beleidsmaker',
+        q1_opt_civil_sub: 'Gemeente, provincie, rijk',
+        q1_opt_developer: 'Ontwikkelaar / opdrachtgever',
+        q1_opt_developer_sub: 'Vastgoed, gebiedsontwikkeling',
+        q1_opt_resident: 'Bewoner / burger',
+        q1_opt_resident_sub: 'Betrokken bij de omgeving',
+        q1_opt_facilitator: 'Facilitator / procesbegeleider',
+        q1_opt_facilitator_sub: 'Sessies, participatie, co-creatie',
+        q1_opt_researcher: 'Onderzoeker / journalist / student',
+        q1_opt_researcher_sub: 'Kennis, media, onderwijs',
+        q1_opt_other: 'Anders',
+        q1_opt_other_placeholder: 'Omschrijf je rol...',
+        q2_step: 'Stap 2 van 4',
+        q2_title: 'Voor wie is dit?',
+        q2_subtitle: 'ENT stemt zijn boodschap af op het publiek.',
+        q2_opt_self: 'Voor mezelf',
+        q2_opt_self_sub: 'Ik verken zelfstandig',
+        q2_opt_group: 'Voor een specifieke groep',
+        q2_opt_group_sub: 'Ik deel de uitvoer met anderen',
+        q2_opt_mixed: 'Voor een gemengd publiek',
+        q2_opt_mixed_sub: 'Meerdere typen mensen in de zaal',
+        q3_step: 'Stap 3 van 4',
+        q3_title: 'Waarvoor gebruik je ENT vandaag?',
+        q3_subtitle: 'Dit bepaalt de vorm en het ritme van de stem.',
+        q3_opt_open: 'Gesprek openen',
+        q3_opt_open_sub: '1-3 min gesproken opener',
+        q3_opt_respond: 'Reageren op een plan',
+        q3_opt_respond_sub: 'Wat betekent dit ontwerp voor mij?',
+        q3_opt_story: 'Mijn verhaal vertellen',
+        q3_opt_story_sub: 'Langere verhalende vorm',
+        q3_opt_provoke: 'Provoceren / verstoren',
+        q3_opt_provoke_sub: 'Benoem wat niet gezegd wordt',
+        q3_opt_codesign: 'Co-ontwerpen',
+        q3_opt_codesign_sub: 'Stel vragen terug, bied alternatieven',
+        q3_opt_closing: 'Afsluiten',
+        q3_opt_closing_sub: 'Stille reflectie aan het einde',
+        q3_opt_explore: 'Verkennen / spelen',
+        q3_opt_explore_sub: 'Vrij, geen vaste vorm',
+        q3_opt_other: 'Anders',
+        q3_opt_other_placeholder: 'Omschrijf het doel...',
+        q4_step: 'Stap 4 van 4',
+        q4_title: 'De context',
+        q4_subtitle: 'Hoe specifieker, hoe sterker de stem.',
+        q4_voice_label: 'Welke stem?',
+        q4_boom: 'De Boom',
+        q4_boom_sub: 'Geworteld, systemisch, geduldig',
+        q4_egel: 'De Egel',
+        q4_egel_sub: 'Klein, nachtelijk, eigenwijs',
+        q4_location_label: 'Waar?',
+        q4_location_placeholder: 'Locatie, type plek...',
+        q4_situation_label: 'Wat speelt er?',
+        q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
+        q4_audience_label: 'Wie zit er in de zaal?',
+        q4_audience_placeholder: 'Wie zijn ze, wat boeit ze, wat zien ze nog niet...',
+        q4_continue: 'Ga verder',
+        confirm_title: 'Klopt dit?',
+        confirm_yes: 'Ja, start de sessie',
+        confirm_edit: 'Antwoorden aanpassen',
+        back: '← Terug',
+        skip: 'Intake overslaan (config plakken)',
+        skip_paste_label: 'Plak een eerder geëxporteerde config:',
+        skip_paste_placeholder: '{"user_role": "designer", ...}',
+        skip_load: 'Laden',
+        skip_cancel: 'Annuleren',
+        error_api: 'De wind neemt mijn woorden even mee. Probeer het opnieuw.',
+        error_json: 'Ongeldige config — controleer het JSON formaat.',
+        voice_boom: 'de boom',
+        voice_egel: 'de egel',
+        purpose_open: 'om het gesprek te openen',
+        purpose_respond: 'om te reageren op een plan of ontwerp',
+        purpose_story: 'om zijn verhaal te vertellen',
+        purpose_provoke: 'om te provoceren',
+        purpose_codesign: 'om mee te co-ontwerpen',
+        purpose_closing: 'voor een afsluitende reflectie',
+        purpose_explore: 'om te verkennen',
+        purpose_other: 'voor een vrij gesprek',
+        audience_self: 'voor jou persoonlijk',
+        audience_group: 'voor een specifieke groep',
+        audience_mixed: 'voor een gemengd publiek',
+        loading_boom: 'De boom luistert…',
+        loading_egel: 'De egel luistert…',
+      },
+      en: {
+        q1_step: 'Step 1 of 4',
+        q1_title: 'Who are you?',
+        q1_subtitle: 'This helps ENT find the right tone.',
+        q1_opt_designer: 'Designer / architect',
+        q1_opt_designer_sub: 'Spatial design, urbanism, landscape',
+        q1_opt_ecologist: 'Ecologist / nature professional',
+        q1_opt_ecologist_sub: 'Nature, species, ecosystems',
+        q1_opt_civil: 'Civil servant / policy maker',
+        q1_opt_civil_sub: 'Municipality, province, government',
+        q1_opt_developer: 'Developer / client',
+        q1_opt_developer_sub: 'Real estate, area development',
+        q1_opt_resident: 'Resident / citizen',
+        q1_opt_resident_sub: 'Involved in the neighbourhood',
+        q1_opt_facilitator: 'Facilitator / process lead',
+        q1_opt_facilitator_sub: 'Sessions, participation, co-creation',
+        q1_opt_researcher: 'Researcher / journalist / student',
+        q1_opt_researcher_sub: 'Knowledge, media, education',
+        q1_opt_other: 'Something else',
+        q1_opt_other_placeholder: 'Describe your role...',
+        q2_step: 'Step 2 of 4',
+        q2_title: 'Who is this for?',
+        q2_subtitle: 'ENT adjusts its message to the audience.',
+        q2_opt_self: 'Just me',
+        q2_opt_self_sub: 'Exploring on my own',
+        q2_opt_group: 'A specific group',
+        q2_opt_group_sub: "I'll share this output with others",
+        q2_opt_mixed: 'A mixed audience',
+        q2_opt_mixed_sub: 'Multiple types of people in the room',
+        q3_step: 'Step 3 of 4',
+        q3_title: 'What will you use ENT for today?',
+        q3_subtitle: 'This determines the shape and rhythm of the voice.',
+        q3_opt_open: 'Open a conversation',
+        q3_opt_open_sub: '1–3 min spoken opener',
+        q3_opt_respond: 'Respond to a plan',
+        q3_opt_respond_sub: 'What does this design mean for me?',
+        q3_opt_story: 'Tell my story',
+        q3_opt_story_sub: 'Longer narrative form',
+        q3_opt_provoke: 'Provoke / disrupt',
+        q3_opt_provoke_sub: "Name what isn't being said",
+        q3_opt_codesign: 'Co-design',
+        q3_opt_codesign_sub: 'Ask questions back, offer alternatives',
+        q3_opt_closing: 'Closing reflection',
+        q3_opt_closing_sub: 'Quiet reflection at the end',
+        q3_opt_explore: 'Explore / play',
+        q3_opt_explore_sub: 'Loose, no fixed shape',
+        q3_opt_other: 'Something else',
+        q3_opt_other_placeholder: 'Describe the purpose...',
+        q4_step: 'Step 4 of 4',
+        q4_title: 'Context',
+        q4_subtitle: 'The more specific, the stronger the voice.',
+        q4_voice_label: 'Which voice?',
+        q4_boom: 'The Tree',
+        q4_boom_sub: 'Rooted, systemic, patient',
+        q4_egel: 'The Hedgehog',
+        q4_egel_sub: 'Small, nocturnal, headstrong',
+        q4_location_label: 'Where?',
+        q4_location_placeholder: 'Location, type of site...',
+        q4_situation_label: "What's happening there?",
+        q4_situation_placeholder: 'The plan, project, or question on the table...',
+        q4_audience_label: "Who's in the room?",
+        q4_audience_placeholder: "Who they are, what they care about, what they don't yet see...",
+        q4_continue: 'Continue',
+        confirm_title: 'Does this look right?',
+        confirm_yes: 'Yes, start the session',
+        confirm_edit: 'Edit answers',
+        back: '← Back',
+        skip: 'Skip intake (paste config)',
+        skip_paste_label: 'Paste a previously exported config:',
+        skip_paste_placeholder: '{"user_role": "designer", ...}',
+        skip_load: 'Load',
+        skip_cancel: 'Cancel',
+        error_api: 'The wind takes my words for a moment. Try again.',
+        error_json: 'Invalid config — check the JSON format.',
+        voice_boom: 'the tree',
+        voice_egel: 'the hedgehog',
+        purpose_open: 'to open a conversation',
+        purpose_respond: 'to respond to a plan or design',
+        purpose_story: 'to tell its story',
+        purpose_provoke: 'to provoke',
+        purpose_codesign: 'to co-design',
+        purpose_closing: 'for a closing reflection',
+        purpose_explore: 'to explore',
+        purpose_other: 'for a free conversation',
+        audience_self: 'for you personally',
+        audience_group: 'for a specific group',
+        audience_mixed: 'for a mixed audience',
+        loading_boom: 'The tree is listening…',
+        loading_egel: 'The hedgehog is listening…',
+      }
+    };
+
+    function t(key) {
+      return (STRINGS[intake.lang] || STRINGS.nl)[key] || key;
+    }
+
+    /* ══════════════════════════════════════
+       LANGUAGE
+    ══════════════════════════════════════ */
+    function setLang(lang) {
+      intake.lang = lang;
+      document.documentElement.lang = lang;
+      document.getElementById('btn-nl').classList.toggle('active', lang === 'nl');
+      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+      applyTranslations();
+    }
+
+    function applyTranslations() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.dataset.i18n);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.dataset.i18nPlaceholder);
+      });
+    }
+
+    /* ══════════════════════════════════════
+       SCREEN NAVIGATION
+    ══════════════════════════════════════ */
+    const SCREEN_IDS = ['screen-1','screen-2','screen-3','screen-4','screen-confirm'];
+
+    function showScreen(id) {
+      SCREEN_IDS.forEach(s => {
+        document.getElementById(s).hidden = true;
+      });
+      document.getElementById(id).hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Focus first focusable element
+      requestAnimationFrame(() => {
+        const el = document.getElementById(id).querySelector('button, input, textarea, [tabindex="0"]');
+        if (el) el.focus();
+      });
+    }
+
+    function goTo(screen) {
+      currentScreen = screen;
+      if (screen === 'confirm') {
+        showScreen('screen-confirm');
+      } else {
+        showScreen('screen-' + screen);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q1 — WHO ARE YOU
+    ══════════════════════════════════════ */
+    function selectQ1(tile) {
+      clearSelection('q1-options');
+      markSelected(tile);
+      intake.user_role = tile.dataset.value;
+
+      const otherInput = document.getElementById('q1-other-input');
+      if (intake.user_role === 'other') {
+        otherInput.hidden = false;
+        otherInput.focus();
+        otherInput.oninput = () => { intake.user_role_other = otherInput.value; };
+      } else {
+        otherInput.hidden = true;
+        intake.user_role_other = '';
+        // Auto-advance
+        setTimeout(() => goTo(2), 180);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q2 — WHO IS THIS FOR
+    ══════════════════════════════════════ */
+    function selectQ2(tile) {
+      clearSelection('q2-options');
+      markSelected(tile);
+      intake.audience_mode = tile.dataset.value;
+      setTimeout(() => goTo(3), 180);
+    }
+
+    /* ══════════════════════════════════════
+       Q3 — WHAT FOR
+    ══════════════════════════════════════ */
+    function selectQ3(tile) {
+      clearSelection('q3-options');
+      markSelected(tile);
+      intake.purpose = tile.dataset.value;
+
+      const otherInput = document.getElementById('q3-other-input');
+      if (intake.purpose === 'other') {
+        otherInput.hidden = false;
+        otherInput.focus();
+        otherInput.oninput = () => { intake.purpose_other = otherInput.value; };
+      } else {
+        otherInput.hidden = true;
+        intake.purpose_other = '';
+        // Auto-advance
+        setTimeout(() => goTo(4), 180);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       Q4 — CONTEXT
+    ══════════════════════════════════════ */
+    function selectVoice(tile) {
+      document.querySelectorAll('#q4-voice-options .voice-tile').forEach(t => {
+        t.classList.remove('selected');
+        t.setAttribute('aria-checked', 'false');
+      });
+      tile.classList.add('selected');
+      tile.setAttribute('aria-checked', 'true');
+      intake.voice_subject = tile.dataset.value;
+    }
+
+    function goToConfirm() {
+      intake.location         = document.getElementById('q4-location').value.trim();
+      intake.situation        = document.getElementById('q4-situation').value.trim();
+      intake.audience_details = document.getElementById('q4-audience').value.trim();
+
+      // Show audience field on Q4 based on Q2 answer
+      const needsAudience = intake.audience_mode === 'group' || intake.audience_mode === 'mixed';
+      document.getElementById('q4-audience-field').hidden = !needsAudience;
+
+      buildConfirmSummary();
+      goTo('confirm');
+    }
+
+    function buildConfirmSummary() {
+      const lang = intake.lang;
+      const voiceKey   = 'voice_'   + (intake.voice_subject || 'boom');
+      const purposeKey = 'purpose_' + (intake.purpose       || 'explore');
+      const audKey     = 'audience_'+ (intake.audience_mode || 'self');
+
+      const voice   = t(voiceKey);
+      const purpose = t(purposeKey);
+      const aud     = t(audKey);
+      const loc     = intake.location ? ` in ${intake.location}` : '';
+      const sitSnip = intake.situation
+        ? (intake.situation.length > 60
+            ? intake.situation.slice(0, 57) + '…'
+            : intake.situation)
+        : '';
+      const sitPart = sitSnip ? ` — “${sitSnip}”` : '';
+
+      let summary;
+      if (lang === 'nl') {
+        summary = `Zo: ${voice}${loc} spreekt ${aud}${sitPart} ${purpose}.`;
+      } else {
+        summary = `So: ${voice}${loc} speaks ${aud}${sitPart} ${purpose}.`;
+      }
+
+      document.getElementById('confirmSummary').textContent = summary;
+    }
+
+    /* ══════════════════════════════════════
+       START SESSION
+    ══════════════════════════════════════ */
+    function startSession() {
+      const btn    = document.querySelector('.btn-start');
+      const status = document.getElementById('confirmStatus');
+      btn.disabled = true;
+      status.textContent = '';
+      status.className   = 'confirm-status';
+
+      // Show loading overlay
+      const voiceImg = intake.voice_subject === 'egel'
+        ? '/image/egel-dicht' : '/image/boom-dicht';
+      const loadingKey = 'loading_' + (intake.voice_subject || 'boom');
+      document.getElementById('loadingImg').src       = voiceImg;
+      document.getElementById('loadingText').textContent = t(loadingKey);
+      document.getElementById('loadingOverlay').classList.add('visible');
+
+      const payload = {
+        user_role:        intake.user_role,
+        user_role_other:  intake.user_role_other,
+        audience_mode:    intake.audience_mode,
+        purpose:          intake.purpose,
+        purpose_other:    intake.purpose_other,
+        voice_subject:    intake.voice_subject,
+        location:         intake.location,
+        situation:        intake.situation,
+        audience_details: intake.audience_details,
+        lang:             intake.lang
+      };
+
+      // Store in sessionStorage for "adjust setup" in demo
+      try { sessionStorage.setItem('ent_intake', JSON.stringify(payload)); } catch(e) {}
+
+      fetch('/intake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          window.location.href = '/demo';
+        } else {
+          throw new Error(data.error || 'Onbekende fout');
+        }
+      })
+      .catch(() => {
+        document.getElementById('loadingOverlay').classList.remove('visible');
+        btn.disabled = false;
+        status.textContent = t('error_api');
+        status.className   = 'confirm-status error';
+      });
+    }
+
+    /* ══════════════════════════════════════
+       SKIP / PASTE CONFIG
+    ══════════════════════════════════════ */
+    function toggleSkipPanel() {
+      const panel = document.getElementById('skipPanel');
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        document.getElementById('skipPasteArea').focus();
+      }
+    }
+
+    function loadPastedConfig() {
+      const raw = document.getElementById('skipPasteArea').value.trim();
+      const errEl = document.getElementById('skipError');
+      errEl.hidden = true;
+
+      let cfg;
+      try { cfg = JSON.parse(raw); }
+      catch(e) {
+        errEl.hidden = false;
+        return;
+      }
+
+      applyConfig(cfg);
+      document.getElementById('skipPanel').hidden = true;
+    }
+
+    function applyConfig(cfg) {
+      if (cfg.user_role)        intake.user_role        = cfg.user_role;
+      if (cfg.audience_mode)    intake.audience_mode    = cfg.audience_mode;
+      if (cfg.purpose)          intake.purpose          = cfg.purpose;
+      if (cfg.voice_subject)    intake.voice_subject    = cfg.voice_subject;
+      if (cfg.location)         intake.location         = cfg.location;
+      if (cfg.situation)        intake.situation        = cfg.situation;
+      if (cfg.audience_details) intake.audience_details = cfg.audience_details;
+
+      // Pre-fill Q4 fields
+      document.getElementById('q4-location').value  = intake.location;
+      document.getElementById('q4-situation').value = intake.situation;
+      document.getElementById('q4-audience').value  = intake.audience_details;
+
+      // Pre-select voice
+      document.querySelectorAll('#q4-voice-options .voice-tile').forEach(t => {
+        const sel = t.dataset.value === intake.voice_subject;
+        t.classList.toggle('selected', sel);
+        t.setAttribute('aria-checked', sel ? 'true' : 'false');
+      });
+
+      // Pre-select Q1
+      if (intake.user_role) {
+        document.querySelectorAll('#q1-options .option-tile').forEach(t => {
+          if (t.dataset.value === intake.user_role) markSelected(t);
+        });
+      }
+
+      // Pre-select Q2
+      if (intake.audience_mode) {
+        document.querySelectorAll('#q2-options .option-tile').forEach(t => {
+          if (t.dataset.value === intake.audience_mode) markSelected(t);
+        });
+      }
+
+      // Pre-select Q3
+      if (intake.purpose) {
+        document.querySelectorAll('#q3-options .option-tile').forEach(t => {
+          if (t.dataset.value === intake.purpose) markSelected(t);
+        });
+      }
+
+      buildConfirmSummary();
+      goTo('confirm');
+    }
+
+    /* ══════════════════════════════════════
+       CHECK FOR ADJUST MODE (from demo)
+    ══════════════════════════════════════ */
+    function checkAdjustMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('adjust')) return;
+
+      // Try session storage first
+      try {
+        const stored = sessionStorage.getItem('ent_intake');
+        if (stored) { applyConfig(JSON.parse(stored)); return; }
+      } catch(e) {}
+
+      // Fallback: fetch from server
+      fetch('/session-config')
+        .then(r => r.json())
+        .then(cfg => { if (cfg && cfg.user_role) applyConfig(cfg); })
+        .catch(() => {});
+    }
+
+    /* ══════════════════════════════════════
+       LOCATION AUTOCOMPLETE
+    ══════════════════════════════════════ */
+    let suggestTimer = null;
+
+    function handleLocationInput() {
+      clearTimeout(suggestTimer);
+      const val = document.getElementById('q4-location').value.trim();
+      if (!val || val.length < 2) { hideSuggestions(); return; }
+      suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
+    }
+
+    async function fetchSuggestions(query) {
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=nl`,
+          { headers: { 'Accept-Language': intake.lang } }
+        );
+        if (!resp.ok) return;
+        const results = await resp.json();
+        if (!results.length) { hideSuggestions(); return; }
+        renderSuggestions(results.map(r => {
+          const parts = r.display_name.split(',').map(s => s.trim());
+          return { label: parts.slice(0, 3).join(', '), value: parts.slice(0, 2).join(', ') };
+        }));
+      } catch(e) { hideSuggestions(); }
+    }
+
+    function renderSuggestions(items) {
+      const box = document.getElementById('locationSuggestions');
+      box.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.textContent = item.label;
+        div.onmousedown = () => {
+          document.getElementById('q4-location').value = item.value;
+          intake.location = item.value;
+          hideSuggestions(true);
+        };
+        box.appendChild(div);
+      });
+      box.classList.add('visible');
+    }
+
+    function hideSuggestions(immediate) {
+      if (immediate) {
+        document.getElementById('locationSuggestions').classList.remove('visible');
+      } else {
+        setTimeout(() => document.getElementById('locationSuggestions').classList.remove('visible'), 180);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       KEYBOARD NAVIGATION
+    ══════════════════════════════════════ */
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+      if (e.key === 'Escape' && currentScreen > 1) {
+        e.preventDefault();
+        goTo(currentScreen - 1);
+        return;
+      }
+
+      // Arrow key navigation within option grids
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight' ||
+          e.key === 'ArrowUp'   || e.key === 'ArrowLeft') {
+        const focused = document.activeElement;
+        if (!focused || !focused.classList.contains('option-tile') &&
+                        !focused.classList.contains('voice-tile')) return;
+        e.preventDefault();
+        const parent = focused.closest('[role="radiogroup"]');
+        if (!parent) return;
+        const tiles = Array.from(parent.querySelectorAll('.option-tile, .voice-tile'));
+        const idx   = tiles.indexOf(focused);
+        const next  = (e.key === 'ArrowDown' || e.key === 'ArrowRight')
+          ? (idx + 1) % tiles.length
+          : (idx - 1 + tiles.length) % tiles.length;
+        tiles[next].focus();
+      }
+
+      // Enter to confirm "other" open text and advance
+      if (e.key === 'Enter') {
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('option-tile')) {
+          focused.click();
+        }
+      }
+    });
+
+    /* ══════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════ */
+    function clearSelection(groupId) {
+      document.querySelectorAll(`#${groupId} .option-tile`).forEach(t => {
+        t.classList.remove('selected');
+        t.setAttribute('aria-checked', 'false');
+      });
+    }
+
+    function markSelected(tile) {
+      tile.classList.add('selected');
+      tile.setAttribute('aria-checked', 'true');
+    }
+
+    /* ══════════════════════════════════════
+       Q4 AUDIENCE FIELD VISIBILITY
+       (update whenever Q2 changes — but Q4
+        calls goToConfirm which handles it)
+    ══════════════════════════════════════ */
+    // Also show/hide on screen-4 open
+    const origGoTo = goTo;
+
+    /* Keyboard "other" advance: pressing Enter when other-input has value */
+    document.getElementById('q1-other-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        intake.user_role_other = e.target.value.trim();
+        goTo(2);
+      }
+    });
+    document.getElementById('q3-other-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        intake.purpose_other = e.target.value.trim();
+        goTo(4);
+      }
+    });
+
+    /* Show/hide audience field when screen 4 becomes visible */
+    const origShowScreen = showScreen;
+    const _showScreen = function(id) {
+      origShowScreen(id);
+      if (id === 'screen-4') {
+        const needs = intake.audience_mode === 'group' || intake.audience_mode === 'mixed';
+        document.getElementById('q4-audience-field').hidden = !needs;
+      }
+    };
+    // Override showScreen
+    window.showScreen = _showScreen;
+
+    /* ══════════════════════════════════════
+       INIT
+    ══════════════════════════════════════ */
+    checkAdjustMode();
+  </script>
+</body>
+</html>

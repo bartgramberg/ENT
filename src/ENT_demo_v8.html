@@ -412,6 +412,7 @@
       <button class="console-link" onclick="window.location.href='/console'">‹ Console</button>
     </div>
     <div class="topbar-btns">
+      <button class="btn-ghost" onclick="adjustSetup()">Setup aanpassen</button>
       <button class="btn-ghost" onclick="resetConversation()">Gesprek wissen</button>
       <button class="btn-ghost" onclick="saveGesprek()">Exporteren</button>
       <button class="btn-save" onclick="saveGesprek()">Gesprek opslaan</button>
@@ -532,10 +533,27 @@
       }, 30);
     }
 
+    /* ── Adjust setup — go back to onboarding without losing history ── */
+    function adjustSetup() {
+      // Store current config in sessionStorage so onboarding can pre-fill
+      fetch('/session-config')
+        .then(r => r.json())
+        .then(cfg => {
+          try { sessionStorage.setItem('ent_intake', JSON.stringify(cfg)); } catch(e) {}
+          window.location.href = '/onboarding?adjust=true';
+        })
+        .catch(() => { window.location.href = '/onboarding?adjust=true'; });
+    }
+
     /* ── Init ── */
+    const skipIntake = new URLSearchParams(window.location.search).has('skip');
     fetch('/state')
       .then(r => r.json())
       .then(data => {
+        if (!data.has_api_key && !skipIntake) {
+          window.location.href = '/';
+          return;
+        }
         currentPersona = data.persona || 'boom';
         applyPersona(currentPersona);
         if (data.location) {
