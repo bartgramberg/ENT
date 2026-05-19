@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0e0b;
+      --surface: rgba(18, 22, 16, 0.85);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --accent-green: #4ade80;
+      --accent-green-dim: #22c55e;
+      --text-primary: #e8eee4;
+      --text-secondary: rgba(232,238,228,0.55);
+      --text-label: rgba(232,238,228,0.35);
+      --input-bg: rgba(232, 228, 208, 0.92);
+      --input-text: #1a1f16;
+      --btn-primary: #3d9e52;
+      --btn-primary-hover: #4abe62;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .bg-layer {
+      position: fixed; inset: 0;
+      background-image: url('/background');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.20;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(5,8,4,0.75) 100%);
+      z-index: 0; pointer-events: none;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 52px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,13,9,0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .logo {
+      font-family: 'Newsreader', serif;
+      font-style: italic; font-size: 22px;
+      color: var(--accent-green); letter-spacing: 0.5px;
+    }
+
+    .nav-link {
+      font-size: 13px; font-weight: 600;
+      color: var(--accent-green);
+      text-decoration: none; padding: 6px 0;
+      border-bottom: 2px solid var(--accent-green);
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .btn-ghost {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 400;
+      color: var(--text-secondary); background: transparent;
+      border: none; cursor: pointer; padding: 6px 10px;
+      transition: color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text-primary); }
+
+    .btn-primary {
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: #fff; background: var(--btn-primary);
+      border: none; border-radius: 8px;
+      padding: 8px 18px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--btn-primary-hover); }
+
+    /* PAGE */
+    .page {
+      position: relative; z-index: 2;
+      max-width: 1100px; margin: 0 auto;
+      padding: 56px 32px 80px;
+    }
+
+    .page-title {
+      font-family: 'Newsreader', serif;
+      font-weight: 400;
+      font-size: clamp(28px, 4.5vw, 48px);
+      color: var(--text-primary);
+      margin-bottom: 14px; line-height: 1.15;
+    }
+    .page-title em { font-style: italic; color: var(--accent-green); }
+
+    .page-subtitle {
+      font-size: 15px; font-weight: 300;
+      color: var(--text-secondary);
+      margin-bottom: 48px; line-height: 1.6;
+    }
+
+    /* GRID */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px; align-items: start;
+    }
+    @media (max-width: 768px) { .config-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      backdrop-filter: blur(16px);
+    }
+
+    .card-right {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px;
+      backdrop-filter: blur(16px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .field-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: #438A3E; margin-bottom: 10px; display: block;
+    }
+
+    /* API input */
+    .api-input-wrap { position: relative; margin-bottom: 24px; }
+    .api-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); font-size: 15px; opacity: 0.5;
+    }
+
+    input[type="password"], input[type="text"] {
+      width: 100%; background: var(--input-bg);
+      border: none; border-radius: 10px;
+      color: var(--input-text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px; padding: 13px 16px 13px 42px;
+      outline: none; transition: box-shadow 0.2s;
+    }
+    input[type="password"]:focus, input[type="text"]:focus {
+      box-shadow: 0 0 0 2px rgba(67,138,62,0.4);
+    }
+    input::placeholder { color: rgba(26,31,22,0.4); }
+
+    /* Select */
+    .select-wrap { position: relative; }
+    .select-icon {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%); font-size: 15px; pointer-events: none;
+    }
+    select {
+      width: 100%; background: var(--input-bg);
+      border: none; border-radius: 10px;
+      color: var(--input-text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px; padding: 13px 36px 13px 40px;
+      outline: none; appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a1f16' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      background-color: var(--input-bg);
+      transition: box-shadow 0.2s;
+    }
+    select:focus { box-shadow: 0 0 0 2px rgba(67,138,62,0.4); }
+    option:disabled { color: #888; }
+
+    /* Two-column row */
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-bottom: 0;
+    }
+    @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+
+    /* Location */
+    .location-wrap { position: relative; }
+    .location-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%); font-size: 15px;
+      z-index: 1; pointer-events: none;
+    }
+    #locationInput { padding-left: 40px; }
+
+    .location-suggestions {
+      position: absolute; top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: rgba(18,24,14,0.98);
+      border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; z-index: 100; display: none;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .location-suggestions.visible { display: block; }
+
+    .suggestion-item {
+      padding: 11px 16px; font-size: 13px;
+      color: var(--text-primary); cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: rgba(74,222,128,0.08); }
+
+    /* Upload */
+    .upload-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-top: 20px;
+    }
+    @media (max-width: 500px) { .upload-grid { grid-template-columns: 1fr; } }
+
+    .upload-box {
+      background: rgba(10,14,8,0.5);
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 22px 16px;
+      cursor: pointer; position: relative; text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-box:hover { border-color: rgba(255,255,255,0.2); background: rgba(20,26,16,0.6); }
+    .upload-box.has-files { border-color: rgba(74,222,128,0.4); border-style: solid; }
+
+    .upload-box input[type="file"] {
+      position: absolute; inset: 0; opacity: 0;
+      cursor: pointer; width: 100%; height: 100%; padding: 0;
+    }
+
+    .upload-icon-wrap {
+      width: 42px; height: 42px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; font-size: 18px;
+    }
+
+    .upload-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .upload-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+    .upload-files-list { margin-top: 8px; font-size: 11px; color: var(--accent-green); line-height: 1.7; }
+
+    /* Textarea */
+    textarea {
+      width: 100%; background: var(--input-bg);
+      border: none; border-radius: 10px;
+      color: var(--input-text);
+      font-family: 'Manrope', sans-serif;
+      font-size: 14px; padding: 14px 16px;
+      outline: none; resize: none; height: 180px; line-height: 1.6;
+      transition: box-shadow 0.2s;
+    }
+    textarea:focus { box-shadow: 0 0 0 2px rgba(67,138,62,0.4); }
+    textarea::placeholder { color: rgba(26,31,22,0.4); font-style: italic; }
+
+    /* Start button */
+    .start-btn {
+      width: 100%; background: #438A3E;
+      border: none; border-radius: 12px; color: #fff;
+      font-family: 'Manrope', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 16px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .start-btn:hover { background: #52a64c; }
+    .start-btn:active { transform: scale(0.99); }
+    .start-btn:disabled { background: rgba(255,255,255,0.07); color: var(--text-label); cursor: not-allowed; }
+
+    .btn-arrow { font-size: 16px; transition: transform 0.2s; }
+    .start-btn:hover .btn-arrow { transform: translateX(4px); }
+
+    .status { text-align: center; font-size: 13px; font-style: italic; margin-top: 10px; min-height: 20px; color: var(--accent-green-dim); }
+    .status.error { color: #f87171; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="bg-vignette"></div>
+
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div class="logo">ENT</div>
+      <span class="nav-link">Console</span>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn-ghost" onclick="void(0)">Gesprek wissen</button>
+      <button class="btn-ghost" onclick="void(0)">Exporteren</button>
+      <button class="btn-primary" onclick="void(0)">Gesprek opslaan</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <h1 class="page-title">Start het <em>ENT Ecosysteem</em></h1>
+    <p class="page-subtitle">Configureer de parameters voor de ecologische intelligentie-sessie.</p>
+
+    <div class="config-grid">
+
+      <!-- LEFT -->
+      <div class="card">
+        <div>
+          <span class="field-label">API Sleutel</span>
+          <div class="api-input-wrap">
+            <span class="api-icon">🔑</span>
+            <input type="password" id="apiKeyInput" placeholder="• • • • • • • • • • • • • • • •" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div>
+            <span class="field-label">Kies Persona</span>
+            <div class="select-wrap">
+              <span class="select-icon">🌿</span>
+              <select id="personaSelect">
+                <option value="boom" selected>Boom/Tree</option>
+                <option value="egel">Egel</option>
+                <option value="steenuil" disabled>Steenuil — binnenkort</option>
+                <option value="regenwater" disabled>Regenwater — binnenkort</option>
+                <option value="zomertemperatuur" disabled>Temperatuur 2050 — binnenkort</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <span class="field-label">Project Locatie</span>
+            <div class="location-wrap">
+              <span class="location-icon">📍</span>
+              <input type="text" id="locationInput" placeholder="Buiksloterham, Amsterdam" autocomplete="off"
+                oninput="handleLocationInput()" onblur="hideSuggestions()">
+              <div class="location-suggestions" id="locationSuggestions"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-grid">
+          <div class="upload-box" id="entConfigBox">
+            <input type="file" id="entConfigFile" accept=".md,.txt" onchange="handleEntConfig()">
+            <div class="upload-icon-wrap">📋</div>
+            <div class="upload-title">ENT Instructies</div>
+            <div class="upload-desc">Sleep hier je MD bestand met persona en stem</div>
+            <div class="upload-files-list" id="entConfigList"></div>
+          </div>
+
+          <div class="upload-box" id="projectBox">
+            <input type="file" id="projectFiles" accept=".md,.txt" multiple onchange="handleProjectFiles()">
+            <div class="upload-icon-wrap">🗂️</div>
+            <div class="upload-title">Project Documenten</div>
+            <div class="upload-desc">Meerdere .md of .txt bestanden mogelijk</div>
+            <div class="upload-files-list" id="projectList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card-right">
+        <div>
+          <span class="field-label">Aanvullende Instructies</span>
+          <textarea id="projectInstructions" placeholder="Typ hier specifieke context voor het Mycelium netwerk..."></textarea>
+        </div>
+        <div>
+          <button class="start-btn" id="startBtn" onclick="startDemo()">
+            START GESPREK <span class="btn-arrow">→</span>
+          </button>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const fileContents = { entConfig: '', project: '' };
+    const fileNames    = { entConfig: '', project: '' };
+
+    /* ── Location autocomplete via Nominatim ── */
+    let suggestTimer = null;
+
+    function handleLocationInput() {
+      clearTimeout(suggestTimer);
+      const val = document.getElementById('locationInput').value.trim();
+      if (!val || val.length < 2) { hideSuggestions(); return; }
+      suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
+    }
+
+    async function fetchSuggestions(query) {
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=nl`,
+          { headers: { 'Accept-Language': 'nl' } }
+        );
+        if (!resp.ok) return;
+        const results = await resp.json();
+        if (!results.length) { hideSuggestions(); return; }
+        renderSuggestions(results.map(r => {
+          const parts = r.display_name.split(',').map(s => s.trim());
+          return { label: parts.slice(0, 3).join(', '), value: parts.slice(0, 2).join(', ') };
+        }));
+      } catch (e) { hideSuggestions(); }
+    }
+
+    function renderSuggestions(items) {
+      const box = document.getElementById('locationSuggestions');
+      box.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<span style="opacity:.4">📍</span>${item.label}`;
+        div.onmousedown = () => {
+          document.getElementById('locationInput').value = item.label;
+          hideSuggestions(true);
+        };
+        box.appendChild(div);
+      });
+      box.classList.add('visible');
+    }
+
+    function hideSuggestions(immediate) {
+      if (immediate) document.getElementById('locationSuggestions').classList.remove('visible');
+      else setTimeout(() => document.getElementById('locationSuggestions').classList.remove('visible'), 180);
+    }
+
+    /* ── File uploads ── */
+    function handleEntConfig() {
+      const file = document.getElementById('entConfigFile').files[0];
+      if (!file) return;
+      new FileReader().onload = e => { fileContents.entConfig = e.target.result; };
+      const r = new FileReader();
+      r.onload = e => { fileContents.entConfig = e.target.result; document.getElementById('entConfigBox').classList.add('has-files'); };
+      r.readAsText(file);
+      fileNames.entConfig = file.name;
+      document.getElementById('entConfigList').textContent = '✓ ' + file.name;
+    }
+
+    function handleProjectFiles() {
+      const files = Array.from(document.getElementById('projectFiles').files);
+      if (!files.length) return;
+      const list = document.getElementById('projectList');
+      list.innerHTML = '';
+      const texts = [];
+      let readCount = 0;
+      fileNames.project = files.map(f => f.name).join(', ');
+      files.forEach((file, i) => {
+        const r = new FileReader();
+        r.onload = e => {
+          texts[i] = `## ${file.name}\n\n${e.target.result}`;
+          if (++readCount === files.length) {
+            fileContents.project = texts.filter(Boolean).join('\n\n---\n\n');
+            document.getElementById('projectBox').classList.add('has-files');
+          }
+        };
+        r.readAsText(file);
+        list.innerHTML += `✓ ${file.name}<br>`;
+      });
+    }
+
+    /* ── Start ── */
+    function startDemo() {
+      const apiKey       = document.getElementById('apiKeyInput').value.trim();
+      const persona      = document.getElementById('personaSelect').value;
+      const instructions = document.getElementById('projectInstructions').value.trim();
+      const location     = document.getElementById('locationInput').value.trim();
+      const btn          = document.getElementById('startBtn');
+      const status       = document.getElementById('status');
+
+      if (!apiKey) {
+        status.textContent = 'Vul eerst de API key in.';
+        status.className = 'status error';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Configuratie versturen...';
+      status.className = 'status';
+
+      fetch('/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: apiKey,
+          ent_config: fileContents.entConfig,
+          ent_config_file: fileNames.entConfig,
+          project_files: fileContents.project,
+          project_file_names: fileNames.project,
+          project_instructions: instructions,
+          location,
+          persona
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          status.textContent = 'Gereed. Demo wordt geopend...';
+          setTimeout(() => { window.location.href = '/demo'; }, 600);
+        } else throw new Error('Onbekende fout');
+      })
+      .catch(err => {
+        status.textContent = 'Fout: ' + err.message;
+        status.className = 'status error';
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>

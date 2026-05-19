@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400;1,600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0e0b;
+      --border: rgba(255,255,255,0.07);
+      --border-light: rgba(255,255,255,0.05);
+      --accent-green: #4ade80;
+      --accent-green-dim: #22c55e;
+      --accent-green-faint: rgba(74,222,128,0.12);
+      --text-primary: #e8eee4;
+      --text-secondary: rgba(232,238,228,0.55);
+      --text-dim: rgba(232,238,228,0.28);
+      --bubble-ent: rgba(15, 22, 13, 0.85);
+      --bubble-user: rgba(24, 30, 22, 0.8);
+      --surface: rgba(14, 18, 12, 0.7);
+      --overw-label: #4ade80;
+      --overw-title: rgba(74,222,128,0.7);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Background */
+    .bg-layer {
+      position: fixed; inset: 0;
+      background-image: url('/background');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.80; z-index: 0; pointer-events: none;
+    }
+    .bg-vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(5,8,4,0.55) 0%, rgba(5,8,4,0.75) 100%);
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: relative; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 52px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,11,7,0.7);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+    .logo {
+      font-family: 'Newsreader', serif;
+      font-style: italic; font-size: 22px;
+      color: var(--accent-green);
+    }
+
+    .console-link {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-dim); cursor: pointer;
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 12px;
+      transition: color 0.2s, border-color 0.2s;
+      font-family: 'Manrope', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .console-link:hover { color: var(--text-secondary); border-color: rgba(255,255,255,0.12); }
+
+    .topbar-btns { display: flex; gap: 8px; }
+
+    .btn-ghost {
+      font-family: 'Manrope', sans-serif;
+      font-size: 12px; font-weight: 400;
+      color: var(--text-secondary); background: transparent;
+      border: none; cursor: pointer; padding: 6px 10px;
+      transition: color 0.2s; border-radius: 6px;
+    }
+    .btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+
+    .btn-save {
+      font-family: 'Manrope', sans-serif;
+      font-size: 12px; font-weight: 600;
+      color: #fff; background: #438A3E;
+      border: none; border-radius: 8px;
+      padding: 7px 16px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-save:hover { background: #52a64c; }
+
+    /* ── MAIN LAYOUT ── */
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      overflow: hidden;
+      position: relative; z-index: 2;
+    }
+
+    /* ── LEFT: CHAT ── */
+    .chat-col {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border);
+      overflow: hidden; position: relative;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 120px; /* bottom padding for floating input */
+      display: flex; flex-direction: column; gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.06) transparent;
+    }
+    .chat-messages::-webkit-scrollbar { width: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    /* Bubbles */
+    .bubble {
+      padding: 18px 22px;
+      border-radius: 16px;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1.6;
+      max-width: 88%;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .bubble.ent {
+      background: #E4D8C4;
+      border: none;
+      align-self: flex-start;
+      color: #1a1a16;
+      /* top-left straight, rest rounded */
+      border-radius: 3px 16px 16px 16px;
+    }
+
+    .bubble.user {
+      background: #B4AD9E;
+      border: none;
+      align-self: flex-end;
+      color: #1a1a16;
+      /* top-right straight, rest rounded */
+      border-radius: 16px 3px 16px 16px;
+    }
+
+    .bubble.ent.thinking {
+      color: rgba(26,26,22,0.5);
+      font-style: italic;
+      font-size: 18px;
+    }
+
+    .thinking-dots::after {
+      content: '.';
+      animation: dots 1.2s infinite;
+    }
+    @keyframes dots {
+      0%,33%  { content: '.'; }
+      34%,66% { content: '..'; }
+      67%,100%{ content: '...'; }
+    }
+
+    .typing-cursor::after {
+      content: '▋';
+      animation: blink 0.65s step-end infinite;
+      color: var(--accent-green);
+      font-size: 13px; margin-left: 1px;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── FLOATING INPUT ── */
+    .floating-input {
+      position: absolute;
+      bottom: 24px; left: 24px; right: 24px;
+      z-index: 10;
+    }
+
+    .input-inner {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(20, 26, 18, 0.92);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 10px 10px 10px 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(74,222,128,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .input-inner:focus-within {
+      border-color: rgba(74,222,128,0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(74,222,128,0.1);
+    }
+
+    textarea#messageInput {
+      flex: 1;
+      background: transparent; border: none; outline: none;
+      color: var(--text-primary);
+      font-family: 'Manrope', sans-serif;
+      font-size: 15px; font-weight: 400;
+      line-height: 1.5; resize: none; overflow: hidden;
+      max-height: 80px;
+    }
+    textarea#messageInput::placeholder { color: var(--text-dim); font-style: italic; }
+
+    .send-btn {
+      background: #438A3E; border: none; border-radius: 10px;
+      color: #fff; width: 38px; height: 38px; flex-shrink: 0;
+      cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .send-btn:hover { background: #52a64c; }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { background: rgba(255,255,255,0.06); cursor: not-allowed; }
+
+    /* ── RIGHT: PERSONA + OVERWEGINGEN ── */
+    .right-col {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Persona card */
+    .persona-card {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--border);
+      border: 1px solid rgba(67,138,62,0.35);
+      border-radius: 12px;
+      margin: 12px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .persona-img-frame {
+      width: 100%; aspect-ratio: 1;
+      max-width: 200px; margin: 0 auto 16px;
+      border-radius: 16px; overflow: hidden;
+      position: relative;
+      background: rgba(10,14,8,0.5);
+    }
+
+    .persona-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: opacity 0.08s;
+    }
+
+    /* Thinking glow */
+    .thinking-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at center, rgba(74,222,128,0.06) 0%, transparent 70%);
+      opacity: 0; transition: opacity 0.6s; pointer-events: none;
+      border-radius: 16px;
+    }
+    .thinking-glow.active { opacity: 1; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    .persona-name {
+      font-family: 'Newsreader', serif;
+      font-style: italic; font-size: 22px;
+      color: var(--text-primary); text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .persona-location {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #438A3E;
+    }
+    .persona-location-dot { font-size: 10px; }
+
+    /* Overwegingen */
+    .overw-section {
+      flex: 1; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+
+    .overw-header {
+      padding: 14px 24px 10px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .overw-icon { font-size: 12px; }
+
+    .overw-content {
+      flex: 1; overflow-y: auto;
+      padding: 14px 16px 28px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.05) transparent;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .overw-content::-webkit-scrollbar { width: 3px; }
+    .overw-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+    .overw-empty {
+      font-size: 13px; color: var(--text-dim);
+      font-style: italic; line-height: 1.7;
+    }
+
+    /* Colors for cycling overweging titles */
+    :root {
+      --ow-color-0: #438A3E;
+      --ow-color-1: #F4BB92;
+      --ow-color-2: #8DD982;
+      --ow-color-3: #C3C8BD;
+    }
+
+    .overw-block {
+      background: #1C1B1B;
+      border-radius: 10px;
+      border-left: 3px solid var(--ow-color-0);
+      padding: 12px 14px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .overw-block:nth-child(4n+1) { border-left-color: var(--ow-color-0); }
+    .overw-block:nth-child(4n+2) { border-left-color: var(--ow-color-1); }
+    .overw-block:nth-child(4n+3) { border-left-color: var(--ow-color-2); }
+    .overw-block:nth-child(4n+0) { border-left-color: var(--ow-color-3); }
+
+    .overw-block-title {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    /* Title colors cycling via JS (applied inline) */
+
+    .overw-block-body {
+      font-size: 12px; line-height: 1.65;
+      color: rgba(232,238,228,0.65);
+    }
+
+    /* Mycelium status */
+    .mycelium-section {
+      padding: 14px 24px 18px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .mycelium-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .mycelium-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-green);
+      animation: mycelium-pulse 2s ease-in-out infinite;
+    }
+    @keyframes mycelium-pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+    .mycelium-label {
+      font-size: 9px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .mycelium-bar-wrap {
+      height: 4px; background: rgba(255,255,255,0.06);
+      border-radius: 2px; overflow: hidden; margin-bottom: 6px;
+    }
+    .mycelium-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mycelium-pct {
+      font-size: 11px; color: var(--text-dim);
+      text-align: right;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .main { grid-template-columns: 1fr; }
+      .right-col { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="bg-vignette"></div>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">ENT</span>
+      <button class="console-link" onclick="window.location.href='/console'">‹ Console</button>
+    </div>
+    <div class="topbar-btns">
+      <button class="btn-ghost" onclick="resetConversation()">Gesprek wissen</button>
+      <button class="btn-ghost" onclick="saveGesprek()">Exporteren</button>
+      <button class="btn-save" onclick="saveGesprek()">Gesprek opslaan</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: CHAT -->
+    <div class="chat-col">
+      <div class="chat-messages" id="chatMessages">
+        <div class="bubble ent" id="welcomeBubble">Ik ben hier. Stel mij voor aan het project, of stel je eerste vraag.</div>
+      </div>
+
+      <!-- FLOATING INPUT -->
+      <div class="floating-input">
+        <div class="input-inner">
+          <textarea id="messageInput" placeholder="Stel een vraag of deel een stelling..." rows="1"
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PERSONA + OVERWEGINGEN -->
+    <div class="right-col">
+
+      <!-- Persona card -->
+      <div class="persona-card">
+        <div class="persona-img-frame">
+          <div class="thinking-glow" id="thinkingGlow"></div>
+          <img id="imgDicht" class="persona-img" src="" alt="Persona" style="opacity:1">
+          <img id="imgOpen"  class="persona-img" src="" alt="Persona praat" style="opacity:0">
+        </div>
+        <div class="persona-name" id="personaName">De Egel</div>
+        <div class="persona-location">
+          <span class="persona-location-dot">📍</span>
+          <span id="personaLocation">STADSRAND BOSRIJK, NL</span>
+        </div>
+      </div>
+
+      <!-- Overwegingen -->
+      <div class="overw-section">
+        <div class="overw-header">
+          <span class="overw-icon">🗂</span>
+          OVERWEGINGEN
+        </div>
+        <div class="overw-content" id="overwContent">
+          <div class="overw-empty">Ecologische feiten en afwegingen verschijnen hier zodra de ENT heeft gereageerd.</div>
+        </div>
+      </div>
+
+      <!-- Mycelium status -->
+      <div class="mycelium-section">
+        <div class="mycelium-header">
+          <div class="mycelium-dot"></div>
+          <span class="mycelium-label">Mycelium Netwerk Status</span>
+        </div>
+        <div class="mycelium-bar-wrap">
+          <div class="mycelium-bar" id="myceliumBar"></div>
+        </div>
+        <div class="mycelium-pct" id="myceliumPct">Verbinding met lokaal ecosysteem: <span id="myceliumValue">0</span>%</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let isThinking = false;
+    let mouthInterval = null;
+    let currentPersona = 'boom';
+    let messageCount = 0; // tracks conversation depth for mycelium
+
+    const sessie = {
+      persona: '', entConfigFile: '', projectFiles: '',
+      projectInstructions: '', berichten: []
+    };
+
+    const PERSONA = {
+      egel: {
+        title: 'ENT — Egel',
+        topbarTitle: 'ENT — Egel',
+        personaName: 'De Egel',
+        bubbleLabel: '🦔 Egel',
+        thinkingLabel: 'Egel denkt na',
+        overwLabel: 'Ecologische afweging',
+        imgDicht: '/image/egel-dicht',
+        imgOpen:  '/image/egel-open',
+        welcome: 'Ik ben hier, in de donkere grond en tussen de struiken. Wat wil je van mij weten?'
+      },
+      boom: {
+        title: 'ENT — Boom als vertegenwoordiger van de natuur',
+        topbarTitle: 'ENT — Boom',
+        personaName: 'De Boom',
+        bubbleLabel: '🌳 Boom',
+        thinkingLabel: 'Boom overweegt',
+        overwLabel: 'Ecologische afweging',
+        imgDicht: '/image/boom-dicht',
+        imgOpen:  '/image/boom-open',
+        welcome: 'Ik sta hier al langer dan dit plan bestaat. Stel mij voor aan de plek, of stel je eerste vraag.'
+      }
+    };
+
+    /* ── Mycelium progress ── */
+    // Grows slowly with each exchange, max ~95%
+    function updateMycelium() {
+      // Each exchange adds diminishing returns, capped at 95
+      const target = Math.min(95, Math.round(100 * (1 - Math.exp(-messageCount * 0.18))));
+      document.getElementById('myceliumBar').style.width = target + '%';
+      // Animate counter
+      const el = document.getElementById('myceliumValue');
+      const current = parseInt(el.textContent) || 0;
+      if (current === target) return;
+      const step = target > current ? 1 : -1;
+      let val = current;
+      const timer = setInterval(() => {
+        val += step;
+        el.textContent = val;
+        if (val === target) clearInterval(timer);
+      }, 30);
+    }
+
+    /* ── Init ── */
+    fetch('/state')
+      .then(r => r.json())
+      .then(data => {
+        currentPersona = data.persona || 'boom';
+        applyPersona(currentPersona);
+        if (data.location) {
+          document.getElementById('personaLocation').textContent = data.location.toUpperCase();
+        }
+      })
+      .catch(() => applyPersona('boom'));
+
+    fetch('/sessie-meta')
+      .then(r => r.json())
+      .then(data => {
+        sessie.persona             = data.persona_label || '';
+        sessie.entConfigFile       = data.ent_config_file || '';
+        sessie.projectFiles        = data.project_files || '';
+        sessie.projectInstructions = data.project_instructions || '';
+        if (data.location) {
+          document.getElementById('personaLocation').textContent = data.location.toUpperCase();
+        }
+      })
+      .catch(() => {});
+
+    function applyPersona(persona) {
+      const cfg = PERSONA[persona] || PERSONA['egel'];
+      document.title = cfg.title;
+      document.getElementById('personaName').textContent = cfg.personaName;
+      document.getElementById('imgDicht').src = cfg.imgDicht;
+      document.getElementById('imgOpen').src  = cfg.imgOpen;
+      const wb = document.getElementById('welcomeBubble');
+      if (wb) wb.textContent = cfg.welcome;
+      const oc = document.getElementById('overwContent');
+      const empty = oc.querySelector('.overw-empty');
+      if (empty) empty.textContent = 'Ecologische feiten en afwegingen verschijnen hier zodra de ' + cfg.personaName + ' heeft gereageerd.';
+    }
+
+    /* ── Mouth animation ── */
+    function startMouth() {
+      let open = false;
+      mouthInterval = setInterval(() => {
+        open = !open;
+        document.getElementById('imgDicht').style.opacity = open ? '0' : '1';
+        document.getElementById('imgOpen').style.opacity  = open ? '1' : '0';
+      }, 200);
+    }
+
+    function stopMouth() {
+      if (mouthInterval) { clearInterval(mouthInterval); mouthInterval = null; }
+      document.getElementById('imgDicht').style.opacity = '1';
+      document.getElementById('imgOpen').style.opacity  = '0';
+    }
+
+    /* ── Utils ── */
+    function autoResize(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+    }
+
+    function handleKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function scrollChat() {
+      const w = document.getElementById('chatMessages');
+      w.scrollTop = w.scrollHeight;
+    }
+
+    function setThinking(val) {
+      isThinking = val;
+      document.getElementById('sendBtn').disabled = val;
+      document.getElementById('thinkingGlow').className = 'thinking-glow' + (val ? ' active' : '');
+    }
+
+    function getLabel(key) {
+      return (PERSONA[currentPersona] || PERSONA['egel'])[key] || '';
+    }
+
+    /* ── Bubbles ── */
+    function addUserBubble(text) {
+      sessie.berichten.push({ rol: 'deelnemer', tekst: text });
+      const div = document.createElement('div');
+      div.className = 'bubble user';
+      div.textContent = text;
+      document.getElementById('chatMessages').appendChild(div);
+      scrollChat();
+    }
+
+    let thinkingCounter = 0;
+    function addThinkingBubble() {
+      const id = 'thinking-' + (++thinkingCounter);
+      const div = document.createElement('div');
+      div.className = 'bubble ent thinking thinking-dots';
+      div.id = id;
+      div.textContent = getLabel('thinkingLabel');
+      document.getElementById('chatMessages').appendChild(div);
+      scrollChat();
+      return id;
+    }
+
+    function removeThinkingBubble(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function typeEntBubble(text, onDone) {
+      const div = document.createElement('div');
+      div.className = 'bubble ent typing-cursor';
+      document.getElementById('chatMessages').appendChild(div);
+      let i = 0;
+      const interval = setInterval(() => {
+        div.textContent = text.slice(0, ++i);
+        scrollChat();
+        if (i >= text.length) {
+          clearInterval(interval);
+          div.classList.remove('typing-cursor');
+          sessie.berichten.push({ rol: 'ent', tekst: text });
+          if (onDone) onDone();
+        }
+      }, 16);
+    }
+
+    const OW_COLORS = ['#438A3E', '#F4BB92', '#8DD982', '#C3C8BD'];
+    let overwColorIndex = 0;
+
+    function typeOverwegingen(text) {
+      const container = document.getElementById('overwContent');
+      const empty = container.querySelector('.overw-empty');
+      if (empty) empty.remove();
+
+      // Parse structured overwegingen (try JSON, fallback to plain text)
+      let blocks = [];
+      try {
+        const parsed = JSON.parse(text);
+        if (Array.isArray(parsed)) blocks = parsed;
+        else if (parsed.title) blocks = [parsed];
+      } catch (e) {
+        const parts = text.split(/\n\n+/).filter(Boolean);
+        blocks = parts.map(p => {
+          const lines = p.trim().split('\n');
+          return { title: lines[0], body: lines.slice(1).join(' ').trim() || lines[0] };
+        });
+      }
+
+      blocks.forEach((block, idx) => {
+        const color = OW_COLORS[overwColorIndex % OW_COLORS.length];
+        overwColorIndex++;
+        setTimeout(() => {
+          const b = document.createElement('div');
+          b.className = 'overw-block';
+          b.style.borderLeftColor = color;
+          b.style.animationDelay = (idx * 0.1) + 's';
+
+          const t = document.createElement('div');
+          t.className = 'overw-block-title';
+          t.style.color = color;
+          t.textContent = block.title || getLabel('overwLabel');
+
+          const body = document.createElement('div');
+          body.className = 'overw-block-body';
+          body.textContent = block.body || text;
+
+          b.appendChild(t);
+          b.appendChild(body);
+          container.appendChild(b);
+        }, idx * 200);
+      });
+    }
+
+    /* ── Send ── */
+    function sendMessage() {
+      if (isThinking) return;
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      addUserBubble(message);
+      input.value = '';
+      input.style.height = 'auto';
+
+      const thinkingId = addThinkingBubble();
+      setThinking(true);
+
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      })
+      .then(r => r.json())
+      .then(data => {
+        removeThinkingBubble(thinkingId);
+        setThinking(false);
+
+        if (data.error) { addEntBubble('Er ging iets mis: ' + data.error); return; }
+        if (data.persona) currentPersona = data.persona;
+
+        // Increment mycelium
+        messageCount++;
+        updateMycelium();
+
+        startMouth();
+        typeEntBubble(data.stem || '', () => {
+          stopMouth();
+          if (data.overwegingen) typeOverwegingen(data.overwegingen);
+        });
+      })
+      .catch(err => {
+        removeThinkingBubble(thinkingId);
+        setThinking(false);
+        addEntBubble('Verbindingsfout: ' + err.message);
+      });
+    }
+
+    function addEntBubble(text) {
+      const div = document.createElement('div');
+      div.className = 'bubble ent';
+      div.textContent = text;
+      document.getElementById('chatMessages').appendChild(div);
+      scrollChat();
+    }
+
+    /* ── Save ── */
+    function saveGesprek() {
+      const cfg = PERSONA[currentPersona] || PERSONA['boom'];
+      const datum = new Date().toLocaleDateString('nl-NL', { day:'2-digit', month:'long', year:'numeric' });
+      const tijd  = new Date().toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+      const lijn  = '─'.repeat(60);
+      const loc   = document.getElementById('personaLocation').textContent;
+
+      let txt = `ENT — Gespreksverslag\n${datum} — ${tijd}\nPersona: ${cfg.personaName}\nLocatie: ${loc}\n${lijn}\n\nGESPREK\n\n`;
+      if (!sessie.berichten.length) {
+        txt += '(geen berichten)\n';
+      } else {
+        for (const msg of sessie.berichten) {
+          const label = msg.rol === 'ent' ? cfg.personaName : 'Deelnemer';
+          txt += `${label}\n${msg.tekst}\n\n`;
+        }
+      }
+
+      const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `ENT-gesprek-${new Date().toISOString().slice(0,10)}.txt`;
+      a.click(); URL.revokeObjectURL(url);
+    }
+
+    function resetConversation() {
+      fetch('/reset', { method: 'POST' })
+        .then(() => window.location.reload())
+        .catch(() => window.location.reload());
+    }
+  </script>
+</body>
+</html>
