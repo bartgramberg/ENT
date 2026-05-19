@@ -3,20 +3,28 @@
 ENT compose.py
 Assembles the ENT system prompt from an IntakeConfig dict + versioned prompt files.
 
-Prompt files live in prompts/ent/ (relative to repo root, one level above src/).
-Adding a new audience: drop a .md file in prompts/ent/audiences/ and add its key
-to ROLE_TO_AUDIENCE below.
-Adding a new purpose: drop a .md file in prompts/ent/purposes/ and add its key
-to PURPOSE_TO_FILE below.
+Architecture:
+  prompts/ent/voices/{voice}.md     — complete self-contained voice identity
+  prompts/ent/audiences/{type}.md   — register tuning per audience type
+  prompts/ent/purposes/{purpose}.md — shape/format tuning per purpose
+  prompts/ent/format/overwegingen.md — technical parse contract (always last)
+
+Adding a new voice:      add {voice}.md to voices/, add key to AVAILABLE_VOICES
+Adding a new audience:   add {type}.md to audiences/, add key to ROLE_TO_AUDIENCE
+                         and AUDIENCE_TYPE_TO_FILE
+Adding a new purpose:    add {purpose}.md to purposes/, add key to PURPOSE_TO_FILE
 """
 
 import os
-import json
 
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-PROMPTS    = os.path.join(BASE_DIR, "..", "prompts", "ent")
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+PROMPTS       = os.path.join(BASE_DIR, "..", "prompts", "ent")
+VOICES_DIR    = os.path.join(PROMPTS, "voices")
 
-# Maps user_role values → audience prompt file (without .md)
+# Voices with a complete voice file — extend this list as new voices are added
+AVAILABLE_VOICES = ["boom"]
+
+# Maps user_role (Q1) → audience prompt file (without .md)
 ROLE_TO_AUDIENCE = {
     "designer":      "designers",
     "ecologist":     "ecologists",
@@ -28,7 +36,18 @@ ROLE_TO_AUDIENCE = {
     "other":         "mixed",
 }
 
-# Maps purpose values → purpose prompt file (without .md)
+# Maps audience_type (Q2b) → audience prompt file (without .md)
+AUDIENCE_TYPE_TO_FILE = {
+    "residents":     "residents",
+    "designers":     "designers",
+    "ecologists":    "ecologists",
+    "civil_servant": "civil-servants",
+    "developer":     "developers",
+    "mixed":         "mixed",
+    "other":         "mixed",
+}
+
+# Maps purpose (Q3) → purpose prompt file (without .md)
 PURPOSE_TO_FILE = {
     "open":     "open",
     "respond":  "respond",
@@ -38,22 +57,6 @@ PURPOSE_TO_FILE = {
     "closing":  "closing",
     "explore":  "explore",
     "other":    "explore",
-}
-
-# Short voice-grounding block injected after base.md
-VOICE_FRAME = {
-    "boom": (
-        "Je spreekt als De Boom. Je bent geworteld, geduldig, systemisch. "
-        "Je hebt wortels die diep gaan en een kroon die schaduwen geeft. "
-        "Je hebt generaties mensen zien komen en gaan. "
-        "In het gesprek ben je: De Boom."
-    ),
-    "egel": (
-        "Je spreekt als De Egel. Je bent klein, nachtelijk, kwetsbaar maar eigenwijs. "
-        "Je leeft dicht bij de grond, je ruikt wat mensen niet zien, "
-        "en je weet welke plekken veilig zijn en welke niet. "
-        "In het gesprek ben je: De Egel."
-    ),
 }
 
 
@@ -67,35 +70,49 @@ def _read(relative_path: str) -> str:
         return ""
 
 
+def _load_voice(voice_subject: str) -> str:
+    """
+    Load the complete voice prompt for the given voice key.
+    Falls back to boom.md if the requested voice file does not exist.
+    """
+    path = os.path.join(VOICES_DIR, f"{voice_subject}.md")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        fallback = os.path.join(VOICES_DIR, "boom.md")
+        with open(fallback, "r", encoding="utf-8") as f:
+            return f.read().strip()
+
+
 def compose(config: dict) -> str:
     """
     Assemble and return the ENT system prompt string.
 
     config keys:
-        user_role        str   — "designer" | "ecologist" | "civil_servant" |
-                                 "developer" | "resident" | "facilitator" |
-                                 "researcher" | "other"
-        audience_mode    str   — "self" | "group" | "mixed"
-        purpose          str   — "open" | "respond" | "story" | "provoke" |
-                                 "codesign" | "closing" | "explore" | "other"
-        voice_subject    str   — "boom" | "egel"
-        location         str   — free text, e.g. "Buiksloterham, Amsterdam"
-        situation        str   — free text describing the plan / question on the table
-        audience_details str   — free text (only when audience_mode != "self")
+        user_role        str  — "designer" | "ecologist" | "civil_servant" |
+                                "developer" | "resident" | "facilitator" |
+                                "researcher" | "other"
+        audience_mode    str  — "self" | "group"
+        audience_type    str  — audience key (only when audience_mode = "group")
+        audience_details str  — free text (only when audience_type = "mixed")
+        purpose          str  — "open" | "respond" | "story" | "provoke" |
+                                "codesign" | "closing" | "explore" | "other"
+        voice_subject    str  — "boom" (only available voice for now)
+        location         str  — free text
+        situation        str  — free text
+        documents        list — [{"filename": str, "text": str}, ...]
+        lang             str  — "nl" | "en"
     """
     parts = []
 
-    # 1. Immutable core
-    base = _read("base.md")
-    if base:
-        parts.append(base)
+    # 1. Complete voice identity
+    voice_subject = config.get("voice_subject", "boom")
+    voice_prompt  = _load_voice(voice_subject)
+    if voice_prompt:
+        parts.append(voice_prompt)
 
-    # 2. Voice frame — who is speaking
-    voice = config.get("voice_subject", "boom")
-    frame = VOICE_FRAME.get(voice, VOICE_FRAME["boom"])
-    parts.append(f"# Wie spreekt\n\n{frame}")
-
-    # 3. Audience tuning
+    # 2. Audience tuning
     audience_mode = config.get("audience_mode", "self")
     if audience_mode == "self":
         role          = config.get("user_role", "other")
@@ -103,55 +120,93 @@ def compose(config: dict) -> str:
         content       = _read(f"audiences/{audience_file}.md")
         if content:
             parts.append(f"# Publiek\n\n{content}")
-    else:
-        # group or mixed: use mixed.md register + inject who's in the room
-        content = _read("audiences/mixed.md")
+    elif audience_mode == "group":
+        audience_type = config.get("audience_type", "mixed")
+        audience_file = AUDIENCE_TYPE_TO_FILE.get(audience_type, "mixed")
+        content       = _read(f"audiences/{audience_file}.md")
         if content:
             parts.append(f"# Publiek\n\n{content}")
-        details = config.get("audience_details", "").strip()
-        if details:
-            parts.append(f"# Wie zit er in de zaal\n\n{details}")
 
-    # 4. Purpose tuning
+    # Always inject audience_details if present (regardless of mode)
+    details = config.get("audience_details", "").strip()
+    if details:
+        parts.append(f"# Wie zit er in de zaal\n\n{details}")
+
+    # 3. Purpose tuning
     purpose      = config.get("purpose", "explore")
     purpose_file = PURPOSE_TO_FILE.get(purpose, "explore")
     content      = _read(f"purposes/{purpose_file}.md")
     if content:
         parts.append(f"# Doel en vorm\n\n{content}")
 
-    # 5. Session context — injected last so it overrides anything generic above
-    ctx = []
+    # 4. Session context
+    ctx  = []
+    lang = config.get("lang", "nl")
+    ctx.append(f"Taal / Language: {lang}")
+
     location  = config.get("location",  "").strip()
     situation = config.get("situation", "").strip()
     if location:
         ctx.append(f"Locatie: {location}")
     if situation:
         ctx.append(f"Context: {situation}")
-    if ctx:
-        parts.append("# Sessie context\n\n" + "\n".join(ctx))
+    parts.append("# Sessie context\n\n" + "\n".join(ctx))
 
-    # 6. Overwegingen format instruction — always the final block
-    parts.append(
-        "Sluit elk antwoord af met de markering [OVERWEGINGEN]. "
-        "Geef daarna max 3 ecologische feiten, risico's of beleidscontext. "
-        "Elke overweging heeft een korte titel op de eerste regel en een verklarende zin op de tweede. "
-        "Scheid overwegingen met een lege regel.\n\n"
-        "Het deel VOOR [OVERWEGINGEN] = jouw stem: kort, max 3 zinnen, poëtisch-zakelijk.\n"
-        "Het deel NA [OVERWEGINGEN] = de feiten."
-    )
+    # 5. Project documents (optional, session-only)
+    documents = config.get("documents", [])
+    if documents:
+        MAX_TOTAL_CHARS = 8000
+        total = sum(len(d.get("text", "")) for d in documents)
+
+        doc_parts = [
+            "# Projectdocumenten\n\n"
+            "De volgende documenten zijn aangeleverd als projectcontext.\n"
+            "Gebruik ze om je antwoorden te verankeren in het specifieke project.\n"
+            "Verzin geen details die er niet in staan."
+        ]
+
+        if total > MAX_TOTAL_CHARS:
+            # Proportional truncation per file
+            for doc in documents:
+                text = doc.get("text", "")
+                share = len(text) / total if total else 0
+                cap   = int(MAX_TOTAL_CHARS * share)
+                if len(text) > cap:
+                    text = text[:cap] + "\n[Tekst ingekort vanwege lengte]"
+                doc_parts.append(f"---\n[Bestand: {doc.get('filename', 'onbekend')}]\n{text}")
+        else:
+            for doc in documents:
+                doc_parts.append(
+                    f"---\n[Bestand: {doc.get('filename', 'onbekend')}]\n{doc.get('text', '')}"
+                )
+
+        parts.append("\n\n".join(doc_parts))
+
+    # 6. Output format / parse contract — always last
+    fmt = _read("format/overwegingen.md")
+    if fmt:
+        parts.append(fmt)
 
     return "\n\n---\n\n".join(parts)
 
 
 if __name__ == "__main__":
-    # Quick smoke test
+    # Smoke test
     test = {
         "user_role":       "resident",
         "audience_mode":   "group",
+        "audience_type":   "residents",
         "purpose":         "open",
         "voice_subject":   "boom",
         "location":        "Buiksloterham, Amsterdam",
         "situation":       "Herontwikkeling van de Papaverweg-strook",
-        "audience_details": "Bewoners van de buurt, gefocust op woningen, bezorgd over groen",
+        "audience_details":"Bewoners van de buurt, gefocust op woningen, bezorgd over groen",
+        "lang":            "nl",
     }
-    print(compose(test))
+    result = compose(test)
+    # Print first 300 chars and last 300 chars to verify structure
+    print("=== FIRST 300 ===")
+    print(result[:300])
+    print("\n=== LAST 300 ===")
+    print(result[-300:])
+    print(f"\n=== TOTAL LENGTH: {len(result)} chars ===")

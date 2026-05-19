@@ -76,6 +76,19 @@ state = {
 
 # ── Utilities ──
 
+def extract_pdf_text(data: bytes) -> str:
+    """Extract plain text from PDF bytes. Requires pdfminer.six."""
+    try:
+        from pdfminer.high_level import extract_text as _pdfminer_extract
+        import io
+        text = _pdfminer_extract(io.BytesIO(data))
+        return (text or "").strip()
+    except ImportError:
+        return "[PDF-extractie niet beschikbaar — pip install pdfminer.six]"
+    except Exception as e:
+        return f"[Kon PDF niet lezen: {e}]"
+
+
 def parse_overwegingen(raw):
     blocks = []
     paragraphs = [p.strip() for p in raw.split("\n\n") if p.strip()]
@@ -98,11 +111,14 @@ def log_intake(config: dict):
             "ts":                  datetime.datetime.utcnow().isoformat() + "Z",
             "user_role":           config.get("user_role"),
             "audience_mode":       config.get("audience_mode"),
+            "audience_type":       config.get("audience_type") if config.get("audience_mode") == "group" else None,
             "purpose":             config.get("purpose"),
             "voice_subject":       config.get("voice_subject"),
             "has_location":        bool(config.get("location")),
             "has_situation":       bool(config.get("situation")),
             "has_audience_details":bool(config.get("audience_details")),
+            "has_documents":       bool(config.get("documents")),
+            "document_count":      len(config.get("documents") or []),
             "lang":                config.get("lang", "nl"),
         }
         with open(os.path.join(LOGS_DIR, "usage.jsonl"), "a", encoding="utf-8") as f:
@@ -165,7 +181,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path   = urlparse(self.path).path
         length = int(self.headers.get("Content-Length", 0))
-        body   = json.loads(self.rfile.read(length)) if length > 0 else {}
+
+        # /upload uses multipart — read rfile inside the handler, not here
+        if path == "/upload":
+            self._handle_upload()
+            return
+
+        body = json.loads(self.rfile.read(length)) if length > 0 else {}
 
         # ── /intake — new onboarding-driven setup ──
         if path == "/intake":
@@ -182,10 +204,15 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 return
 
+            raw_mode = body.get("audience_mode", "self")
+            # v2: only "self" and "group" are valid; guard against legacy "mixed"
+            audience_mode = raw_mode if raw_mode in ("self", "group") else "self"
+
             config = {
                 "user_role":        body.get("user_role",        "other"),
                 "user_role_other":  body.get("user_role_other",  ""),
-                "audience_mode":    body.get("audience_mode",    "self"),
+                "audience_mode":    audience_mode,
+                "audience_type":    body.get("audience_type",    "mixed"),
                 "purpose":          body.get("purpose",          "explore"),
                 "purpose_other":    body.get("purpose_other",    ""),
                 "voice_subject":    body.get("voice_subject",    "boom"),
@@ -376,6 +403,53 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+
+    def _handle_upload(self):
+        """Handle POST /upload — multipart/form-data with PDF or TXT files.
+        Uses stdlib email module (cgi was removed in Python 3.13).
+        """
+        import email as _email
+
+        content_type   = self.headers.get("Content-Type", "")
+        content_length = int(self.headers.get("Content-Length", 0))
+
+        if not content_type.startswith("multipart/form-data"):
+            self.send_json({"error": "Verwacht multipart/form-data"}, 400)
+            return
+
+        try:
+            raw_body = self.rfile.read(content_length)
+            msg = _email.message_from_bytes(
+                b"Content-Type: " + content_type.encode() + b"\r\n\r\n" + raw_body
+            )
+        except Exception as e:
+            self.send_json({"error": f"Kon formulier niet lezen: {e}"}, 400)
+            return
+
+        MAX_FILES      = 5
+        MAX_CHARS_FILE = 20000   # per file; compose.py caps total to 8000
+        results        = []
+
+        for part in msg.walk():
+            if part.get_content_maintype() == "multipart":
+                continue
+            filename = part.get_filename()
+            if not filename:
+                continue
+            filename = filename.strip()
+            data     = part.get_payload(decode=True) or b""
+            if filename.lower().endswith(".pdf"):
+                text = extract_pdf_text(data)
+            else:
+                text = data.decode("utf-8", errors="replace")
+            text = text.strip()
+            if len(text) > MAX_CHARS_FILE:
+                text = text[:MAX_CHARS_FILE] + "\n[Tekst ingekort vanwege lengte]"
+            results.append({"filename": filename, "text": text})
+            if len(results) >= MAX_FILES:
+                break
+
+        self.send_json({"documents": results})
 
     def serve_file(self, filename, content_type):
         try:
