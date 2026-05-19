@@ -71,6 +71,7 @@ state = {
         "persona_label":        "",
         "location":             "",
     },
+    "usage": {"input_tokens": 0, "output_tokens": 0, "requests": 0},
 }
 
 
@@ -170,6 +171,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/sessie-meta":
             self.send_json(state["meta"])
 
+        elif path == "/usage":
+            self.send_json(state["usage"])
+
         elif path == "/session-config":
             # Export current intake config for session replay
             self.send_json(state["intake_config"] or {})
@@ -243,6 +247,8 @@ class Handler(BaseHTTPRequestHandler):
                 "location":             config["location"],
             }
 
+            if not preserve:
+                state["usage"] = {"input_tokens": 0, "output_tokens": 0, "requests": 0}
             log_intake(config)
             self.send_json({"status": "ok", "persona": persona})
 
@@ -371,6 +377,10 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     result    = json.loads(resp.read())
+                    usage = result.get("usage", {})
+                    state["usage"]["input_tokens"]  += usage.get("input_tokens", 0)
+                    state["usage"]["output_tokens"] += usage.get("output_tokens", 0)
+                    state["usage"]["requests"]      += 1
                     full_text = result["content"][0]["text"]
 
                     if "[OVERWEGINGEN]" in full_text:
@@ -398,6 +408,7 @@ class Handler(BaseHTTPRequestHandler):
         # ── /reset ──
         elif path == "/reset":
             state["conversation_history"] = []
+            state["usage"] = {"input_tokens": 0, "output_tokens": 0, "requests": 0}
             self.send_json({"status": "reset"})
 
         else:
