@@ -45,6 +45,7 @@ AUDIENCE_TYPE_TO_FILE = {
     "developer":     "developers",
     "children":      "children",
     "mixed":         "mixed",
+    "children":      "children",
     "other":         "mixed",
 }
 
