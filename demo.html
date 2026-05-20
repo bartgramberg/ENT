@@ -289,15 +289,15 @@
       display: flex; flex-direction: column;
     }
     .overw-header {
-      padding: 14px 24px 10px;
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--color-text-light);
+      padding: 14px 24px 12px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--color-text-mid);
       border-bottom: 1px solid var(--border-light);
       flex-shrink: 0;
       display: flex; align-items: center; gap: 8px;
     }
-    .overw-icon { font-size: 12px; }
+    .overw-icon { font-size: 13px; }
     .overw-content {
       flex: 1; overflow-y: auto;
       padding: 14px 16px 28px;
@@ -441,13 +441,23 @@
       /* Show mobile tabs */
       .mobile-tabs { display: flex; }
 
-      /* Two-column layout collapses */
-      .main { grid-template-columns: 1fr; }
+      /* Single-column grid, rows bounded to fill the container */
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr);
+      }
 
       /* Right panel hidden by default — shown when ENT tab active */
       .right-col { display: none; }
-      .right-col.mobile-active { display: flex; }
+      .right-col.mobile-active {
+        display: flex;
+        overflow: hidden; /* essential: lets children scroll instead of expand */
+        height: 100%;
+      }
       .chat-col.mobile-hidden  { display: none; }
+
+      /* Allow overw-section to shrink so overw-content can scroll */
+      .overw-section { min-height: 0; }
 
       /* Smaller chat bubbles on mobile */
       .bubble { font-size: 15px; }
@@ -472,21 +482,21 @@
     </div>
     <div class="topbar-btns">
       <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust" aria-label="Setup aanpassen">
-        <span class="label-full">Setup aanpassen</span><span class="label-short">⚙</span>
+        <span class="label-full">Setup aanpassen</span><span class="label-short">Setup</span>
       </button>
       <button class="btn-ghost" onclick="resetConversation()" id="btnReset" aria-label="Gesprek wissen">
-        <span class="label-full">Gesprek wissen</span><span class="label-short">↺</span>
+        <span class="label-full">Gesprek wissen</span><span class="label-short">Wissen</span>
       </button>
       <button class="btn-save"  onclick="saveGesprek()" id="btnExport" aria-label="Exporteren">
-        <span class="label-full">Exporteren</span><span class="label-short">↓</span>
+        <span class="label-full">Exporteren</span><span class="label-short">Export</span>
       </button>
     </div>
   </header>
 
   <!-- Mobile tab bar (only visible ≤ 700px) -->
   <div class="mobile-tabs" id="mobileTabs">
-    <button class="mobile-tab active" id="tabGesprek" onclick="switchTab('gesprek')">Gesprek</button>
-    <button class="mobile-tab"        id="tabEnt"     onclick="switchTab('ent')">ENT</button>
+    <button class="mobile-tab active" id="tabGesprek"  onclick="switchTab('gesprek')">Gesprek</button>
+    <button class="mobile-tab"        id="tabOverwegingen" onclick="switchTab('ent')">Overwegingen</button>
   </div>
 
   <!-- MAIN -->
@@ -511,7 +521,7 @@
       <!-- FLOATING INPUT -->
       <div class="floating-input">
         <div class="input-inner">
-          <textarea id="messageInput" placeholder="Stel een vraag of deel een stelling..." rows="1"
+          <textarea id="messageInput" placeholder="Stel een vraag of deel iets" rows="1"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
         </div>
@@ -624,28 +634,38 @@
     ══════════════════════════════════════ */
     const STRINGS = {
       nl: {
+        tab_gesprek:   'Gesprek',
+        tab_overw:     'Overwegingen',
         adjust:        'Setup aanpassen',
+        adjust_short:  'Setup',
         reset:         'Gesprek wissen',
+        reset_short:   'Wissen',
         export:        'Exporteren',
+        export_short:  'Export',
         error_title:   'De boom rust.',
         error_body:    'Er is een tijdelijke fout opgetreden. Probeer het opnieuw.',
         error_retry:   'Opnieuw proberen',
         thinking:      'Boom overweegt',
         welcome:       'Ik sta hier al langer dan dit plan bestaat. Stel mij voor aan de plek, of stel je eerste vraag.',
         overw_empty:   'Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.',
-        input_placeholder: 'Stel een vraag of deel een stelling...',
+        input_placeholder: 'Stel een vraag of deel iets',
       },
       en: {
+        tab_gesprek:   'Conversation',
+        tab_overw:     'Considerations',
         adjust:        'Adjust setup',
+        adjust_short:  'Setup',
         reset:         'Clear conversation',
+        reset_short:   'Clear',
         export:        'Export',
+        export_short:  'Export',
         error_title:   'The tree is resting.',
         error_body:    'A temporary error occurred. Please try again.',
         error_retry:   'Retry',
         thinking:      'Tree is considering',
         welcome:       "I have stood here longer than this plan has existed. Introduce me to the place, or ask your first question.",
         overw_empty:   'Ecological facts and considerations appear here once the Tree has responded.',
-        input_placeholder: 'Ask a question or share a thought...',
+        input_placeholder: 'Ask a question or share something',
       }
     };
 
@@ -673,10 +693,17 @@
        INIT
     ══════════════════════════════════════ */
     (function init() {
-      // Apply language strings to topbar (targets label-full span for responsive labels)
-      document.getElementById('btnAdjust').querySelector('.label-full').textContent = t('adjust');
-      document.getElementById('btnReset').querySelector('.label-full').textContent  = t('reset');
-      document.getElementById('btnExport').querySelector('.label-full').textContent = t('export');
+      // Mobile tab labels (language-aware)
+      document.getElementById('tabGesprek').textContent     = t('tab_gesprek');
+      document.getElementById('tabOverwegingen').textContent = t('tab_overw');
+
+      // Apply language strings to topbar (full + short responsive labels)
+      document.getElementById('btnAdjust').querySelector('.label-full').textContent  = t('adjust');
+      document.getElementById('btnAdjust').querySelector('.label-short').textContent = t('adjust_short');
+      document.getElementById('btnReset').querySelector('.label-full').textContent   = t('reset');
+      document.getElementById('btnReset').querySelector('.label-short').textContent  = t('reset_short');
+      document.getElementById('btnExport').querySelector('.label-full').textContent  = t('export');
+      document.getElementById('btnExport').querySelector('.label-short').textContent = t('export_short');
       document.getElementById('btnAdjust').setAttribute('aria-label', t('adjust'));
       document.getElementById('btnReset').setAttribute('aria-label',  t('reset'));
       document.getElementById('btnExport').setAttribute('aria-label', t('export'));
@@ -871,6 +898,7 @@
 
           b.appendChild(titleEl); b.appendChild(bodyEl);
           container.appendChild(b);
+          container.scrollTop = container.scrollHeight;
         }, idx * 200);
       });
     }
@@ -1087,7 +1115,7 @@
       const chatCol  = document.querySelector('.chat-col');
       const rightCol = document.querySelector('.right-col');
       const tabG = document.getElementById('tabGesprek');
-      const tabE = document.getElementById('tabEnt');
+      const tabE = document.getElementById('tabOverwegingen');
       if (tab === 'gesprek') {
         chatCol.classList.remove('mobile-hidden');
         rightCol.classList.remove('mobile-active');
@@ -1098,6 +1126,9 @@
         rightCol.classList.add('mobile-active');
         tabG.classList.remove('active');
         tabE.classList.add('active');
+        // Scroll overwegingen to latest entry
+        const oc = document.getElementById('overwContent');
+        if (oc) oc.scrollTop = oc.scrollHeight;
       }
     }
   </script>

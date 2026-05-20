@@ -1685,18 +1685,9 @@
     ══════════════════════════════════════ */
     function checkAdjustMode() {
       if (!isAdjustMode) return;
-      try {
-        const stored = localStorage.getItem('ent_intake_config');
-        if (stored) {
-          applyConfig(JSON.parse(stored));
-          return;
-        }
-      } catch(e) {}
-      // Fallback: try sessionStorage (legacy)
-      try {
-        const stored = sessionStorage.getItem('ent_intake');
-        if (stored) applyConfig(JSON.parse(stored));
-      } catch(e) {}
+      // Start at Q1 — user re-does the full intake from scratch.
+      // isAdjustMode stays true so startSession() preserves the existing conversation.
+      goTo(1);
     }
 
     /* ══════════════════════════════════════
