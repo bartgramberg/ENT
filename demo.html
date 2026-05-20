@@ -636,6 +636,8 @@
       nl: {
         tab_gesprek:   'Gesprek',
         tab_overw:     'Overwegingen',
+        welcome_no_loc:   'Ik heb de tijd. Wat speelt er bij jullie?',
+        welcome_with_loc: 'Ik heb de tijd. Wat speelt er rond ',
         adjust:        'Setup aanpassen',
         adjust_short:  'Setup',
         reset:         'Gesprek wissen',
@@ -653,6 +655,8 @@
       en: {
         tab_gesprek:   'Conversation',
         tab_overw:     'Considerations',
+        welcome_no_loc:   'I have time. What\'s happening with you?',
+        welcome_with_loc: 'I have time. What\'s happening around ',
         adjust:        'Adjust setup',
         adjust_short:  'Setup',
         reset:         'Clear conversation',
@@ -725,8 +729,15 @@
       const loc = intakeConfig.location || '';
       document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
 
-      // Welcome message
-      document.getElementById('welcomeBubble').textContent = t('welcome');
+      // Welcome message — location-aware for boom persona
+      const _loc = (intakeConfig.location || '').trim();
+      let _welcome;
+      if (currentPersona === 'boom') {
+        _welcome = _loc ? t('welcome_with_loc') + _loc + '?' : t('welcome_no_loc');
+      } else {
+        _welcome = t('welcome');
+      }
+      document.getElementById('welcomeBubble').textContent = _welcome;
 
       // Restore conversation from localStorage
       if (conversation.length > 0) {

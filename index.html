@@ -626,9 +626,9 @@
         <div class="progress">
           <div class="progress-dots">
             <div class="dot active"></div><div class="dot"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
           </div>
-          <span class="progress-label" data-i18n="q1_step">Stap 1 van 5</span>
+          <span class="progress-label" data-i18n="q1_step">Stap 1 van 4</span>
         </div>
 
         <button class="back-btn" hidden></button>
@@ -681,9 +681,9 @@
         <div class="progress">
           <div class="progress-dots">
             <div class="dot done"></div><div class="dot active"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div>
           </div>
-          <span class="progress-label" data-i18n="q2_step">Stap 2 van 5</span>
+          <span class="progress-label" data-i18n="q2_step">Stap 2 van 4</span>
         </div>
 
         <button class="back-btn" id="back-btn-2" onclick="backFromScreen2()" data-i18n="back">&#8592; Terug</button>
@@ -709,49 +709,23 @@
           <p class="q2b-subtitle" data-i18n="q2b_subtitle">Welk publiek?</p>
 
           <div class="options-grid" role="radiogroup" id="q2b-options" aria-label="Welk publiek">
-            <button class="option-tile" data-value="residents"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_residents">Bewoners</span>
+            <button class="option-tile" data-value="residents"     role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2b_opt_residents">Bewoners</span>
               <span class="option-sublabel" data-i18n="q2b_opt_residents_sub">Buurtparticipatie</span>
             </button>
-            <button class="option-tile" data-value="designers"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_designers">Ontwerpers / architecten</span>
-              <span class="option-sublabel" data-i18n="q2b_opt_designers_sub">Ruimtelijk ontwerp</span>
+            <button class="option-tile" data-value="professionals" role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2b_opt_professionals">Professionals</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_professionals_sub">Ontwerpers, beleidsmakers, onderzoekers</span>
             </button>
-            <button class="option-tile" data-value="ecologists"   role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_ecologists">Ecologen</span>
-              <span class="option-sublabel" data-i18n="q2b_opt_ecologists_sub">Natuur en soorten</span>
+            <button class="option-tile" data-value="children"      role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2b_opt_children">Kinderen</span>
+              <span class="option-sublabel" data-i18n="q2b_opt_children_sub">Onderwijs, jeugd</span>
             </button>
-            <button class="option-tile" data-value="civil_servant" role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_civil">Ambtenaren / beleidsmakers</span>
-              <span class="option-sublabel" data-i18n="q2b_opt_civil_sub">Gemeente, provincie</span>
-            </button>
-            <button class="option-tile" data-value="developer"    role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_developer">Ontwikkelaars</span>
-              <span class="option-sublabel" data-i18n="q2b_opt_developer_sub">Vastgoed, opdrachtgevers</span>
-            </button>
-            <button class="option-tile" data-value="mixed"        role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_mixed">Gemengd publiek</span>
+            <button class="option-tile" data-value="mixed"         role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
+              <span class="option-label"    data-i18n="q2b_opt_mixed">Gemengd</span>
               <span class="option-sublabel" data-i18n="q2b_opt_mixed_sub">Meerdere typen in de zaal</span>
             </button>
-            <button class="option-tile" data-value="other"        role="radio" aria-checked="false" onclick="selectQ2b(this)" tabindex="0">
-              <span class="option-label" data-i18n="q2b_opt_other">Anders</span>
-            </button>
           </div>
-          <input class="other-input" id="q2b-other-input" type="text" hidden
-                 data-i18n-placeholder="q2b_opt_other_placeholder"
-                 placeholder="Omschrijf het publiek..." maxlength="120">
-
-          <div class="q2b-details-field" id="q2b-details-field" hidden>
-            <label class="field-label" for="q2b-audience-details" data-i18n="q2b_details_label">Wie zit er in de zaal?</label>
-            <textarea class="text-input" id="q2b-audience-details"
-                      data-i18n-placeholder="q2b_details_placeholder"
-                      placeholder="Wie zijn ze, wat boeit ze, wat zien ze nog niet..."></textarea>
-          </div>
-
-          <button class="q2b-continue" id="q2b-continue-btn" onclick="advanceFromQ2b()" hidden>
-            <span data-i18n="q2b_continue">Ga verder</span>
-            <span>&#8594;</span>
-          </button>
         </div>
       </div>
 
@@ -760,9 +734,9 @@
         <div class="progress">
           <div class="progress-dots">
             <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot active"></div><div class="dot"></div>
           </div>
-          <span class="progress-label" data-i18n="q3_step">Stap 3 van 5</span>
+          <span class="progress-label" data-i18n="q3_step">Stap 3 van 4</span>
         </div>
 
         <button class="back-btn" onclick="goTo(2)" data-i18n="back">&#8592; Terug</button>
@@ -813,9 +787,9 @@
         <div class="progress">
           <div class="progress-dots">
             <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot done"></div><div class="dot active"></div><div class="dot"></div>
+            <div class="dot done"></div><div class="dot active"></div>
           </div>
-          <span class="progress-label" data-i18n="q4_step">Stap 4 van 5</span>
+          <span class="progress-label" data-i18n="q4_step">Stap 4 van 4</span>
         </div>
 
         <button class="back-btn" onclick="goTo(3)" data-i18n="back">&#8592; Terug</button>
@@ -857,57 +831,26 @@
                     placeholder="Het plan, project of de vraag die op tafel ligt..."></textarea>
         </div>
 
-        <button class="continue-btn" onclick="goToQ5()">
-          <span data-i18n="q4_continue">Ga verder</span>
-          <span class="btn-arrow">&#8594;</span>
-        </button>
-      </div>
-
-      <!-- ── SCREEN 5: Q5 Documents ── -->
-      <div id="screen-5" hidden>
-        <div class="progress">
-          <div class="progress-dots">
-            <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot active"></div>
-          </div>
-          <span class="progress-label" data-i18n="q5_step">Stap 5 van 5</span>
-        </div>
-
-        <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
-
-        <h1 class="q-title"    data-i18n="q5_title">Projectdocumenten</h1>
-        <p  class="q-subtitle" data-i18n="q5_subtitle">ENT gebruikt ze om specifieker te spreken. Optioneel.</p>
-
-        <div class="options-grid single-col" role="radiogroup" id="q5-options" aria-label="Documenten">
-          <button class="option-tile" data-value="yes" role="radio" aria-checked="false" onclick="selectQ5(this)" tabindex="0">
-            <span class="option-label"    data-i18n="q5_opt_yes">Ja, ik voeg documenten toe</span>
-            <span class="option-sublabel" data-i18n="q5_opt_yes_sub">PDF of tekst — max 5 bestanden</span>
-          </button>
-          <button class="option-tile" data-value="no"  role="radio" aria-checked="false" onclick="selectQ5(this)" tabindex="0">
-            <span class="option-label"    data-i18n="q5_opt_no">Nee, verder zonder documenten</span>
-            <span class="option-sublabel" data-i18n="q5_opt_no_sub">ENT spreekt vanuit zijn algemene kennis</span>
-          </button>
-        </div>
-
-        <div class="upload-section" id="upload-section" hidden>
-          <div class="q2b-divider" style="margin-top:24px;"></div>
+        <div class="field-group">
+          <span class="field-label" data-i18n="q4_docs_label">Documenten (optioneel)</span>
+          <p class="q-subtitle" style="margin-bottom:12px;" data-i18n="q4_docs_sub">Upload projectdocumenten. ENT gebruikt ze om specifieker te spreken.</p>
           <div class="upload-zone" id="uploadZone"
                ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
                ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput" accept=".pdf,.txt" multiple hidden
                    onchange="handleFileSelect(event)">
             <div class="upload-zone-icon">&#8593;</div>
-            <p class="upload-zone-text"  data-i18n="q5_drop">Sleep bestanden hierheen of klik om te kiezen</p>
-            <p class="upload-zone-hint"  data-i18n="q5_drop_hint">PDF of TXT · max 5 bestanden</p>
+            <p class="upload-zone-text"  data-i18n="q4_drop">Sleep bestanden hierheen of klik om te kiezen</p>
+            <p class="upload-zone-hint"  data-i18n="q4_drop_hint">PDF of TXT · max 5 bestanden</p>
           </div>
           <div class="upload-list"   id="uploadList"></div>
           <div class="upload-status" id="uploadStatus"></div>
-          <button class="continue-btn" id="q5-continue-btn" onclick="buildConfirmSummary(); goTo('confirm');" style="margin-top:24px;">
-            <span data-i18n="q5_continue">Ga verder</span>
-            <span class="btn-arrow">&#8594;</span>
-          </button>
         </div>
+
+        <button class="continue-btn" onclick="goToConfirm()">
+          <span data-i18n="q4_continue">Ga verder</span>
+          <span class="btn-arrow">&#8594;</span>
+        </button>
       </div>
 
       <!-- ── SCREEN CONFIRM ── -->
@@ -916,11 +859,10 @@
           <div class="progress-dots">
             <div class="dot done"></div><div class="dot done"></div>
             <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot done"></div>
           </div>
         </div>
 
-        <button class="back-btn" onclick="goTo(5)" data-i18n="back">&#8592; Terug</button>
+        <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
 
         <h1 class="q-title" data-i18n="confirm_title">Klopt dit?</h1>
 
@@ -1028,7 +970,7 @@
         gate_error_server: 'Server niet bereikbaar. Probeer het later.',
         gate_error_network: 'Geen verbinding. Controleer je internet.',
 
-        q1_step: 'Stap 1 van 5', q1_title: 'Wie ben jij?',
+        q1_step: 'Stap 1 van 4', q1_title: 'Wie ben jij?',
         q1_subtitle: 'Dit helpt ENT de juiste toon te vinden.',
         q1_opt_designer: 'Ontwerper / architect',       q1_opt_designer_sub: 'Ruimtelijk ontwerp, stedenbouw, landschap',
         q1_opt_ecologist: 'Ecoloog / natuurprofessional', q1_opt_ecologist_sub: 'Natuur, soorten, ecosystemen',
@@ -1039,24 +981,18 @@
         q1_opt_researcher: 'Onderzoeker / journalist / student', q1_opt_researcher_sub: 'Kennis, media, onderwijs',
         q1_opt_other: 'Anders', q1_opt_other_placeholder: 'Omschrijf je rol...',
 
-        q2_step: 'Stap 2 van 5', q2_title: 'Voor wie is dit?',
+        q2_step: 'Stap 2 van 4', q2_title: 'Voor wie is dit?',
         q2_subtitle: 'ENT stemt zijn boodschap af op het publiek.',
         q2_opt_self: 'Voor mezelf',       q2_opt_self_sub: 'Ik verken zelfstandig',
         q2_opt_group: 'Voor een publiek', q2_opt_group_sub: 'Ik gebruik dit met anderen',
 
         q2b_subtitle: 'Welk publiek?',
-        q2b_opt_residents: 'Bewoners',                  q2b_opt_residents_sub: 'Buurtparticipatie',
-        q2b_opt_designers: 'Ontwerpers / architecten',  q2b_opt_designers_sub: 'Ruimtelijk ontwerp',
-        q2b_opt_ecologists: 'Ecologen',                 q2b_opt_ecologists_sub: 'Natuur en soorten',
-        q2b_opt_civil: 'Ambtenaren / beleidsmakers',    q2b_opt_civil_sub: 'Gemeente, provincie',
-        q2b_opt_developer: 'Ontwikkelaars',             q2b_opt_developer_sub: 'Vastgoed, opdrachtgevers',
-        q2b_opt_mixed: 'Gemengd publiek',               q2b_opt_mixed_sub: 'Meerdere typen in de zaal',
-        q2b_opt_other: 'Anders',                        q2b_opt_other_placeholder: 'Omschrijf het publiek...',
-        q2b_details_label: 'Wie zit er in de zaal?',
-        q2b_details_placeholder: 'Wie zijn ze, wat boeit ze, wat zien ze nog niet...',
-        q2b_continue: 'Ga verder',
+        q2b_opt_residents:      'Bewoners',      q2b_opt_residents_sub:      'Buurtparticipatie',
+        q2b_opt_professionals:  'Professionals', q2b_opt_professionals_sub:  'Ontwerpers, beleidsmakers, onderzoekers',
+        q2b_opt_children:       'Kinderen',      q2b_opt_children_sub:       'Onderwijs, jeugd',
+        q2b_opt_mixed:          'Gemengd',       q2b_opt_mixed_sub:          'Meerdere typen in de zaal',
 
-        q3_step: 'Stap 3 van 5', q3_title: 'Waarvoor gebruik je ENT vandaag?',
+        q3_step: 'Stap 3 van 4', q3_title: 'Waarvoor gebruik je ENT vandaag?',
         q3_subtitle: 'Dit bepaalt de vorm en het ritme van de stem.',
         q3_opt_open: 'Gesprek openen',        q3_opt_open_sub: '1-3 min gesproken opener',
         q3_opt_respond: 'Reageren op een plan', q3_opt_respond_sub: 'Wat betekent dit ontwerp voor mij?',
@@ -1067,22 +1003,18 @@
         q3_opt_explore: 'Verkennen / spelen',  q3_opt_explore_sub: 'Vrij, geen vaste vorm',
         q3_opt_other: 'Anders',                q3_opt_other_placeholder: 'Omschrijf het doel...',
 
-        q4_step: 'Stap 4 van 5', q4_title: 'De context',
+        q4_step: 'Stap 4 van 4', q4_title: 'De context',
         q4_subtitle: 'Hoe specifieker, hoe sterker de stem.',
         q4_voice_label: 'Welke stem?',
         q4_boom: 'De Boom', q4_boom_sub: 'Geworteld, systemisch, geduldig',
         q4_more: 'Meer natuur', q4_more_sub: 'Binnenkort',
         q4_location_label: 'Waar?',       q4_location_placeholder: 'Locatie, type plek...',
         q4_situation_label: 'Wat speelt er?', q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
+        q4_docs_label: 'Documenten (optioneel)',
+        q4_docs_sub:   'Upload projectdocumenten. ENT gebruikt ze om specifieker te spreken.',
+        q4_drop:       'Sleep bestanden hierheen of klik om te kiezen',
+        q4_drop_hint:  'PDF of TXT · max 5 bestanden',
         q4_continue: 'Ga verder',
-
-        q5_step: 'Stap 5 van 5', q5_title: 'Projectdocumenten',
-        q5_subtitle: 'ENT gebruikt ze om specifieker te spreken. Optioneel.',
-        q5_opt_yes: 'Ja, ik voeg documenten toe', q5_opt_yes_sub: 'PDF of tekst — max 5 bestanden',
-        q5_opt_no: 'Nee, verder zonder documenten', q5_opt_no_sub: 'ENT spreekt vanuit zijn algemene kennis',
-        q5_drop: 'Sleep bestanden hierheen of klik om te kiezen',
-        q5_drop_hint: 'PDF of TXT · max 5 bestanden',
-        q5_continue: 'Ga verder',
         q5_extracting: 'Tekst lezen…',
         q5_extracted: 'Toegevoegd',
         q5_extract_error: 'Fout bij lezen',
@@ -1095,13 +1027,10 @@
 
         voice_boom: 'de boom',
         aud_self_prefix: 'spreekt met jou',
-        aud_group_residents: 'spreekt tot bewoners',
-        aud_group_designers: 'spreekt tot ontwerpers en architecten',
-        aud_group_ecologists: 'spreekt tot ecologen',
-        aud_group_civil_servant: 'spreekt tot ambtenaren en beleidsmakers',
-        aud_group_developer: 'spreekt tot projectontwikkelaars',
-        aud_group_mixed: 'spreekt tot een gemengd publiek',
-        aud_group_other: 'spreekt tot een specifiek publiek',
+        aud_group_residents:     'spreekt tot bewoners',
+        aud_group_professionals: 'spreekt tot professionals',
+        aud_group_children:      'spreekt tot kinderen',
+        aud_group_mixed:         'spreekt tot een gemengd publiek',
         purpose_open: 'om het gesprek te openen',
         purpose_respond: 'om te reageren op een plan',
         purpose_story: 'om zijn verhaal te vertellen',
@@ -1119,7 +1048,7 @@
         gate_error_server: 'Server unavailable. Try again later.',
         gate_error_network: 'No connection. Check your internet.',
 
-        q1_step: 'Step 1 of 5', q1_title: 'Who are you?',
+        q1_step: 'Step 1 of 4', q1_title: 'Who are you?',
         q1_subtitle: 'This helps ENT find the right tone.',
         q1_opt_designer: 'Designer / architect',        q1_opt_designer_sub: 'Spatial design, urbanism, landscape',
         q1_opt_ecologist: 'Ecologist / nature professional', q1_opt_ecologist_sub: 'Nature, species, ecosystems',
@@ -1130,24 +1059,18 @@
         q1_opt_researcher: 'Researcher / journalist / student', q1_opt_researcher_sub: 'Knowledge, media, education',
         q1_opt_other: 'Something else',                 q1_opt_other_placeholder: 'Describe your role...',
 
-        q2_step: 'Step 2 of 5', q2_title: 'Who is this for?',
+        q2_step: 'Step 2 of 4', q2_title: 'Who is this for?',
         q2_subtitle: 'ENT adjusts its message to the audience.',
         q2_opt_self: 'Just me',            q2_opt_self_sub: 'Exploring on my own',
         q2_opt_group: 'For an audience',   q2_opt_group_sub: "I'll use this with others",
 
         q2b_subtitle: 'Which audience?',
-        q2b_opt_residents: 'Residents',                 q2b_opt_residents_sub: 'Neighbourhood participation',
-        q2b_opt_designers: 'Designers / architects',    q2b_opt_designers_sub: 'Spatial design',
-        q2b_opt_ecologists: 'Ecologists',               q2b_opt_ecologists_sub: 'Nature and species',
-        q2b_opt_civil: 'Civil servants / policy makers', q2b_opt_civil_sub: 'Municipality, province',
-        q2b_opt_developer: 'Developers',                q2b_opt_developer_sub: 'Real estate, clients',
-        q2b_opt_mixed: 'Mixed audience',                q2b_opt_mixed_sub: 'Multiple types in the room',
-        q2b_opt_other: 'Something else',                q2b_opt_other_placeholder: 'Describe the audience...',
-        q2b_details_label: "Who's in the room?",
-        q2b_details_placeholder: "Who they are, what they care about, what they don't yet see...",
-        q2b_continue: 'Continue',
+        q2b_opt_residents:      'Residents',     q2b_opt_residents_sub:      'Neighbourhood participation',
+        q2b_opt_professionals:  'Professionals', q2b_opt_professionals_sub:  'Designers, policy makers, researchers',
+        q2b_opt_children:       'Children',      q2b_opt_children_sub:       'Education, youth',
+        q2b_opt_mixed:          'Mixed',         q2b_opt_mixed_sub:          'Multiple types in the room',
 
-        q3_step: 'Step 3 of 5', q3_title: 'What will you use ENT for today?',
+        q3_step: 'Step 3 of 4', q3_title: 'What will you use ENT for today?',
         q3_subtitle: 'This determines the shape and rhythm of the voice.',
         q3_opt_open: 'Open a conversation',   q3_opt_open_sub: '1–3 min spoken opener',
         q3_opt_respond: 'Respond to a plan',  q3_opt_respond_sub: 'What does this design mean for me?',
@@ -1158,22 +1081,18 @@
         q3_opt_explore: 'Explore / play',     q3_opt_explore_sub: 'Loose, no fixed shape',
         q3_opt_other: 'Something else',       q3_opt_other_placeholder: 'Describe the purpose...',
 
-        q4_step: 'Step 4 of 5', q4_title: 'Context',
+        q4_step: 'Step 4 of 4', q4_title: 'Context',
         q4_subtitle: 'The more specific, the stronger the voice.',
         q4_voice_label: 'Which voice?',
         q4_boom: 'The Tree',   q4_boom_sub: 'Rooted, systemic, patient',
         q4_more: 'More nature', q4_more_sub: 'Coming soon',
         q4_location_label: 'Where?',          q4_location_placeholder: 'Location, type of site...',
         q4_situation_label: "What's happening there?", q4_situation_placeholder: 'The plan, project, or question on the table...',
+        q4_docs_label: 'Documents (optional)',
+        q4_docs_sub:   'Upload project documents. ENT uses them to speak more specifically.',
+        q4_drop:       'Drag files here or click to browse',
+        q4_drop_hint:  'PDF or TXT · up to 5 files',
         q4_continue: 'Continue',
-
-        q5_step: 'Step 5 of 5', q5_title: 'Project documents',
-        q5_subtitle: 'ENT uses them to speak more specifically. Optional.',
-        q5_opt_yes: "Yes, I'll add documents", q5_opt_yes_sub: 'PDF or text — up to 5 files',
-        q5_opt_no: 'No, continue without documents', q5_opt_no_sub: 'ENT speaks from its general knowledge',
-        q5_drop: 'Drag files here or click to browse',
-        q5_drop_hint: 'PDF or TXT · up to 5 files',
-        q5_continue: 'Continue',
         q5_extracting: 'Reading text…',
         q5_extracted: 'Added',
         q5_extract_error: 'Read error',
@@ -1186,13 +1105,10 @@
 
         voice_boom: 'the tree',
         aud_self_prefix: 'speaks with you',
-        aud_group_residents: 'speaks to residents',
-        aud_group_designers: 'speaks to designers and architects',
-        aud_group_ecologists: 'speaks to ecologists',
-        aud_group_civil_servant: 'speaks to civil servants and policy makers',
-        aud_group_developer: 'speaks to project developers',
-        aud_group_mixed: 'speaks to a mixed audience',
-        aud_group_other: 'speaks to a specific audience',
+        aud_group_residents:     'speaks to residents',
+        aud_group_professionals: 'speaks to professionals',
+        aud_group_children:      'speaks to children',
+        aud_group_mixed:         'speaks to a mixed audience',
         purpose_open: 'to open a conversation',
         purpose_respond: 'to respond to a plan',
         purpose_story: 'to tell its story',
@@ -1230,7 +1146,7 @@
     /* ══════════════════════════════════════
        SCREEN NAVIGATION
     ══════════════════════════════════════ */
-    const SCREEN_IDS = ['screen-1','screen-2','screen-3','screen-4','screen-5','screen-confirm'];
+    const SCREEN_IDS = ['screen-1','screen-2','screen-3','screen-4','screen-confirm'];
 
     function showScreen(id) {
       SCREEN_IDS.forEach(s => { document.getElementById(s).hidden = true; });
@@ -1300,40 +1216,9 @@
     function selectQ2b(tile) {
       clearSelection('q2b-options');
       markSelected(tile);
-      intake.audience_type = tile.dataset.value;
-
-      const detailsField = document.getElementById('q2b-details-field');
-      const otherInput   = document.getElementById('q2b-other-input');
-      const continueBtn  = document.getElementById('q2b-continue-btn');
-
-      const needsDetails = intake.audience_type === 'mixed' || intake.audience_type === 'other';
-
-      if (needsDetails) {
-        detailsField.hidden = false;
-        continueBtn.hidden  = false;
-        if (intake.audience_type === 'other') {
-          otherInput.hidden = false;
-          otherInput.focus();
-        } else {
-          otherInput.hidden = true;
-          document.getElementById('q2b-audience-details').focus();
-        }
-      } else {
-        detailsField.hidden = true;
-        otherInput.hidden   = true;
-        continueBtn.hidden  = true;
-        intake.audience_details = '';
-        setTimeout(() => goTo(3), 180);
-      }
-    }
-
-    function advanceFromQ2b() {
-      intake.audience_details = document.getElementById('q2b-audience-details').value.trim();
-      if (intake.audience_type === 'other') {
-        const oi = document.getElementById('q2b-other-input').value.trim();
-        if (oi) intake.audience_details = oi + (intake.audience_details ? ' — ' + intake.audience_details : '');
-      }
-      goTo(3);
+      intake.audience_type    = tile.dataset.value;
+      intake.audience_details = '';
+      setTimeout(() => goTo(3), 180);
     }
 
     function backFromScreen2() {
@@ -1370,33 +1255,18 @@
     }
 
     /* ══════════════════════════════════════
-       Q4
+       Q4 → CONFIRM
     ══════════════════════════════════════ */
-    function goToQ5() {
+    function goToConfirm() {
       intake.location  = document.getElementById('q4-location').value.trim();
       intake.situation = document.getElementById('q4-situation').value.trim();
-      clearSelection('q5-options');
-      document.getElementById('upload-section').hidden = true;
-      goTo(5);
+      buildConfirmSummary();
+      goTo('confirm');
     }
 
     /* ══════════════════════════════════════
-       Q5 — client-side document extraction
+       Q4 — client-side document extraction
     ══════════════════════════════════════ */
-    function selectQ5(tile) {
-      clearSelection('q5-options');
-      markSelected(tile);
-      const uploadSection = document.getElementById('upload-section');
-      if (tile.dataset.value === 'yes') {
-        uploadSection.hidden = false;
-        setTimeout(() => document.getElementById('uploadZone').focus(), 50);
-      } else {
-        uploadSection.hidden = true;
-        intake.documents = [];
-        buildConfirmSummary();
-        setTimeout(() => goTo('confirm'), 180);
-      }
-    }
 
     function handleDragOver(e) {
       e.preventDefault();
@@ -1752,9 +1622,7 @@
     document.getElementById('q3-other-input').addEventListener('keydown', e => {
       if (e.key === 'Enter' && e.target.value.trim()) { intake.purpose_other = e.target.value.trim(); goTo(4); }
     });
-    document.getElementById('q2b-other-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.target.value.trim()) advanceFromQ2b();
-    });
+
 
     /* ══════════════════════════════════════
        HELPERS
