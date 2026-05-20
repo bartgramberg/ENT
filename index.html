@@ -673,19 +673,7 @@
                data-i18n-placeholder="q1_opt_other_placeholder"
                placeholder="Omschrijf je rol..." maxlength="120">
 
-        <button class="skip-link" onclick="toggleSkipPanel()" data-i18n="skip">Intake overslaan (config plakken)</button>
-
-        <div class="skip-panel" id="skipPanel" hidden>
-          <span class="field-label" data-i18n="skip_paste_label">Plak een eerder geëxporteerde config:</span>
-          <textarea class="text-input" id="skipPasteArea"
-                    data-i18n-placeholder="skip_paste_placeholder"
-                    placeholder='{"user_role": "designer", ...}'></textarea>
-          <div class="skip-error" id="skipError" hidden data-i18n="error_json">Ongeldige config — controleer het JSON formaat.</div>
-          <div class="skip-panel-btns">
-            <button class="btn-sm primary" onclick="loadPastedConfig()" data-i18n="skip_load">Laden</button>
-            <button class="btn-sm ghost"   onclick="toggleSkipPanel()"  data-i18n="skip_cancel">Annuleren</button>
-          </div>
-        </div>
+        <button class="skip-link" onclick="skipIntake()" data-i18n="skip">Intake overslaan</button>
       </div>
 
       <!-- ── SCREEN 2: Q2 + Q2b ── -->
@@ -1102,13 +1090,8 @@
         confirm_title: 'Klopt dit?',
         confirm_yes: 'Ja, start de sessie', confirm_edit: 'Antwoorden aanpassen',
         back: '← Terug',
-        skip: 'Intake overslaan (config plakken)',
-        skip_paste_label: 'Plak een eerder geëxporteerde config:',
-        skip_paste_placeholder: '{"user_role": "designer", ...}',
-        skip_load: 'Laden', skip_cancel: 'Annuleren',
+        skip: 'Intake overslaan',
         error_composing: 'Kon de sessie niet samenstellen. Probeer opnieuw.',
-        error_json: 'Ongeldige config — controleer het JSON formaat.',
-        skip_docs_notice: 'Eerder geüploade documenten zijn niet opgeslagen en moeten opnieuw worden toegevoegd.',
 
         voice_boom: 'de boom',
         aud_self_prefix: 'spreekt met jou',
@@ -1198,13 +1181,8 @@
         confirm_title: 'Does this look right?',
         confirm_yes: 'Yes, start the session', confirm_edit: 'Edit answers',
         back: '← Back',
-        skip: 'Skip intake (paste config)',
-        skip_paste_label: 'Paste a previously exported config:',
-        skip_paste_placeholder: '{"user_role": "designer", ...}',
-        skip_load: 'Load', skip_cancel: 'Cancel',
+        skip: 'Skip intake',
         error_composing: 'Could not compose the session. Please try again.',
-        error_json: 'Invalid config — check the JSON format.',
-        skip_docs_notice: 'Previously uploaded documents are not saved and must be re-uploaded.',
 
         voice_boom: 'the tree',
         aud_self_prefix: 'speaks with you',
@@ -1627,28 +1605,23 @@
     }
 
     /* ══════════════════════════════════════
-       SKIP / PASTE CONFIG
+       SKIP INTAKE — start with blank config
     ══════════════════════════════════════ */
-    function toggleSkipPanel() {
-      const panel = document.getElementById('skipPanel');
-      panel.hidden = !panel.hidden;
-      if (!panel.hidden) document.getElementById('skipPasteArea').focus();
-    }
-
-    function loadPastedConfig() {
-      const raw   = document.getElementById('skipPasteArea').value.trim();
-      const errEl = document.getElementById('skipError');
-      errEl.hidden = true;
-      let cfg;
-      try { cfg = JSON.parse(raw); }
-      catch(e) { errEl.hidden = false; return; }
-
-      if (cfg.documents && cfg.documents.length > 0) {
-        cfg.documents = [];
-        document.getElementById('confirmStatus').textContent = t('skip_docs_notice');
-      }
-      applyConfig(cfg);
-      document.getElementById('skipPanel').hidden = true;
+    async function skipIntake() {
+      // Reset intake to all defaults
+      intake.user_role        = null;
+      intake.user_role_other  = '';
+      intake.audience_mode    = null;
+      intake.audience_type    = null;
+      intake.audience_details = '';
+      intake.purpose          = null;
+      intake.purpose_other    = '';
+      intake.voice_subject    = 'boom';
+      intake.location         = '';
+      intake.situation        = '';
+      intake.documents        = [];
+      // Go straight to demo
+      await startSession();
     }
 
     function applyConfig(cfg) {
