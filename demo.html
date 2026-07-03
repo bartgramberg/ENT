@@ -289,15 +289,15 @@
       display: flex; flex-direction: column;
     }
     .overw-header {
-      padding: 14px 24px 10px;
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--color-text-light);
+      padding: 14px 24px 12px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--color-text-mid);
       border-bottom: 1px solid var(--border-light);
       flex-shrink: 0;
       display: flex; align-items: center; gap: 8px;
     }
-    .overw-icon { font-size: 12px; }
+    .overw-icon { font-size: 13px; }
     .overw-content {
       flex: 1; overflow-y: auto;
       padding: 14px 16px 28px;
@@ -411,9 +411,62 @@
     }
     .klimaat-over-link:hover { text-decoration: underline; }
 
+    /* ── MOBILE TAB SWITCHER ── */
+    .mobile-tabs {
+      display: none;
+      flex-shrink: 0;
+      position: relative; z-index: 15;
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .mobile-tab {
+      flex: 1; padding: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--color-text-light);
+      background: transparent; border: none;
+      border-bottom: 2.5px solid transparent;
+      cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    }
+    .mobile-tab.active {
+      color: var(--color-green);
+      border-bottom-color: var(--color-green);
+    }
+
+    /* Short topbar labels (hidden by default) */
+    .label-short { display: none; }
+
     @media (max-width: 700px) {
-      .main { grid-template-columns: 1fr; }
+      /* Show mobile tabs */
+      .mobile-tabs { display: flex; }
+
+      /* Single-column grid, rows bounded to fill the container */
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      /* Right panel hidden by default — shown when ENT tab active */
       .right-col { display: none; }
+      .right-col.mobile-active {
+        display: flex;
+        overflow: hidden; /* essential: lets children scroll instead of expand */
+        height: 100%;
+      }
+      .chat-col.mobile-hidden  { display: none; }
+
+      /* Allow overw-section to shrink so overw-content can scroll */
+      .overw-section { min-height: 0; }
+
+      /* Smaller chat bubbles on mobile */
+      .bubble { font-size: 15px; }
+
+      /* Compact topbar */
+      .topbar { padding: 0 12px; }
+      .topbar-btns { gap: 5px; }
+      .label-full  { display: none; }
+      .label-short { display: inline; }
     }
   </style>
 </head>
@@ -428,11 +481,23 @@
       <span class="logo">ENT</span>
     </div>
     <div class="topbar-btns">
-      <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust">Setup aanpassen</button>
-      <button class="btn-ghost" onclick="resetConversation()" id="btnReset">Gesprek wissen</button>
-      <button class="btn-save"  onclick="saveGesprek()" id="btnExport">Exporteren</button>
+      <button class="btn-ghost" onclick="adjustSetup()" id="btnAdjust" aria-label="Setup aanpassen">
+        <span class="label-full">Setup aanpassen</span><span class="label-short">Setup</span>
+      </button>
+      <button class="btn-ghost" onclick="resetConversation()" id="btnReset" aria-label="Gesprek wissen">
+        <span class="label-full">Gesprek wissen</span><span class="label-short">Wissen</span>
+      </button>
+      <button class="btn-save"  onclick="saveGesprek()" id="btnExport" aria-label="Exporteren">
+        <span class="label-full">Exporteren</span><span class="label-short">Export</span>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile tab bar (only visible ≤ 700px) -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="mobile-tab active" id="tabGesprek"  onclick="switchTab('gesprek')">Gesprek</button>
+    <button class="mobile-tab"        id="tabOverwegingen" onclick="switchTab('ent')">Overwegingen</button>
+  </div>
 
   <!-- MAIN -->
   <div class="main">
@@ -456,7 +521,7 @@
       <!-- FLOATING INPUT -->
       <div class="floating-input">
         <div class="input-inner">
-          <textarea id="messageInput" placeholder="Stel een vraag of deel een stelling..." rows="1"
+          <textarea id="messageInput" placeholder="Stel een vraag of deel iets" rows="1"
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
         </div>
@@ -569,28 +634,42 @@
     ══════════════════════════════════════ */
     const STRINGS = {
       nl: {
+        tab_gesprek:   'Gesprek',
+        tab_overw:     'Overwegingen',
+        welcome_no_loc:   'Ik heb de tijd. Wat speelt er bij jullie?',
+        welcome_with_loc: 'Ik heb de tijd. Wat speelt er rond ',
         adjust:        'Setup aanpassen',
+        adjust_short:  'Setup',
         reset:         'Gesprek wissen',
+        reset_short:   'Wissen',
         export:        'Exporteren',
+        export_short:  'Export',
         error_title:   'De boom rust.',
         error_body:    'Er is een tijdelijke fout opgetreden. Probeer het opnieuw.',
         error_retry:   'Opnieuw proberen',
         thinking:      'Boom overweegt',
         welcome:       'Ik sta hier al langer dan dit plan bestaat. Stel mij voor aan de plek, of stel je eerste vraag.',
         overw_empty:   'Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.',
-        input_placeholder: 'Stel een vraag of deel een stelling...',
+        input_placeholder: 'Stel een vraag of deel iets',
       },
       en: {
+        tab_gesprek:   'Conversation',
+        tab_overw:     'Considerations',
+        welcome_no_loc:   'I have time. What\'s happening with you?',
+        welcome_with_loc: 'I have time. What\'s happening around ',
         adjust:        'Adjust setup',
+        adjust_short:  'Setup',
         reset:         'Clear conversation',
+        reset_short:   'Clear',
         export:        'Export',
+        export_short:  'Export',
         error_title:   'The tree is resting.',
         error_body:    'A temporary error occurred. Please try again.',
         error_retry:   'Retry',
         thinking:      'Tree is considering',
         welcome:       "I have stood here longer than this plan has existed. Introduce me to the place, or ask your first question.",
         overw_empty:   'Ecological facts and considerations appear here once the Tree has responded.',
-        input_placeholder: 'Ask a question or share a thought...',
+        input_placeholder: 'Ask a question or share something',
       }
     };
 
@@ -618,10 +697,20 @@
        INIT
     ══════════════════════════════════════ */
     (function init() {
-      // Apply language strings to topbar
-      document.getElementById('btnAdjust').textContent = t('adjust');
-      document.getElementById('btnReset').textContent  = t('reset');
-      document.getElementById('btnExport').textContent = t('export');
+      // Mobile tab labels (language-aware)
+      document.getElementById('tabGesprek').textContent     = t('tab_gesprek');
+      document.getElementById('tabOverwegingen').textContent = t('tab_overw');
+
+      // Apply language strings to topbar (full + short responsive labels)
+      document.getElementById('btnAdjust').querySelector('.label-full').textContent  = t('adjust');
+      document.getElementById('btnAdjust').querySelector('.label-short').textContent = t('adjust_short');
+      document.getElementById('btnReset').querySelector('.label-full').textContent   = t('reset');
+      document.getElementById('btnReset').querySelector('.label-short').textContent  = t('reset_short');
+      document.getElementById('btnExport').querySelector('.label-full').textContent  = t('export');
+      document.getElementById('btnExport').querySelector('.label-short').textContent = t('export_short');
+      document.getElementById('btnAdjust').setAttribute('aria-label', t('adjust'));
+      document.getElementById('btnReset').setAttribute('aria-label',  t('reset'));
+      document.getElementById('btnExport').setAttribute('aria-label', t('export'));
       document.getElementById('messageInput').placeholder = t('input_placeholder');
       document.getElementById('chatErrorTitle').textContent = t('error_title');
       document.getElementById('chatErrorBody').textContent  = t('error_body');
@@ -640,8 +729,15 @@
       const loc = intakeConfig.location || '';
       document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
 
-      // Welcome message
-      document.getElementById('welcomeBubble').textContent = t('welcome');
+      // Welcome message — location-aware for boom persona
+      const _loc = (intakeConfig.location || '').trim();
+      let _welcome;
+      if (currentPersona === 'boom') {
+        _welcome = _loc ? t('welcome_with_loc') + _loc + '?' : t('welcome_no_loc');
+      } else {
+        _welcome = t('welcome');
+      }
+      document.getElementById('welcomeBubble').textContent = _welcome;
 
       // Restore conversation from localStorage
       if (conversation.length > 0) {
@@ -813,6 +909,7 @@
 
           b.appendChild(titleEl); b.appendChild(bodyEl);
           container.appendChild(b);
+          container.scrollTop = container.scrollHeight;
         }, idx * 200);
       });
     }
@@ -1020,6 +1117,30 @@
       a.download = `ENT-gesprek-${new Date().toISOString().slice(0,10)}.txt`;
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    /* ══════════════════════════════════════
+       MOBILE TAB SWITCHER
+    ══════════════════════════════════════ */
+    function switchTab(tab) {
+      const chatCol  = document.querySelector('.chat-col');
+      const rightCol = document.querySelector('.right-col');
+      const tabG = document.getElementById('tabGesprek');
+      const tabE = document.getElementById('tabOverwegingen');
+      if (tab === 'gesprek') {
+        chatCol.classList.remove('mobile-hidden');
+        rightCol.classList.remove('mobile-active');
+        tabG.classList.add('active');
+        tabE.classList.remove('active');
+      } else {
+        chatCol.classList.add('mobile-hidden');
+        rightCol.classList.add('mobile-active');
+        tabG.classList.remove('active');
+        tabE.classList.add('active');
+        // Scroll overwegingen to latest entry
+        const oc = document.getElementById('overwContent');
+        if (oc) oc.scrollTop = oc.scrollHeight;
+      }
     }
   </script>
 </body>
