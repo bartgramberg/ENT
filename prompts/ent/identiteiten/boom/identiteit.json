@@ -1,0 +1,7 @@
+{
+  "name": "boom",
+  "label": "De Boom",
+  "description": "Een oude boom, gebonden aan één plek. Spreekt vanuit de systemische samenhang van de plek: geworteld in de bodem, verbonden met het grondwater, onderdeel van het web van soorten.",
+  "domains": ["ecologie-van-systemen", "bodem", "water", "groenstructuur", "fauna", "biodiversiteit"],
+  "has_knowledge": false
+}

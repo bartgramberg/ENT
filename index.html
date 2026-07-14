@@ -800,15 +800,17 @@
         <div class="field-group">
           <span class="field-label" data-i18n="q4_voice_label">Welke stem?</span>
           <div class="voice-grid">
-            <div class="voice-tile selected" role="radio" aria-checked="true" tabindex="0">
+            <div class="voice-tile selected" role="radio" aria-checked="true" tabindex="0"
+                 onclick="selectVoice(this,'boom')" onkeydown="voiceKey(event,this,'boom')">
               <img class="voice-img" src="/assets/images/Boom_mond_dicht.png" alt="De Boom">
               <span class="voice-name" data-i18n="q4_boom">De Boom</span>
               <span class="voice-sub"  data-i18n="q4_boom_sub">Geworteld, systemisch, geduldig</span>
             </div>
-            <div class="voice-tile coming-soon" role="presentation" aria-disabled="true" tabindex="-1">
+            <div class="voice-tile" role="radio" aria-checked="false" tabindex="0"
+                 onclick="selectVoice(this,'water')" onkeydown="voiceKey(event,this,'water')">
               <div class="voice-placeholder"><div class="voice-placeholder-dot"></div></div>
-              <span class="voice-name" data-i18n="q4_more">Meer natuur</span>
-              <span class="voice-sub"  data-i18n="q4_more_sub">Binnenkort</span>
+              <span class="voice-name" data-i18n="q4_water">Het Water</span>
+              <span class="voice-sub"  data-i18n="q4_water_sub">Stromend, verbindend, systemisch</span>
             </div>
           </div>
         </div>
@@ -881,12 +883,6 @@
 
     </div><!-- /card -->
   </div><!-- /page-wrap -->
-
-  <!-- Load compose.js as ES module, expose to global scope -->
-  <script type="module">
-    import { compose } from '/compose.js';
-    window._compose = compose;
-  </script>
 
   <script>
     /* ══════════════════════════════════════
@@ -1007,6 +1003,7 @@
         q4_subtitle: 'Hoe specifieker, hoe sterker de stem.',
         q4_voice_label: 'Welke stem?',
         q4_boom: 'De Boom', q4_boom_sub: 'Geworteld, systemisch, geduldig',
+        q4_water: 'Het Water', q4_water_sub: 'Stromend, verbindend, systemisch',
         q4_more: 'Meer natuur', q4_more_sub: 'Binnenkort',
         q4_location_label: 'Waar?',       q4_location_placeholder: 'Locatie, type plek...',
         q4_situation_label: 'Wat speelt er?', q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
@@ -1026,6 +1023,7 @@
         error_composing: 'Kon de sessie niet samenstellen. Probeer opnieuw.',
 
         voice_boom: 'de boom',
+        voice_water: 'het water',
         aud_self_prefix: 'spreekt met jou',
         aud_group_residents:     'spreekt tot bewoners',
         aud_group_professionals: 'spreekt tot professionals',
@@ -1040,6 +1038,7 @@
         purpose_explore: 'om te verkennen',
         purpose_other: 'voor een vrij gesprek',
         loading_boom: 'De boom luistert…',
+        loading_water: 'Het water luistert…',
         confirm_docs: '+ {n} projectdocument(en) geladen',
       },
       en: {
@@ -1085,6 +1084,7 @@
         q4_subtitle: 'The more specific, the stronger the voice.',
         q4_voice_label: 'Which voice?',
         q4_boom: 'The Tree',   q4_boom_sub: 'Rooted, systemic, patient',
+        q4_water: 'The Water', q4_water_sub: 'Flowing, connecting, systemic',
         q4_more: 'More nature', q4_more_sub: 'Coming soon',
         q4_location_label: 'Where?',          q4_location_placeholder: 'Location, type of site...',
         q4_situation_label: "What's happening there?", q4_situation_placeholder: 'The plan, project, or question on the table...',
@@ -1104,6 +1104,7 @@
         error_composing: 'Could not compose the session. Please try again.',
 
         voice_boom: 'the tree',
+        voice_water: 'the water',
         aud_self_prefix: 'speaks with you',
         aud_group_residents:     'speaks to residents',
         aud_group_professionals: 'speaks to professionals',
@@ -1118,6 +1119,7 @@
         purpose_explore: 'to explore',
         purpose_other: 'for a free conversation',
         loading_boom: 'The tree is listening…',
+        loading_water: 'The water is listening…',
         confirm_docs: '+ {n} project document(s) loaded',
       }
     };
@@ -1198,10 +1200,6 @@
         clearSelection('q2b-options');
         intake.audience_type    = null;
         intake.audience_details = '';
-        document.getElementById('q2b-details-field').hidden = true;
-        document.getElementById('q2b-continue-btn').hidden  = true;
-        document.getElementById('q2b-other-input').hidden   = true;
-        document.getElementById('q2b-audience-details').value = '';
         const first = document.querySelector('#q2b-options .option-tile');
         if (first) setTimeout(() => first.focus(), 50);
       } else {
@@ -1383,8 +1381,20 @@
       });
     }
 
+    function selectVoice(tile, name) {
+      intake.voice_subject = name;
+      document.querySelectorAll('.voice-grid .voice-tile').forEach(el => {
+        const on = el === tile;
+        el.classList.toggle('selected', on);
+        el.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    }
+    function voiceKey(e, tile, name) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectVoice(tile, name); }
+    }
+
     function buildConfirmSummary() {
-      const voice   = t('voice_boom');
+      const voice   = t('voice_' + (intake.voice_subject || 'boom'));
       const purpose = t('purpose_' + (intake.purpose || 'explore'));
       const loc     = intake.location ? ` in ${intake.location}` : '';
       const sitSnip = intake.situation
@@ -1415,7 +1425,7 @@
     }
 
     /* ══════════════════════════════════════
-       START SESSION — localStorage + compose.js
+       START SESSION — store intake config, hand off to /demo
     ══════════════════════════════════════ */
     async function startSession() {
       const btn    = document.querySelector('.btn-start');
@@ -1424,7 +1434,7 @@
       status.textContent = '';
       status.className   = 'confirm-status';
 
-      document.getElementById('loadingText').textContent = t('loading_boom');
+      document.getElementById('loadingText').textContent = t('loading_' + (intake.voice_subject || 'boom'));
       document.getElementById('loadingOverlay').classList.add('visible');
 
       const config = {
@@ -1443,18 +1453,9 @@
       };
 
       try {
-        // Wait for compose module to be ready (it's a module import — usually instant)
-        let attempts = 0;
-        while (!window._compose && attempts++ < 20) {
-          await new Promise(r => setTimeout(r, 100));
-        }
-        if (!window._compose) throw new Error('compose not loaded');
-
-        const systemPrompt = await window._compose(config);
-
-        // Store to localStorage
+        // The system prompt is composed server-side (netlify/functions/chat.mjs);
+        // the client only stores the intake config and sends it with each turn.
         localStorage.setItem('ent_intake_config',  JSON.stringify(config));
-        localStorage.setItem('ent_system_prompt',  systemPrompt);
         localStorage.setItem('ent_session_id',     crypto.randomUUID ? crypto.randomUUID() : Date.now().toString());
         localStorage.setItem('ent_password_verified', 'true');
 
@@ -1528,9 +1529,15 @@
     ══════════════════════════════════════ */
     function checkAdjustMode() {
       if (!isAdjustMode) return;
-      // Start at Q1 — user re-does the full intake from scratch.
-      // isAdjustMode stays true so startSession() preserves the existing conversation.
-      goTo(1);
+      // Prefill the intake from the saved config so the user adjusts rather than
+      // restarts. isAdjustMode stays true so startSession() preserves the conversation.
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem('ent_intake_config') || 'null'); } catch (e) {}
+      if (saved) {
+        applyConfig(saved);   // preselects answers and lands on the confirm screen
+      } else {
+        goTo(1);              // no saved config — fall back to a fresh intake
+      }
     }
 
     /* ══════════════════════════════════════

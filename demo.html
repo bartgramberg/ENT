@@ -603,7 +603,6 @@
        STATE — loaded from localStorage
     ══════════════════════════════════════ */
     const intakeConfig  = JSON.parse(localStorage.getItem('ent_intake_config') || '{}');
-    const systemPrompt  = localStorage.getItem('ent_system_prompt') || '';
     const password      = localStorage.getItem('ent_password') || '';
     let   conversation  = JSON.parse(localStorage.getItem('ent_conversation') || '[]');
     let   usage         = JSON.parse(localStorage.getItem('ent_usage') || '{"input_tokens":0,"output_tokens":0,"requests":0}');
@@ -636,39 +635,27 @@
       nl: {
         tab_gesprek:   'Gesprek',
         tab_overw:     'Overwegingen',
-        welcome_no_loc:   'Ik heb de tijd. Wat speelt er bij jullie?',
-        welcome_with_loc: 'Ik heb de tijd. Wat speelt er rond ',
         adjust:        'Setup aanpassen',
         adjust_short:  'Setup',
         reset:         'Gesprek wissen',
         reset_short:   'Wissen',
         export:        'Exporteren',
         export_short:  'Export',
-        error_title:   'De boom rust.',
         error_body:    'Er is een tijdelijke fout opgetreden. Probeer het opnieuw.',
         error_retry:   'Opnieuw proberen',
-        thinking:      'Boom overweegt',
-        welcome:       'Ik sta hier al langer dan dit plan bestaat. Stel mij voor aan de plek, of stel je eerste vraag.',
-        overw_empty:   'Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.',
         input_placeholder: 'Stel een vraag of deel iets',
       },
       en: {
         tab_gesprek:   'Conversation',
         tab_overw:     'Considerations',
-        welcome_no_loc:   'I have time. What\'s happening with you?',
-        welcome_with_loc: 'I have time. What\'s happening around ',
         adjust:        'Adjust setup',
         adjust_short:  'Setup',
         reset:         'Clear conversation',
         reset_short:   'Clear',
         export:        'Export',
         export_short:  'Export',
-        error_title:   'The tree is resting.',
         error_body:    'A temporary error occurred. Please try again.',
         error_retry:   'Retry',
-        thinking:      'Tree is considering',
-        welcome:       "I have stood here longer than this plan has existed. Introduce me to the place, or ask your first question.",
-        overw_empty:   'Ecological facts and considerations appear here once the Tree has responded.',
         input_placeholder: 'Ask a question or share something',
       }
     };
@@ -676,22 +663,45 @@
     function t(key) { return (STRINGS[currentLang] || STRINGS.nl)[key] || key; }
 
     /* ══════════════════════════════════════
-       PERSONA CONFIG
+       IDENTITEIT CONFIG (UI-presentatie per identiteit)
+       Identiteit-specifieke UI-tekst en portret. De prompt-inhoud
+       (identity.md/voice.md) leeft server-side; dit is alleen presentatie.
     ══════════════════════════════════════ */
+    const EN = currentLang === 'en';
+    // Inline droplet as placeholder portrait for identities without an image.
+    const WATER_IMG = 'data:image/svg+xml,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc3d6"/><stop offset="1" stop-color="#3f6b80"/></linearGradient></defs><path d="M50 10C50 10 22 46 22 66a28 28 0 0 0 56 0C78 46 50 10 50 10Z" fill="url(#w)"/></svg>');
+
     const PERSONA = {
-      egel: {
-        title:       'ENT — Egel',
-        personaName: 'De Egel',
-        imgDicht:    '/assets/images/Egel_mond_dicht.png',
-        imgOpen:     '/assets/images/Egel_mond_open.png',
-      },
       boom: {
-        title:       'ENT — Boom als vertegenwoordiger van de natuur',
-        personaName: currentLang === 'en' ? 'The Tree' : 'De Boom',
-        imgDicht:    '/assets/images/Boom_mond_dicht.png',
-        imgOpen:     '/assets/images/Boom_mond_open.png',
-      }
+        title:        'ENT — Boom als vertegenwoordiger van de natuur',
+        personaName:  EN ? 'The Tree' : 'De Boom',
+        imgDicht:     '/assets/images/Boom_mond_dicht.png',
+        imgOpen:      '/assets/images/Boom_mond_open.png',
+        thinking:     EN ? 'The tree is considering' : 'De boom overweegt',
+        errorTitle:   EN ? 'The tree is resting.' : 'De boom rust.',
+        overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Tree has responded.'
+                         : 'Ecologische feiten en afwegingen verschijnen hier zodra de Boom heeft gereageerd.',
+        welcomeNoLoc: EN ? "I have time. What's happening with you?" : 'Ik heb de tijd. Wat speelt er bij jullie?',
+        welcomeLoc:   (loc) => EN ? `I have time. What's happening around ${loc}?`
+                                  : `Ik heb de tijd. Wat speelt er rond ${loc}?`,
+      },
+      water: {
+        title:        'ENT — Water als vertegenwoordiger van de natuur',
+        personaName:  EN ? 'The Water' : 'Het Water',
+        imgDicht:     WATER_IMG,
+        imgOpen:      WATER_IMG,
+        thinking:     EN ? 'The water is considering' : 'Het water overweegt',
+        errorTitle:   EN ? 'The water withdraws.' : 'Het water trekt zich terug.',
+        overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Water has responded.'
+                         : 'Ecologische feiten en afwegingen verschijnen hier zodra het Water heeft gereageerd.',
+        welcomeNoLoc: EN ? "I flow through this place and far beyond. What's happening, and where does it go?"
+                         : 'Ik stroom door deze plek en ver daarbuiten. Wat speelt er, en waar gaat het heen?',
+        welcomeLoc:   (loc) => EN ? `I flow through ${loc} and far beyond. What's happening, and where does it go?`
+                                  : `Ik stroom door ${loc} en ver daarbuiten. Wat speelt er, en waar gaat het heen?`,
+      },
     };
+    const cfg = PERSONA[currentPersona] || PERSONA.boom;
 
     /* ══════════════════════════════════════
        INIT
@@ -712,32 +722,26 @@
       document.getElementById('btnReset').setAttribute('aria-label',  t('reset'));
       document.getElementById('btnExport').setAttribute('aria-label', t('export'));
       document.getElementById('messageInput').placeholder = t('input_placeholder');
-      document.getElementById('chatErrorTitle').textContent = t('error_title');
+      document.getElementById('chatErrorTitle').textContent = cfg.errorTitle;
       document.getElementById('chatErrorBody').textContent  = t('error_body');
       document.getElementById('chatErrorRetry').textContent = t('error_retry');
 
-      // Apply persona
-      const cfg = PERSONA[currentPersona] || PERSONA.boom;
+      // Apply identiteit (portret + naam)
       document.title = cfg.title;
       document.getElementById('personaName').textContent = cfg.personaName;
       document.getElementById('imgDicht').src = cfg.imgDicht;
       document.getElementById('imgOpen').src  = cfg.imgOpen;
       document.getElementById('chatError').querySelector('.chat-error-img').src = cfg.imgDicht;
-      document.getElementById('overwEmpty').textContent = t('overw_empty');
+      document.getElementById('overwEmpty').textContent = cfg.overwEmpty;
 
       // Location
       const loc = intakeConfig.location || '';
       document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
 
-      // Welcome message — location-aware for boom persona
+      // Welcome message — identiteit-specifiek, locatie-bewust
       const _loc = (intakeConfig.location || '').trim();
-      let _welcome;
-      if (currentPersona === 'boom') {
-        _welcome = _loc ? t('welcome_with_loc') + _loc + '?' : t('welcome_no_loc');
-      } else {
-        _welcome = t('welcome');
-      }
-      document.getElementById('welcomeBubble').textContent = _welcome;
+      document.getElementById('welcomeBubble').textContent =
+        _loc ? cfg.welcomeLoc(_loc) : cfg.welcomeNoLoc;
 
       // Restore conversation from localStorage
       if (conversation.length > 0) {
@@ -768,8 +772,7 @@
        ADJUST SETUP
     ══════════════════════════════════════ */
     function adjustSetup() {
-      // Store config in sessionStorage so onboarding can pick it up
-      try { sessionStorage.setItem('ent_intake', localStorage.getItem('ent_intake_config') || '{}'); } catch(e) {}
+      // Onboarding prefills from localStorage['ent_intake_config'] via ?adjust=true.
       window.location.href = '/?adjust=true';
     }
 
@@ -848,7 +851,7 @@
       const div = document.createElement('div');
       div.className = 'bubble ent thinking thinking-dots';
       div.id = id;
-      div.textContent = t('thinking');
+      div.textContent = cfg.thinking;
       document.getElementById('chatMessages').appendChild(div);
       scrollChat();
       return id;
@@ -964,7 +967,7 @@
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, messages, system: systemPrompt })
+        body: JSON.stringify({ password, messages, config: intakeConfig })
       })
       .then(async res => {
         removeThinkingBubble(thinkingId);

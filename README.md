@@ -11,23 +11,24 @@ ENT is an AI conversation tool by Protopia Studio. A user converses with the Tre
    npm install -g netlify-cli
    ```
 
-2. Copy the env template:
+2. Link the repo to the Netlify site (pulls the env vars — API key + access password — automatically):
+   ```bash
+   netlify link --name ent-demo
+   ```
+   Alternatively, copy the env template and fill it in locally:
    ```bash
    cp .env.example .env
+   # then set ANTHROPIC_API_KEY and ENT_ACCESS_PASSWORD in .env
    ```
 
-3. Open `.env` and paste your Anthropic API key plus a chosen access password:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-...
-   ENT_ACCESS_PASSWORD=your-chosen-password
-   ```
-
-4. Start the dev server:
+3. Start the dev server:
    ```bash
    netlify dev
    ```
 
-5. Open [http://localhost:8888](http://localhost:8888)
+4. Open [http://localhost:8888](http://localhost:8888)
+
+> Note: a local `.env` **overrides** the linked Netlify project's variables. If you've run `netlify link`, don't keep an empty `.env` around — it will inject blank values.
 
 ---
 
@@ -41,34 +42,19 @@ Set environment variables via the **Netlify dashboard → Site settings → Envi
 
 ---
 
-## Run locally (Python — fallback)
-
-The original Python server is preserved for local development without Netlify CLI:
-
-```bash
-cd src
-export ANTHROPIC_API_KEY=sk-ant-...
-python3 server.py
-```
-
-Open: [http://localhost:8766](http://localhost:8766)
-
----
-
 ## Architecture
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Password gate + five-step onboarding |
-| `demo.html` | Chat interface with Tree |
-| `console.html` | Legacy operator console (no Netlify routing) |
+| `index.html` | Password gate + four-step onboarding |
+| `demo.html` | Chat interface with the Tree |
 | `compose.js` | Client-side prompt assembly from modular markdown files |
-| `netlify/functions/chat.js` | Stateless Anthropic API proxy |
+| `netlify/functions/chat.mjs` | Stateless Anthropic API proxy |
 | `netlify.toml` | Netlify build config + redirects |
-| `src/server.py` | Python server (local fallback) |
-| `src/compose.py` | Python prompt assembly (source of truth for compose.js) |
 | `prompts/ent/` | Modular voice, audience, purpose and format prompt files |
 | `assets/images/` | Avatar and background images |
+
+The password is verified server-side by `chat.mjs` against `ENT_ACCESS_PASSWORD` on every `/api/chat` request. The onboarding gate is a client-side overlay; the real access control is in the function.
 
 ---
 
@@ -77,9 +63,8 @@ Open: [http://localhost:8766](http://localhost:8766)
 ```
 /index.html
 /demo.html
-/console.html
 /compose.js
-/netlify/functions/chat.js
+/netlify/functions/chat.mjs
 /netlify.toml
 /.env.example
 /prompts/ent/voices/
@@ -87,17 +72,11 @@ Open: [http://localhost:8766](http://localhost:8766)
 /prompts/ent/purposes/
 /prompts/ent/format/
 /assets/images/
-/src/server.py
-/src/compose.py
-/src/ENT_onboarding_v1.html
-/src/ENT_demo_v8.html
-/src/ENT_console_v8.html
 ```
 
 ---
 
 ## Requirements
 
-- **Netlify deploy**: Node 18+, Netlify CLI, Anthropic API key
-- **Python fallback**: Python 3.8+, Anthropic API key
+- Node 18+, Netlify CLI, an Anthropic API key
 - Internet connection (for API calls and location autocomplete via OpenStreetMap)

@@ -1,0 +1,7 @@
+{
+  "name": "water",
+  "label": "Het Water",
+  "description": "Het water als doorlopend systeem — regen, grondwater, kwel, sloot, gracht, getij, zee. Niet gebonden aan één plek maar de beweging die plekken verbindt. Ziet het watersysteem als centrale pijler van de plek.",
+  "domains": ["water", "bodem", "klimaatadaptatie", "biodiversiteit", "ecologie-van-systemen"],
+  "has_knowledge": false
+}

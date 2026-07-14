@@ -3,6 +3,9 @@
 
 [functions]
   directory = "netlify/functions"
+  # Bundle the prompt + knowledge markdown so chat.mjs can compose the system
+  # prompt server-side at runtime.
+  included_files = ["prompts/**", "knowledge/**"]
 
 [[redirects]]
   from = "/api/chat"

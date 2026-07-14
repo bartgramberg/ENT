@@ -1,24 +1,42 @@
 /**
- * netlify/functions/chat.js
+ * netlify/functions/chat.mjs
  * Stateless proxy to the Anthropic API for the ENT public demo.
  *
  * Accepts POST with JSON body:
- *   { password, messages, system }
+ *   { password, messages, config }
+ *
+ * The system prompt is composed server-side from `config` (see lib/compose.mjs)
+ * so the knowledge layer and the full prompt are never shipped to the browser,
+ * and the stable prefix can be prompt-cached across sessions.
  *
  * Returns:
- *   200 { stem, overwegingen, usage }
+ *   200 { stem, overwegingen, usage, stop_reason }
  *   401 { error: "Ongeldig wachtwoord" }
  *   500 { error: "Server is not configured. Missing env var: <name>. See README." }
  *   503 { error: "<message>" }   — on Anthropic API failure
  */
 
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-const MODEL         = "claude-sonnet-4-6";
-const MAX_TOKENS    = 700;
+import { compose } from "./lib/compose.mjs";
+
+const MODEL      = "claude-sonnet-5";
+const MAX_TOKENS = 1024;
+
+// Honour a provider base URL if one is injected (e.g. Netlify AI Gateway sets
+// ANTHROPIC_BASE_URL + a gateway-scoped ANTHROPIC_API_KEY). Otherwise call the
+// Anthropic API directly.
+function anthropicUrl() {
+  const base = (process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com").replace(/\/+$/, "");
+  return `${base}/v1/messages`;
+}
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+function json(body, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
 
 /**
  * Parse the [OVERWEGINGEN] block into structured title/body objects.
- * Mirrors parse_overwegingen() in src/server.py.
  */
 function parseOverwegingen(raw) {
   const blocks = [];
@@ -38,29 +56,24 @@ function parseOverwegingen(raw) {
 }
 
 export default async function handler(req, context) {
-  // Only POST is supported
+  // Preflight — the frontend is same-origin, but answer OPTIONS cleanly.
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204 });
+  }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Method not allowed" }, 405);
   }
 
-  // Check env vars first — fail fast with a clear error
-  const apiKey  = process.env.ANTHROPIC_API_KEY;
-  const envPass = process.env.ENT_ACCESS_PASSWORD;
-
+  // Check env vars first — fail fast with a clear error.
+  // Trim to defend against a trailing newline/space in the stored value
+  // (a common paste artifact that yields "invalid x-api-key").
+  const apiKey  = (process.env.ANTHROPIC_API_KEY  || "").trim();
+  const envPass = (process.env.ENT_ACCESS_PASSWORD || "").trim();
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: "Server is not configured. Missing env var: ANTHROPIC_API_KEY. See README." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return json({ error: "Server is not configured. Missing env var: ANTHROPIC_API_KEY. See README." }, 500);
   }
   if (!envPass) {
-    return new Response(
-      JSON.stringify({ error: "Server is not configured. Missing env var: ENT_ACCESS_PASSWORD. See README." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return json({ error: "Server is not configured. Missing env var: ENT_ACCESS_PASSWORD. See README." }, 500);
   }
 
   // Parse body
@@ -68,49 +81,52 @@ export default async function handler(req, context) {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { password, messages, system } = body;
+  const { password, messages, config } = body;
 
   // Verify password
   if (!password || password !== envPass) {
-    return new Response(JSON.stringify({ error: "Ongeldig wachtwoord" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Ongeldig wachtwoord" }, 401);
   }
 
   // Validate messages
   if (!Array.isArray(messages)) {
-    return new Response(JSON.stringify({ error: "messages must be an array" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "messages must be an array" }, 400);
   }
 
-  // Password ping (empty messages = auth check only)
+  // Password ping (empty messages = auth check only) — no compose needed
   if (messages.length === 0) {
-    return new Response(JSON.stringify({ status: "ok" }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ status: "ok" });
+  }
+
+  // Compose the system prompt server-side. Two cache breakpoints:
+  //  - stable prefix (voice + knowledge) is byte-identical across sessions
+  //  - session block is stable within one conversation (cached across turns)
+  let system;
+  try {
+    const { stable, session } = await compose(config || {});
+    system = [];
+    if (stable)  system.push({ type: "text", text: stable,  cache_control: { type: "ephemeral" } });
+    if (session) system.push({ type: "text", text: session, cache_control: { type: "ephemeral" } });
+  } catch (err) {
+    console.error("compose error:", err);
+    return json({ error: "Kon de systeemprompt niet samenstellen." }, 500);
   }
 
   // Call Anthropic API
   const anthropicBody = {
     model:      MODEL,
     max_tokens: MAX_TOKENS,
+    thinking:   { type: "disabled" }, // keep the fast single-shot behaviour on Sonnet 5
     messages,
   };
-  if (system) anthropicBody.system = system;
+  if (system.length) anthropicBody.system = system;
 
   let anthropicRes;
   try {
-    anthropicRes = await fetch(ANTHROPIC_URL, {
+    anthropicRes = await fetch(anthropicUrl(), {
       method: "POST",
       headers: {
         "Content-Type":      "application/json",
@@ -120,13 +136,12 @@ export default async function handler(req, context) {
       body: JSON.stringify(anthropicBody),
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: `Netwerkfout: ${err.message}` }), {
-      status: 503,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("Anthropic network error:", err);
+    return json({ error: "Netwerkfout bij het bereiken van de API. Probeer het opnieuw." }, 503);
   }
 
   if (!anthropicRes.ok) {
+    // Log the upstream detail server-side; do not leak it to the client.
     let detail = "";
     try {
       const errBody = await anthropicRes.json();
@@ -134,24 +149,23 @@ export default async function handler(req, context) {
     } catch {
       detail = await anthropicRes.text().catch(() => "");
     }
-    return new Response(
-      JSON.stringify({ error: `Anthropic API fout ${anthropicRes.status}: ${detail}` }),
-      { status: 503, headers: { "Content-Type": "application/json" } }
-    );
+    console.error(`Anthropic API ${anthropicRes.status}: ${detail}`);
+    return json({ error: `De boom rust even (${anthropicRes.status}). Probeer het zo opnieuw.` }, 503);
   }
 
   let result;
   try {
     result = await anthropicRes.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Kon API-antwoord niet lezen" }), {
-      status: 503,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "Kon API-antwoord niet lezen" }, 503);
   }
 
-  const fullText = result?.content?.[0]?.text || "";
-  const usage    = result?.usage || { input_tokens: 0, output_tokens: 0 };
+  // Concatenate all text blocks (defensive — usually one).
+  const fullText = Array.isArray(result?.content)
+    ? result.content.filter(b => b?.type === "text").map(b => b.text).join("")
+    : "";
+  const usage      = result?.usage || { input_tokens: 0, output_tokens: 0 };
+  const stopReason = result?.stop_reason || null;
 
   let stem, overwegingen;
   if (fullText.includes("[OVERWEGINGEN]")) {
@@ -159,12 +173,11 @@ export default async function handler(req, context) {
     stem         = stemPart.trim();
     overwegingen = parseOverwegingen(overwegingenPart.trim());
   } else {
+    // No marker — either the model skipped it, or the reply was cut off at
+    // max_tokens before reaching it. Return what we have; flag truncation.
     stem         = fullText.trim();
     overwegingen = [];
   }
 
-  return new Response(
-    JSON.stringify({ stem, overwegingen, usage }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
+  return json({ stem, overwegingen, usage, stop_reason: stopReason });
 }
