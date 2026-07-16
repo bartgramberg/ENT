@@ -899,6 +899,7 @@
       purpose_other:    '',
       voice_subject:    'boom',
       location:         '',
+      locationId:       null,
       situation:        '',
       documents:        []
     };
@@ -1394,24 +1395,18 @@
     }
 
     function buildConfirmSummary() {
+      const nl      = intake.lang === 'nl';
       const voice   = t('voice_' + (intake.voice_subject || 'boom'));
-      const purpose = t('purpose_' + (intake.purpose || 'explore'));
-      const loc     = intake.location ? ` in ${intake.location}` : '';
       const sitSnip = intake.situation
-        ? (intake.situation.length > 60 ? intake.situation.slice(0, 57) + '…' : intake.situation)
+        ? (intake.situation.length > 80 ? intake.situation.slice(0, 77) + '…' : intake.situation)
         : '';
-      const sitPart = sitSnip ? ` — "${sitSnip}"` : '';
 
-      let audPart;
-      if (intake.audience_mode === 'self') {
-        audPart = t('aud_self_prefix');
-      } else {
-        const key = 'aud_group_' + (intake.audience_type || 'mixed');
-        audPart = t(key);
-      }
-
-      const summary = (intake.lang === 'nl' ? 'Zo: ' : 'So: ')
-        + `${voice}${loc} ${audPart}${sitPart} ${purpose}.`;
+      // Lopende zin, geen label, geen em dash:
+      // "Je gaat in gesprek met de boom op <locatie> over <situatie>."
+      let summary = nl ? `Je gaat in gesprek met ${voice}` : `You're going to talk with ${voice}`;
+      if (intake.location) summary += (nl ? ' op ' : ' at ') + intake.location;
+      if (sitSnip)         summary += (nl ? ' over ' : ' about ') + sitSnip;
+      summary += '.';
 
       document.getElementById('confirmSummary').textContent = summary;
 
@@ -1447,6 +1442,7 @@
         purpose_other:    intake.purpose_other,
         voice_subject:    intake.voice_subject,
         location:         intake.location,
+        location_id:      intake.locationId,
         situation:        intake.situation,
         documents:        intake.documents,
         lang:             intake.lang,
@@ -1458,7 +1454,12 @@
         try {
           const ctrl = new AbortController();
           const to   = setTimeout(() => ctrl.abort(), 8000);
-          const r    = await fetch('/api/analyse?location=' + encodeURIComponent(intake.location), { signal: ctrl.signal });
+          // Prefer the exact PDOK id from the autocomplete pick (unambiguous);
+          // fall back to the free-text location if the user typed it by hand.
+          const qs   = intake.locationId
+            ? 'id=' + encodeURIComponent(intake.locationId)
+            : 'location=' + encodeURIComponent(intake.location);
+          const r    = await fetch('/api/analyse?' + qs, { signal: ctrl.signal });
           clearTimeout(to);
           if (r.ok) {
             const prof = await r.json();
@@ -1504,6 +1505,7 @@
       intake.purpose_other    = '';
       intake.voice_subject    = 'boom';
       intake.location         = '';
+      intake.locationId       = null;
       intake.situation        = '';
       intake.documents        = [];
       // Go straight to demo
@@ -1517,6 +1519,7 @@
       if (cfg.audience_details) intake.audience_details = cfg.audience_details;
       if (cfg.purpose)          intake.purpose          = cfg.purpose;
       if (cfg.location)         intake.location         = cfg.location;
+      if (cfg.location_id)      intake.locationId       = cfg.location_id;
       if (cfg.situation)        intake.situation        = cfg.situation;
       if (cfg.lang)             setLang(cfg.lang);
 
@@ -1563,23 +1566,24 @@
     function handleLocationInput() {
       clearTimeout(suggestTimer);
       const val = document.getElementById('q4-location').value.trim();
+      // Typing invalidates any previously picked suggestion id.
+      intake.locationId = null;
       if (!val || val.length < 2) { hideSuggestions(); return; }
       suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
     }
 
+    // PDOK Locatieserver — same geocoder the server uses for the hyperlocal scan,
+    // so the picked place resolves identically (no Amstelveen-for-Leusden drift).
     async function fetchSuggestions(query) {
       try {
         const resp = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=nl`,
-          { headers: { 'Accept-Language': intake.lang } }
+          `https://api.pdok.nl/bzk/locatieserver/search/v3_1/suggest?q=${encodeURIComponent(query)}&rows=6`
         );
         if (!resp.ok) return;
-        const results = await resp.json();
-        if (!results.length) { hideSuggestions(); return; }
-        renderSuggestions(results.map(r => {
-          const parts = r.display_name.split(',').map(s => s.trim());
-          return { label: parts.slice(0,3).join(', '), value: parts.slice(0,2).join(', ') };
-        }));
+        const data = await resp.json();
+        const docs = (data && data.response && data.response.docs) || [];
+        if (!docs.length) { hideSuggestions(); return; }
+        renderSuggestions(docs.map(d => ({ label: d.weergavenaam, value: d.weergavenaam, id: d.id })));
       } catch(e) { hideSuggestions(); }
     }
 
@@ -1592,7 +1596,8 @@
         div.textContent = item.label;
         div.onmousedown = () => {
           document.getElementById('q4-location').value = item.value;
-          intake.location = item.value;
+          intake.location   = item.value;
+          intake.locationId = item.id || null;
           hideSuggestions(true);
         };
         box.appendChild(div);

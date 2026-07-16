@@ -283,12 +283,25 @@
     }
     .persona-location-dot { font-size: 10px; }
     .systeemscan {
-      margin-top: 10px; padding: 10px 12px; max-width: 260px; text-align: left;
+      margin-top: 14px; padding: 10px 12px; text-align: left;
       background: rgba(72,115,91,0.06); border: 1px solid var(--border-light);
       border-radius: 8px; font-size: 11px; line-height: 1.55; color: var(--color-text-mid);
     }
     .systeemscan b { color: var(--color-green); font-weight: 600; }
-    .systeemscan .gaps { color: var(--color-text-light); font-style: italic; margin-top: 4px; }
+    .systeemscan .src-details { margin-top: 6px; }
+    .systeemscan .src-details summary {
+      cursor: pointer; color: var(--color-green); font-weight: 600;
+      list-style: none; user-select: none;
+    }
+    .systeemscan .src-details summary::-webkit-details-marker { display: none; }
+    .systeemscan .src-details summary::after { content: ' ▾'; font-size: 9px; }
+    .systeemscan .src-details[open] summary::after { content: ' ▴'; }
+    .systeemscan .src-list { list-style: none; margin: 6px 0 0; padding: 0; }
+    .systeemscan .src-list li { padding: 2px 0 2px 16px; position: relative; }
+    .systeemscan .src-on::before  { content: '●'; position: absolute; left: 0; top: 3px; font-size: 8px; color: var(--color-green); }
+    .systeemscan .src-off { color: var(--color-text-light); }
+    .systeemscan .src-off::before { content: '○'; position: absolute; left: 0; top: 3px; font-size: 8px; color: var(--color-text-light); }
+    .systeemscan .src-date { color: var(--color-text-light); font-weight: 400; }
 
     /* Overwegingen */
     .overw-section {
@@ -725,13 +738,34 @@
         if (p.terrain.relief) t += ' (' + esc(p.terrain.relief.ligging) + ')';
         parts.push(t);
       }
+      if (p.soil && (p.soil.bodemnaam || p.soil.bodemcode)) {
+        const bnaam = (p.soil.bodemnaam || '').split(';')[0].trim() || p.soil.bodemcode;
+        parts.push('· ' + esc(bnaam));
+      }
       const n2k = p.protected_areas && p.protected_areas.natura2000;
       if (n2k) parts.push('· ' + (n2k.in_gebied ? 'Natura 2000: ' + esc(n2k.naam || 'ja') : 'buiten Natura 2000'));
-      const nBron = (p.provenance || []).length, nGap = (p.data_gaps || []).length;
-      let foot = '';
-      if (nBron) foot += nBron + ' bron' + (nBron > 1 ? 'nen' : '');
-      if (nGap)  foot += (foot ? ' · ' : '') + nGap + ' nog niet opgehaald';
-      el.innerHTML = parts.join(' ') + (foot ? '<div class="gaps">' + esc(foot) + '</div>' : '');
+
+      // Bronnen als klikbare dropdown: aantal gelinkte bronnen; open toont welke
+      // bronnen zijn gebruikt (●) en, indien van toepassing, welke niet (○).
+      const prov = p.provenance || [];
+      let dropdown = '';
+      if (prov.length) {
+        const linked = prov.map(s =>
+          '<li class="src-on">' + esc(s.dataset) +
+          (s.retrieved ? ' <span class="src-date">' + esc(s.retrieved) + '</span>' : '') + '</li>'
+        ).join('');
+        const GAP_NL = { soil:'bodem', groundwater:'grondwater', climate_pressures:'klimaat',
+          species_observations:'soorten', terrain:'maaiveld', protected_areas:'beschermde gebieden' };
+        const gaps = (p.data_gaps || []).map(g => {
+          const key = String(g).split(' (')[0].trim();
+          return '<li class="src-off">' + esc(GAP_NL[key] || key) + '</li>';
+        }).join('');
+        const n = prov.length;
+        dropdown =
+          '<details class="src-details"><summary>' + n + ' bron' + (n > 1 ? 'nen' : '') + '</summary>' +
+          '<ul class="src-list">' + linked + gaps + '</ul></details>';
+      }
+      el.innerHTML = parts.join(' ') + dropdown;
       el.hidden = false;
     }
 
@@ -1026,9 +1060,19 @@
           return;
         }
 
-        // Append to conversation
+        // Append to conversation. Store the assistant turn as clean plain text
+        // in the model's own two-lens format — never JSON (that would teach the
+        // model to emit JSON) and never empty (an empty history turn makes the
+        // next API call 400 → the "de boom rust" error on turn 2).
         conversation.push({ role: 'user', content: message });
-        conversation.push({ role: 'assistant', content: (data.stem || '') + (data.overwegingen?.length ? '\n\n[OVERWEGINGEN]\n' + JSON.stringify(data.overwegingen) : '') });
+        const _overwText = (data.overwegingen || [])
+          .map(o => (o.title && o.body && o.title !== o.body) ? (o.title + '\n' + o.body) : (o.body || o.title || ''))
+          .filter(Boolean).join('\n\n');
+        const _assistantText = [
+          (data.stem || '').trim(),
+          _overwText ? '[OVERWEGINGEN]\n\n' + _overwText : ''
+        ].filter(Boolean).join('\n\n') || '…';
+        conversation.push({ role: 'assistant', content: _assistantText });
 
         // Update usage
         const newUsage = data.usage || {};

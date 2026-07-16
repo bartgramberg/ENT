@@ -28,13 +28,14 @@
     },
     "bodemkaart": {
       "owner": "BRO / PDOK",
-      "dataset": "BRO Bodemkaart (SGM)",
+      "dataset": "BRO Bodemkaart 1:50.000",
       "license": "CC BY 4.0",
-      "wms": "",
-      "layer": "",
+      "wms": "https://service.pdok.nl/bzk/bro-bodemkaart/wms/v1_0",
+      "layer": "soilarea",
       "resolution": "1:50.000",
-      "kind": "gemodelleerd",
-      "status": "endpoint-te-bevestigen"
+      "kind": "gekarteerd",
+      "codeProperty": "soilcode",
+      "naamProperty": "first_soilname"
     },
     "grondwaterspiegeldiepte": {
       "owner": "BRO / PDOK",

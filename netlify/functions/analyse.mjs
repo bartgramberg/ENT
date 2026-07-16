@@ -15,7 +15,7 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { geocode, ahnHeight, wfsIntersect } from "./lib/geo.mjs";
+import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
 import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel } from "./lib/systeemprofiel.mjs";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
@@ -65,8 +65,9 @@ export default async function handler(req) {
 
   const url = new URL(req.url);
   const locationText = (url.searchParams.get("location") || "").trim();
+  const idParam = (url.searchParams.get("id") || "").trim(); // PDOK Locatieserver-id (exact)
   const rdParam = url.searchParams.get("rd"); // "x,y"
-  if (!locationText && !rdParam) return json({ error: "location of rd vereist" }, 400);
+  if (!locationText && !idParam && !rdParam) return json({ error: "location, id of rd vereist" }, 400);
 
   const cfg = await bronnen();
   const S = cfg.sources || {};
@@ -77,13 +78,20 @@ export default async function handler(req) {
   const t0 = Date.now();
 
   // 1) Geocoding + administratieve context
+  const lsUrl = S.locatieserver?.url || "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free";
+  const lookupUrl = lsUrl.replace(/\/free\/?$/, "/lookup");
   let geo = null;
   if (rdParam) {
     const [x, y] = rdParam.split(",").map((n) => parseFloat(n));
     if (Number.isFinite(x) && Number.isFinite(y)) geo = { weergavenaam: `RD ${x}, ${y}`, rd: { x, y }, ll: null };
   }
+  // Voorkeur: exact id uit de autocomplete (ondubbelzinnig). Anders vrije tekst.
+  if (!geo && idParam) {
+    geo = await safe("geocoding", () => lookupById(idParam, { url: lookupUrl, timeoutMs: 3000 }), { provenance, data_gaps, meta });
+    if (geo) provenance.push({ dataset: S.locatieserver?.dataset || "PDOK Locatieserver", retrieved: TODAY() });
+  }
   if (!geo && locationText) {
-    geo = await safe("geocoding", () => geocode(locationText, { url: S.locatieserver?.url, timeoutMs: 3000 }), { provenance, data_gaps, meta });
+    geo = await safe("geocoding", () => geocode(locationText, { url: lsUrl, timeoutMs: 3000 }), { provenance, data_gaps, meta });
     if (geo) provenance.push({ dataset: S.locatieserver?.dataset || "PDOK Locatieserver", retrieved: TODAY() });
   }
   if (!geo || !geo.rd) {
@@ -95,17 +103,26 @@ export default async function handler(req) {
   const gebied = bepaalOnderzoeksgebied(locationText || geo.weergavenaam || geo.gemeente || "");
 
   // 3) Parallelle bronnen (graceful degradation)
-  const [terrain, natura2000] = await Promise.all([
+  const [terrain, natura2000, soil] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
       if (!S.ahn?.wms) { data_gaps.push("terrain (AHN niet geconfigureerd)"); return {}; }
       const off = 50;
       const pts = [rd, { x: rd.x, y: rd.y + off }, { x: rd.x + off, y: rd.y }, { x: rd.x, y: rd.y - off }, { x: rd.x - off, y: rd.y }];
-      const hs = await safe("terrain", () => Promise.all(pts.map((p) => ahnHeight(S.ahn, p, { timeoutMs: 3000 }))), { provenance, data_gaps, meta });
-      if (!hs || hs[0] == null) return {};
+      // Tight sampling bbox: AHN is 0,5 m, so a small bbox samples a real cell.
+      // The DTM (maaiveld) is no-data under buildings, so the address centroid
+      // can miss — in that case use the neighbour heights (±50 m) as the base.
+      const hs = await safe("terrain", () => Promise.all(pts.map((p) => ahnHeight(S.ahn, p, { timeoutMs: 3000, half: 1 }))), { provenance, data_gaps, meta });
+      if (!hs) return {};
+      const center = hs[0];
+      const neighbours = hs.slice(1).filter((v) => Number.isFinite(v));
+      const base = Number.isFinite(center)
+        ? center
+        : (neighbours.length ? neighbours.reduce((a, b) => a + b, 0) / neighbours.length : null);
+      if (base == null) return {};
       provenance.push({ dataset: S.ahn.dataset, retrieved: TODAY() });
-      const relief = reliefIndicatie(hs[0], hs.slice(1));
-      return { hoogte_nap_m: +hs[0].toFixed(2), relief: relief || undefined };
+      const relief = reliefIndicatie(Number.isFinite(center) ? center : base, neighbours);
+      return { hoogte_nap_m: +base.toFixed(2), relief: relief || undefined };
     })(),
     // Natura 2000 punt-intersectie
     (async () => {
@@ -114,6 +131,18 @@ export default async function handler(req) {
       provenance.push({ dataset: S.natura2000.dataset, retrieved: TODAY() });
       if (!p) return { in_gebied: false };
       return { in_gebied: true, naam: p[S.natura2000.naamProperty] || p.naamN2K || null, nr: p.nr ?? null };
+    })(),
+    // BRO Bodemkaart punt-intersectie → bodemtype + bodemnaam
+    (async () => {
+      if (!S.bodemkaart?.wms || !S.bodemkaart?.layer) return {};
+      const p = await safe("bodem", () => wmsPointInfo(S.bodemkaart, rd, { timeoutMs: 3000, half: 1 }), { provenance, data_gaps, meta });
+      if (!p) return {};
+      const code = p[S.bodemkaart.codeProperty || "soilcode"] ?? null;
+      const naam = p[S.bodemkaart.naamProperty || "first_soilname"] ?? null;
+      if (!code && !naam) return {};
+      provenance.push({ dataset: S.bodemkaart.dataset, retrieved: TODAY() });
+      const helling = p.soilslope && p.soilslope !== "Niet opgenomen" ? p.soilslope : null;
+      return { bodemcode: code, bodemnaam: naam, helling: helling || undefined };
     })(),
   ]);
 
@@ -128,8 +157,8 @@ export default async function handler(req) {
   }
 
   const profiel = bouwProfiel({
-    input: { type: rdParam ? "point" : "address", value: locationText || rdParam },
-    geo, gebied, terrain, natura2000, provenance, data_gaps, uncertainties,
+    input: { type: rdParam ? "point" : "address", value: locationText || geo.weergavenaam || idParam || rdParam },
+    geo, gebied, terrain, natura2000, soil, provenance, data_gaps, uncertainties,
   });
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 

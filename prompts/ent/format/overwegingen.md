@@ -25,6 +25,12 @@ The literal string `[OVERWEGINGEN]` must appear exactly once, on its own line,
 between the two parts. This marker is used by the interface to parse and display
 the two parts separately.
 
+**Never** write about the format itself. Do not announce, preview, or explain the
+marker (no "the marker goes here", no "first the voice, then the considerations").
+Begin your reply immediately with Part 1 (de stem) — no preamble. The token
+`[OVERWEGINGEN]` may appear only once, alone on its own line, as the separator —
+never inside a sentence.
+
 ## Example
 
 Ik heb hier gestaan voor de straat er was. Wat jullie bebouwing noemen,

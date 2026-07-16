@@ -54,6 +54,32 @@ export async function geocode(query, { url, timeoutMs = 3000 } = {}) {
   };
 }
 
+/**
+ * Zoek een locatie exact op via haar PDOK Locatieserver-id (uit `suggest`).
+ * Geen vrije-tekst-heuristiek: het id verwijst ondubbelzinnig naar één object,
+ * dus dit vermijdt de "verkeerde plaats"-treffer van een losse tekstzoek.
+ */
+export async function lookupById(id, { url, timeoutMs = 3000 } = {}) {
+  if (!id) return null;
+  const base = url || "https://api.pdok.nl/bzk/locatieserver/search/v3_1/lookup";
+  const fl = "weergavenaam,centroide_rd,centroide_ll,gemeentenaam,provincienaam,waterschapsnaam,type";
+  const u = `${base}?id=${encodeURIComponent(id)}&fl=${encodeURIComponent(fl)}`;
+  const data = await getJson(u, { timeoutMs });
+  const doc = data?.response?.docs?.[0];
+  if (!doc) return null;
+  const rd = parsePoint(doc.centroide_rd);
+  const ll = parsePoint(doc.centroide_ll);
+  return {
+    weergavenaam: doc.weergavenaam || null,
+    type: doc.type || null,
+    rd,
+    ll: ll ? { lon: ll.x, lat: ll.y } : null,
+    gemeente: doc.gemeentenaam || null,
+    provincie: doc.provincienaam || null,
+    waterschap: doc.waterschapsnaam || null,
+  };
+}
+
 /** Vierkante RD-bbox rond een punt met halve zijde `half` meter. */
 export function bboxAround({ x, y }, half) {
   return [x - half, y - half, x + half, y + half];

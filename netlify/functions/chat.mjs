@@ -168,16 +168,23 @@ export default async function handler(req, context) {
   const stopReason = result?.stop_reason || null;
 
   let stem, overwegingen;
-  if (fullText.includes("[OVERWEGINGEN]")) {
-    const [stemPart, overwegingenPart] = fullText.split("[OVERWEGINGEN]", 2);
-    stem         = stemPart.trim();
-    overwegingen = parseOverwegingen(overwegingenPart.trim());
+  // Split on the marker only when it sits on its own line — the real contract
+  // marker always does. A stray inline "[OVERWEGINGEN]" inside a sentence (e.g.
+  // a meta-preamble) must not corrupt the split into an empty stem.
+  const markerRe = /^[ \t]*\[OVERWEGINGEN\][ \t]*$/m;
+  const m = markerRe.exec(fullText);
+  if (m) {
+    stem         = fullText.slice(0, m.index).trim();
+    overwegingen = parseOverwegingen(fullText.slice(m.index + m[0].length).trim());
   } else {
-    // No marker — either the model skipped it, or the reply was cut off at
-    // max_tokens before reaching it. Return what we have; flag truncation.
+    // No marker on its own line — either the model skipped it, or the reply was
+    // cut off at max_tokens before reaching it. Return what we have.
     stem         = fullText.trim();
     overwegingen = [];
   }
+  // Defensive: strip any stray inline marker mentions left in the stem so the
+  // literal token never surfaces in the chat bubble.
+  stem = stem.replace(/\[OVERWEGINGEN\]/g, "").trim();
 
   return json({ stem, overwegingen, usage, stop_reason: stopReason });
 }

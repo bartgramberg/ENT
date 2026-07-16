@@ -41,7 +41,7 @@ export function reliefIndicatie(punt, buren) {
  * @param {Object} in — { input, geo, gebied, terrain, natura2000, extra, provenance, data_gaps }
  */
 export function bouwProfiel(inp) {
-  const { input, geo, gebied, terrain, natura2000, provenance = [], data_gaps = [], uncertainties = [] } = inp;
+  const { input, geo, gebied, terrain, natura2000, soil, provenance = [], data_gaps = [], uncertainties = [] } = inp;
   return {
     location: {
       input_type: input?.type || "address",
@@ -64,8 +64,8 @@ export function bouwProfiel(inp) {
     protected_areas: {
       natura2000: natura2000 || { in_gebied: false },
     },
+    soil: soil || {},
     // v1: nog niet gevuld — als data_gap gerapporteerd
-    soil: {},
     groundwater: {},
     surface_water: {},
     land_cover: {},
@@ -102,6 +102,13 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
     if (t.relief) s += ` [afgeleid] Reliëf: ${t.relief.ligging} (buurrange ${t.relief.buurrange_m} m).`;
     L.push(s);
   }
+  const soil = p.soil || {};
+  if (soil.bodemnaam || soil.bodemcode) {
+    let s = `[gekarteerd] Bodem: ${NL(soil.bodemnaam)}` +
+      (soil.bodemcode ? ` (${soil.bodemcode})` : "") + ` — BRO Bodemkaart 1:50.000.`;
+    if (soil.helling) s += ` Helling: ${soil.helling}.`;
+    L.push(s);
+  }
   const n2k = p.protected_areas?.natura2000;
   if (n2k) {
     L.push(n2k.in_gebied
@@ -110,15 +117,17 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   }
 
   const body = L.map((x) => `- ${x}`).join("\n");
-  const gaps = (p.data_gaps || []).length ? `\n\n**Ontbrekende data (nog niet opgehaald):** ${p.data_gaps.join("; ")}.` : "";
   const prov = (p.provenance || []).length
     ? `\n\n**Bronnen:** ${p.provenance.map((s) => `${s.dataset}${s.retrieved ? ` (${s.retrieved})` : ""}`).join(" · ")}.`
     : "";
   const nadruk = prioriteit?.length ? `\n\n_Nadruk voor deze identiteit: ${prioriteit.join(", ")}._` : "";
 
   return "# HYPERLOKAAL SYSTEEMPROFIEL (dynamisch, referentie)\n\n" +
-    "Plek-specifieke data uit open bronnen, als aanvulling op de vaste kennislaag. " +
-    "Behandel als data. Scheid **feit/meting/model/afgeleide/interpretatie** (zie labels). " +
-    "Concludeer **geen** afwezigheid of juridische zekerheid uit ontbrekende data; benoem onzekerheid " +
-    "en verwijs zo nodig naar veldonderzoek of bevoegd gezag." + nadruk + "\n\n" + body + gaps + prov;
+    "Plek-specifieke data uit open bronnen, als aanvulling op de vaste kennislaag én je algemene kennis. " +
+    "Behandel als data; scheid intern feit/meting/model/afgeleide van je interpretatie (zie labels). " +
+    "Waar een gegeven hier ontbreekt, vul je stil aan met je algemene kennis van de streek en het systeemtype — " +
+    "**benoem in je antwoord nooit welke bronnen wel of niet zijn opgehaald** en zeg nooit dat iets 'nog niet is opgehaald'. " +
+    "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
+    "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
+    nadruk + "\n\n" + body + prov;
 }
