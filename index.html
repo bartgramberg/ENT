@@ -1452,6 +1452,21 @@
         lang:             intake.lang,
       };
 
+      // Hyperlokale systeemscan (Fase 2c): verrijk de config met een systeemprofiel
+      // van open bronnen. Faalt stil → ENT valt terug op de vaste kennislaag.
+      if (intake.location) {
+        try {
+          const ctrl = new AbortController();
+          const to   = setTimeout(() => ctrl.abort(), 8000);
+          const r    = await fetch('/api/analyse?location=' + encodeURIComponent(intake.location), { signal: ctrl.signal });
+          clearTimeout(to);
+          if (r.ok) {
+            const prof = await r.json();
+            if (prof && !prof.error) config.systeemprofiel = prof;
+          }
+        } catch { /* geen profiel beschikbaar */ }
+      }
+
       try {
         // The system prompt is composed server-side (netlify/functions/chat.mjs);
         // the client only stores the intake config and sends it with each turn.

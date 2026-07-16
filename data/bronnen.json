@@ -1,0 +1,56 @@
+{
+  "version": "2026-07-16",
+  "note": "Config-gedreven bronnen voor de hyperlokale systeemscan (Fase 2c v1). Bronnen zonder ingevulde endpoint worden overgeslagen en als data_gap gerapporteerd. Alle bronnen zijn gratis open data.",
+  "sources": {
+    "locatieserver": {
+      "owner": "PDOK / Kadaster",
+      "dataset": "BZK Locatieserver v3_1",
+      "license": "CC BY 4.0",
+      "url": "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free"
+    },
+    "ahn": {
+      "owner": "Rijkswaterstaat / AHN",
+      "dataset": "AHN — maaiveldmodel (DTM 0,5 m)",
+      "license": "CC BY 4.0",
+      "wms": "https://service.pdok.nl/rws/ahn/wms/v1_0",
+      "layer": "dtm_05m",
+      "resolution": "0.5 m",
+      "kind": "gemeten"
+    },
+    "natura2000": {
+      "owner": "RVO",
+      "dataset": "Natura 2000",
+      "license": "CC BY 4.0",
+      "wfs": "https://service.pdok.nl/rvo/natura2000/wfs/v1_0",
+      "typeName": "natura2000:natura2000",
+      "naamProperty": "naamN2K",
+      "kind": "geregistreerd"
+    },
+    "bodemkaart": {
+      "owner": "BRO / PDOK",
+      "dataset": "BRO Bodemkaart (SGM)",
+      "license": "CC BY 4.0",
+      "wms": "",
+      "layer": "",
+      "resolution": "1:50.000",
+      "kind": "gemodelleerd",
+      "status": "endpoint-te-bevestigen"
+    },
+    "grondwaterspiegeldiepte": {
+      "owner": "BRO / PDOK",
+      "dataset": "BRO Model Grondwaterspiegeldiepte (WDM)",
+      "license": "CC BY 4.0",
+      "wms": "",
+      "layer": "",
+      "kind": "gemodelleerd",
+      "status": "endpoint-te-bevestigen"
+    },
+    "klimaateffectatlas": {
+      "owner": "Klimaateffectatlas",
+      "dataset": "Klimaateffectatlas (nationale lagen)",
+      "license": "CC BY 4.0",
+      "kind": "gemodelleerd",
+      "status": "v2 — nationale lagen zijn downloads (GeoTIFF/GeoPackage), geen live punt-WMS; volgt via een import-/COG-pad"
+    }
+  }
+}

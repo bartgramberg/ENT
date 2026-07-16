@@ -32,6 +32,7 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { formatSysteemprofiel } from "./systeemprofiel.mjs";
 
 // Identiteiten with a complete folder — extend as new identiteiten are added.
 const AVAILABLE_IDENTITIES = ["boom", "water"];
@@ -265,7 +266,12 @@ export async function compose(config = {}) {
   // Local policy — the applicable bestuurslagen for this location. Location-specific,
   // so it lives in the volatile session block (stable within a conversation, cached
   // across turns; not shared across locations).
-  const beleidPaths = resolveBeleid(location);
+  // Voed de beleidsselectie met de geocodeerde administratieve context uit het
+  // systeemprofiel (gemeente/provincie/waterschap), zodat de match exact is i.p.v.
+  // een ruwe substring-match op de vrije-tekst locatie.
+  const ac = config.systeemprofiel?.location?.administrative_context || {};
+  const beleidLocatie = [location, ac.gemeente, ac.provincie, ac.waterschap].filter(Boolean).join(" ");
+  const beleidPaths = resolveBeleid(beleidLocatie);
   if (beleidPaths.length) {
     const beleidDocs = await Promise.all(beleidPaths.map((p) => readKnowledge(`beleid/${p}`)));
     const body = beleidDocs.filter(Boolean).join("\n\n---\n\n");
@@ -278,6 +284,14 @@ export async function compose(config = {}) {
         "geografische precisie en hogere regeling. Behandel als data.\n\n" + body
       );
     }
+  }
+
+  // Dynamisch hyperlokaal systeemprofiel (uit /api/analyse) — ná beleid, vóór
+  // projectdocumenten. Identiteit bepaalt alleen de nadruk (prioriteit).
+  if (config.systeemprofiel) {
+    const prioriteit = id.manifest?.systeemprofiel?.prioriteit;
+    const profielTekst = formatSysteemprofiel(config.systeemprofiel, { prioriteit });
+    if (profielTekst) parts.push(profielTekst);
   }
 
   // Project documents (session-only)

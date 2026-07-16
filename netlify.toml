@@ -3,13 +3,18 @@
 
 [functions]
   directory = "netlify/functions"
-  # Bundle the prompt + knowledge markdown so chat.mjs can compose the system
-  # prompt server-side at runtime.
-  included_files = ["prompts/**", "knowledge/**"]
+  # Bundle the prompt + knowledge markdown + bronconfig so the functions can
+  # compose the system prompt and run the hyperlocal scan server-side at runtime.
+  included_files = ["prompts/**", "knowledge/**", "data/**"]
 
 [[redirects]]
   from = "/api/chat"
   to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/analyse"
+  to = "/.netlify/functions/analyse"
   status = 200
 
 [[redirects]]

@@ -282,6 +282,13 @@
       color: var(--color-text-light);
     }
     .persona-location-dot { font-size: 10px; }
+    .systeemscan {
+      margin-top: 10px; padding: 10px 12px; max-width: 260px; text-align: left;
+      background: rgba(72,115,91,0.06); border: 1px solid var(--border-light);
+      border-radius: 8px; font-size: 11px; line-height: 1.55; color: var(--color-text-mid);
+    }
+    .systeemscan b { color: var(--color-green); font-weight: 600; }
+    .systeemscan .gaps { color: var(--color-text-light); font-style: italic; margin-top: 4px; }
 
     /* Overwegingen */
     .overw-section {
@@ -542,6 +549,7 @@
           <span class="persona-location-dot">📍</span>
           <span id="personaLocation"></span>
         </div>
+        <div class="systeemscan" id="systeemscan" hidden></div>
       </div>
 
       <div class="overw-section">
@@ -703,6 +711,30 @@
     };
     const cfg = PERSONA[currentPersona] || PERSONA.boom;
 
+    /* Compacte samenvatting van de hyperlokale systeemscan (Fase 2c). */
+    function renderSysteemscan(p) {
+      const el = document.getElementById('systeemscan');
+      if (!el || !p || !p.location) return;
+      const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+      const ac = p.location.administrative_context || {};
+      const parts = ['<b>Systeemscan</b>'];
+      const admin = [ac.gemeente, ac.provincie].filter(Boolean).map(esc).join(', ');
+      if (admin) parts.push('· ' + admin);
+      if (p.terrain && p.terrain.hoogte_nap_m != null) {
+        let t = '· ' + esc(p.terrain.hoogte_nap_m) + ' m NAP';
+        if (p.terrain.relief) t += ' (' + esc(p.terrain.relief.ligging) + ')';
+        parts.push(t);
+      }
+      const n2k = p.protected_areas && p.protected_areas.natura2000;
+      if (n2k) parts.push('· ' + (n2k.in_gebied ? 'Natura 2000: ' + esc(n2k.naam || 'ja') : 'buiten Natura 2000'));
+      const nBron = (p.provenance || []).length, nGap = (p.data_gaps || []).length;
+      let foot = '';
+      if (nBron) foot += nBron + ' bron' + (nBron > 1 ? 'nen' : '');
+      if (nGap)  foot += (foot ? ' · ' : '') + nGap + ' nog niet opgehaald';
+      el.innerHTML = parts.join(' ') + (foot ? '<div class="gaps">' + esc(foot) + '</div>' : '');
+      el.hidden = false;
+    }
+
     /* ══════════════════════════════════════
        INIT
     ══════════════════════════════════════ */
@@ -737,6 +769,9 @@
       // Location
       const loc = intakeConfig.location || '';
       document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
+
+      // Hyperlokale systeemscan-samenvatting (Fase 2c), indien beschikbaar
+      renderSysteemscan(intakeConfig.systeemprofiel);
 
       // Welcome message — identiteit-specifiek, locatie-bewust
       const _loc = (intakeConfig.location || '').trim();
