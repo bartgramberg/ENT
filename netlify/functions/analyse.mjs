@@ -1,14 +1,18 @@
 /**
  * netlify/functions/analyse.mjs  →  GET /api/analyse
  *
- * Hyperlokale systeemscan (Fase 2c, v1): geocodeer een locatie, bepaal een
- * onderzoeksgebied en bevraag parallel enkele open bronnen (PDOK Locatieserver,
- * AHN, Natura 2000). Levert een compact, genormaliseerd systeemprofiel.
+ * Hyperlokale systeemscan (Fase 2c): geocodeer een locatie, bepaal een
+ * onderzoeksgebied en bevraag parallel de open bronnen (PDOK Locatieserver,
+ * AHN, Natura 2000, BRO Bodemkaart, Klimaateffectatlas). Levert een compact,
+ * genormaliseerd systeemprofiel.
  *
  * Bewust simpel: live queries + graceful degradation. Eén trage/ontbrekende bron
- * blokkeert de analyse niet; die wordt als data_gap gerapporteerd. Bodem,
- * grondwater en klimaat volgen zodra hun bron in data/bronnen.json is ingevuld
- * (bodem/grondwater) of via het download-pad (klimaat, v2).
+ * blokkeert de analyse niet; die wordt als data_gap gerapporteerd.
+ *
+ * Soorten (NDFF) wijken van dit patroon af: NDFF heeft geen live query-API en
+ * geen landelijke bulk-dump, dus die bron is een eigen Supabase/PostGIS-laag
+ * die handmatig gevuld wordt per pilotgebied (zie lib/ndff.mjs). Een punt
+ * buiten een geïmporteerd gebied levert een data_gap, geen "geen soorten".
  */
 
 import { readFile } from "node:fs/promises";
@@ -17,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
 import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea } from "./lib/systeemprofiel.mjs";
+import { gebiedGedekt, nearbyWaarnemingen } from "./lib/ndff.mjs";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const json = (body, status = 200, extra = {}) =>
@@ -105,8 +110,8 @@ export default async function handler(req) {
   // 3) Parallelle bronnen (graceful degradation)
   // health volgt of een bron *haperde* (koude/trage WMS) i.p.v. legitiem leeg
   // was — dat bepaalt of we het resultaat lang mogen cachen (zie stap 5).
-  const health = { bodemOk: true, klimaatOk: true };
-  const [terrain, natura2000, soil, klimaat] = await Promise.all([
+  const health = { bodemOk: true, klimaatOk: true, ndffOk: true };
+  const [terrain, natura2000, soil, klimaat, soorten] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
       if (!S.ahn?.wms) { data_gaps.push("terrain (AHN niet geconfigureerd)"); return {}; }
@@ -199,19 +204,49 @@ export default async function handler(req) {
       if (classified.length) provenance.push({ dataset: kea.dataset, retrieved: TODAY() });
       return classified;
     })(),
+    // NDFF-soorten: geen live bron, dus eerst een dekkingscheck (is dit punt
+    // binnen een al geïmporteerd gebied?). Zonder die check zou een lege
+    // radius-query ten onrechte als "geen soorten hier" gelezen worden i.p.v.
+    // "nog niet geïmporteerd" — dat zou de nooit-afwezigheid-concluderen-regel
+    // schenden. safe() leent zich hier niet voor (die vangt fouten als null,
+    // maar "niet gedekt" is óók legitiem null), dus handmatige try/catch.
+    (async () => {
+      const cfg = S.ndff;
+      if (!cfg?.url || !cfg?.anonKey) { data_gaps.push("species_observations (NDFF-laag niet geconfigureerd)"); return null; }
+      const t = Date.now();
+      let dekking;
+      try {
+        dekking = await gebiedGedekt(cfg, rd, { timeoutMs: 3000 });
+      } catch (e) {
+        meta.ndff_dekking = Date.now() - t;
+        data_gaps.push(`species_observations (niet opgehaald: ${e.name === "AbortError" ? "time-out" : "fout"})`);
+        health.ndffOk = false;
+        return null;
+      }
+      meta.ndff_dekking = Date.now() - t;
+      if (!dekking) { data_gaps.push("species_observations (gebied nog niet geïmporteerd uit NDFF)"); return null; }
+
+      const radius = gebied.context_m || 1000;
+      let groepen;
+      try {
+        groepen = await nearbyWaarnemingen(cfg, rd, radius, { timeoutMs: 4000 });
+      } catch (e) {
+        data_gaps.push(`species_observations (niet opgehaald: ${e.name === "AbortError" ? "time-out" : "fout"})`);
+        health.ndffOk = false;
+        return null;
+      }
+      provenance.push({ dataset: `NDFF-waarnemingen (${dekking.gebied_naam})`, retrieved: dekking.peildatum });
+      return { radius_m: radius, groepen: groepen || [], peildatum: dekking.peildatum, gebied_naam: dekking.gebied_naam };
+    })(),
   ]);
 
-  // 4) Bekende gaten in v1 (grondwater + klimaat komen nu uit de Klimaateffectatlas)
-  for (const [k, why] of [
-    ["soil", S.bodemkaart?.wms ? null : "bodemkaart-endpoint nog te bevestigen"],
-    ["species_observations", "NDFF-soorten — v2"],
-  ]) {
-    if (why) data_gaps.push(`${k} (${why})`);
-  }
+  // 4) Bekende gaten (bodem/grondwater/klimaat/soorten worden hierboven al
+  // dynamisch als data_gap gerapporteerd wanneer hun bron ontbreekt of leeg is)
+  if (!S.bodemkaart?.wms) data_gaps.push("soil (bodemkaart-endpoint nog te bevestigen)");
 
   const profiel = bouwProfiel({
     input: { type: rdParam ? "point" : "address", value: locationText || geo.weergavenaam || idParam || rdParam },
-    geo, gebied, terrain, natura2000, soil, klimaat, provenance, data_gaps, uncertainties,
+    geo, gebied, terrain, natura2000, soil, klimaat, soorten, provenance, data_gaps, uncertainties,
   });
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 
@@ -219,7 +254,7 @@ export default async function handler(req) {
   // Maar cache een *incompleet* resultaat kort: als een bron haperde (koude/
   // trage WMS of een time-out/fout), mag de lege scan niet 24 uur blijven
   // plakken — een volgende bezoeker moet 'm dan vers kunnen ophalen.
-  const gehaperd = !health.bodemOk || !health.klimaatOk || data_gaps.some((g) => /niet opgehaald/.test(g));
+  const gehaperd = !health.bodemOk || !health.klimaatOk || !health.ndffOk || data_gaps.some((g) => /niet opgehaald/.test(g));
   const cacheControl = gehaperd ? "public, max-age=60" : "public, max-age=86400";
   return json(profiel, 200, { "Cache-Control": cacheControl });
 }

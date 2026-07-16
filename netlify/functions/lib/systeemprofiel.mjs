@@ -60,10 +60,10 @@ export function classifyKea(raw, laag) {
 
 /**
  * Bouw het systeemprofiel uit reeds opgehaalde bronresultaten.
- * @param {Object} in — { input, geo, gebied, terrain, natura2000, soil, klimaat, provenance, data_gaps }
+ * @param {Object} in — { input, geo, gebied, terrain, natura2000, soil, klimaat, soorten, provenance, data_gaps }
  */
 export function bouwProfiel(inp) {
-  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], provenance = [], data_gaps = [], uncertainties = [] } = inp;
+  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], soorten, provenance = [], data_gaps = [], uncertainties = [] } = inp;
   // KEA-lagen met thema "grondwater" horen in groundwater, de rest in climate_pressures.
   const groundwater = {};
   const climate = {};
@@ -99,7 +99,7 @@ export function bouwProfiel(inp) {
     // v1: nog niet gevuld — als data_gap gerapporteerd
     surface_water: {},
     land_cover: {},
-    species_observations: {},
+    species_observations: soorten || {},
     system_relations: [], // ENT leidt relaties af in de prompt
     uncertainties,
     data_gaps,
@@ -146,6 +146,23 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   if (clim.length) {
     const items = clim.filter((k) => k?.label).map((k) => `${k.omschrijving}: ${k.label}`);
     if (items.length) L.push(`[gemodelleerd] Klimaatdruk (Klimaateffectatlas) — ${items.join("; ")}.`);
+  }
+
+  const sp = p.species_observations || {};
+  if (sp.gebied_naam) {
+    if (sp.groepen?.length) {
+      const items = sp.groepen
+        .slice().sort((a, b) => (b.aantal_soorten || 0) - (a.aantal_soorten || 0))
+        .map((g) => {
+          const namen = (g.soorten || []).slice(0, 5).join(", ") + ((g.soorten || []).length > 5 ? ", …" : "");
+          return `${g.soortgroep || "overig"}: ${g.aantal_soorten} soort${g.aantal_soorten === 1 ? "" : "en"} (${namen})`;
+        });
+      L.push(`[waargenomen] Soorten binnen ${sp.radius_m} m (NDFF, peildatum ${sp.peildatum}): ${items.join("; ")}. ` +
+        `Dit is wat in de NDFF-database staat voor dit gebied, geen uitputtende lijst — een niet-genoemde soort kan alsnog aanwezig zijn.`);
+    } else {
+      L.push(`[waargenomen] Geen NDFF-waarnemingen geregistreerd binnen ${sp.radius_m} m (peildatum ${sp.peildatum}) — ` +
+        `dat betekent niet dat er niets leeft, mogelijk is het simpelweg niet waargenomen of ingevoerd.`);
+    }
   }
 
   const n2k = p.protected_areas?.natura2000;

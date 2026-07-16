@@ -46,6 +46,15 @@
       "kind": "gemodelleerd",
       "status": "endpoint-te-bevestigen"
     },
+    "ndff": {
+      "owner": "NDFF, via een eigen Supabase/PostGIS-laag",
+      "dataset": "NDFF-waarnemingen (handmatige export per pilotgebied)",
+      "license": "NDFF Open Data Beleid",
+      "url": "https://lopbewmslyfnfsxfxlpj.supabase.co",
+      "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvcGJld21zbHlmbmZzeGZ4bHBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxOTg2NjYsImV4cCI6MjA5OTc3NDY2Nn0.RrE3IjwGcEMsEw0dtxINL-uerWOApD-Xx5Ec1VbSfBo",
+      "kind": "waargenomen",
+      "note": "NDFF heeft geen live query-API en geen landelijke bulk-dump; alleen handmatige export per 5×5 km-cel via de Flora & Fauna Verkenner (max 100.000 waarnemingen/export). Deze laag bevat dus alleen de gebieden die expliciet zijn geïmporteerd — zie de 'dekking'-tabel. De anon-key hierboven is een publiceerbare sleutel (geen secret): de tabellen staan achter row-level security, alleen de twee geaggregeerde RPC-functies (gebied_gedekt, nearby_waarnemingen) zijn bevraagbaar en geven nooit individuele waarnemingspunten terug."
+    },
     "klimaateffectatlas": {
       "owner": "Klimaateffectatlas",
       "dataset": "Klimaateffectatlas (landelijke lagen)",
