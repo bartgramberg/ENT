@@ -176,8 +176,6 @@
       .continue-btn, .btn-start { padding: 13px; }
 
       /* Voice grid: stay 2-col but tighter image */
-      .voice-img { width: 64px; height: 64px; }
-      .voice-placeholder { width: 64px; height: 64px; }
       .voice-name { font-size: 13px; }
       .voice-sub  { font-size: 10px; }
     }
@@ -326,26 +324,13 @@
     .voice-tile.coming-soon:focus-visible { box-shadow: none; border-color: var(--border-light); }
 
     .voice-img {
-      width: 80px; height: 80px;
-      border-radius: 8px; object-fit: cover;
+      width: 100%; aspect-ratio: 540 / 304;
+      border-radius: 8px; object-fit: cover; object-position: center;
       margin-bottom: 10px;
       border: 1px solid var(--border-light);
       background: var(--color-creme);
     }
-
-    .voice-placeholder {
-      width: 80px; height: 80px;
-      border-radius: 8px;
-      border: 1.5px dashed var(--border-light);
-      background: var(--color-creme);
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 10px;
-    }
-    .voice-placeholder-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      background: var(--border-light);
-    }
+    .voice-img.is-water { aspect-ratio: 500 / 269; }
 
     .voice-name { font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 3px; }
     .voice-sub  { font-size: 11px; font-weight: 400; color: var(--color-text-light); text-align: center; line-height: 1.4; }
@@ -578,12 +563,13 @@
     .loading-overlay.visible { opacity: 1; pointer-events: all; }
 
     .loading-voice-img {
-      width: 100px; height: 100px;
-      border-radius: 12px; object-fit: cover;
+      width: 180px; aspect-ratio: 540 / 304;
+      border-radius: 12px; object-fit: cover; object-position: center;
       border: 1px solid var(--border-light);
       margin-bottom: 20px;
       animation: breathe 2s ease-in-out infinite;
     }
+    .loading-voice-img.is-water { aspect-ratio: 500 / 269; }
     @keyframes breathe { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(1.03);opacity:1} }
 
     .loading-text { font-size: 16px; font-weight: 300; font-style: italic; color: var(--color-green); }
@@ -614,7 +600,7 @@
   </header>
 
   <div class="loading-overlay" id="loadingOverlay" aria-live="polite">
-    <img class="loading-voice-img" id="loadingImg" src="/assets/images/Boom_mond_dicht.png" alt="">
+    <img class="loading-voice-img" id="loadingImg" src="/assets/images/Boom.gif" alt="">
     <div class="loading-text"      id="loadingText">Luistert...</div>
   </div>
 
@@ -802,13 +788,13 @@
           <div class="voice-grid">
             <div class="voice-tile selected" role="radio" aria-checked="true" tabindex="0"
                  onclick="selectVoice(this,'boom')" onkeydown="voiceKey(event,this,'boom')">
-              <img class="voice-img" src="/assets/images/Boom_mond_dicht.png" alt="De Boom">
+              <img class="voice-img" src="/assets/images/Boom.gif" alt="De Boom">
               <span class="voice-name" data-i18n="q4_boom">De Boom</span>
               <span class="voice-sub"  data-i18n="q4_boom_sub">Geworteld, systemisch, geduldig</span>
             </div>
             <div class="voice-tile" role="radio" aria-checked="false" tabindex="0"
                  onclick="selectVoice(this,'water')" onkeydown="voiceKey(event,this,'water')">
-              <div class="voice-placeholder"><div class="voice-placeholder-dot"></div></div>
+              <img class="voice-img is-water" src="/assets/images/Water.gif" alt="Het Water">
               <span class="voice-name" data-i18n="q4_water">Het Water</span>
               <span class="voice-sub"  data-i18n="q4_water_sub">Stromend, verbindend, systemisch</span>
             </div>
@@ -1430,6 +1416,10 @@
       status.className   = 'confirm-status';
 
       document.getElementById('loadingText').textContent = t('loading_' + (intake.voice_subject || 'boom'));
+      const isWater = intake.voice_subject === 'water';
+      const loadingImg = document.getElementById('loadingImg');
+      loadingImg.src = isWater ? '/assets/images/Water.gif' : '/assets/images/Boom.gif';
+      loadingImg.classList.toggle('is-water', isWater);
       document.getElementById('loadingOverlay').classList.add('visible');
 
       const config = {
