@@ -172,10 +172,11 @@
     .chat-error.visible { display: flex; }
 
     .chat-error-img {
-      width: 80px; height: 80px; border-radius: 12px; object-fit: cover;
-      border: 1px solid var(--border-light);
+      width: 160px; aspect-ratio: 540 / 304; border-radius: 12px; object-fit: cover;
+      object-position: center; border: 1px solid var(--border-light);
       margin-bottom: 20px; opacity: 0.5;
     }
+    .chat-error-img.is-water { aspect-ratio: 500 / 269; }
     .chat-error-title {
       font-size: 20px; font-weight: 600;
       color: var(--color-green); margin-bottom: 8px;
@@ -248,17 +249,19 @@
       flex-shrink: 0; position: relative;
     }
     .persona-img-frame {
-      width: 100%; aspect-ratio: 1;
-      max-width: 180px; margin: 0 auto 16px;
+      width: 100%; aspect-ratio: 540 / 304;
+      max-width: 240px; margin: 0 auto 16px;
       border-radius: 16px; overflow: hidden;
       position: relative;
       background: var(--color-creme);
       border: 1px solid var(--border-light);
     }
+    .persona-img-frame.is-water { aspect-ratio: 500 / 269; }
     .persona-img {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
-      object-fit: cover; transition: opacity 0.08s;
+      object-fit: cover; object-position: center;
+      transition: opacity 0.08s;
     }
     .thinking-glow {
       position: absolute; inset: 0;
@@ -532,7 +535,7 @@
 
       <!-- Error screen (shown on 503) -->
       <div class="chat-error" id="chatError">
-        <img class="chat-error-img" src="/assets/images/Boom_mond_dicht.png" alt="De Boom">
+        <img class="chat-error-img" src="/assets/images/Boom.gif" alt="De Boom">
         <div class="chat-error-title" id="chatErrorTitle">De boom rust.</div>
         <div class="chat-error-body"  id="chatErrorBody">Er is een verbindingsfout opgetreden. Probeer het opnieuw.</div>
         <button class="chat-error-retry" onclick="retryLastMessage()" id="chatErrorRetry">Opnieuw proberen</button>
@@ -689,16 +692,13 @@
        (identity.md/voice.md) leeft server-side; dit is alleen presentatie.
     ══════════════════════════════════════ */
     const EN = currentLang === 'en';
-    // Inline droplet as placeholder portrait for identities without an image.
-    const WATER_IMG = 'data:image/svg+xml,' + encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc3d6"/><stop offset="1" stop-color="#3f6b80"/></linearGradient></defs><path d="M50 10C50 10 22 46 22 66a28 28 0 0 0 56 0C78 46 50 10 50 10Z" fill="url(#w)"/></svg>');
 
     const PERSONA = {
       boom: {
         title:        'ENT — Boom als vertegenwoordiger van de natuur',
         personaName:  EN ? 'The Tree' : 'De Boom',
-        imgDicht:     '/assets/images/Boom_mond_dicht.png',
-        imgOpen:      '/assets/images/Boom_mond_open.png',
+        imgDicht:     '/assets/images/Boom.gif',
+        imgOpen:      '/assets/images/Boom.gif',
         thinking:     EN ? 'The tree is considering' : 'De boom overweegt',
         errorTitle:   EN ? 'The tree is resting.' : 'De boom rust.',
         overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Tree has responded.'
@@ -710,8 +710,8 @@
       water: {
         title:        'ENT — Water als vertegenwoordiger van de natuur',
         personaName:  EN ? 'The Water' : 'Het Water',
-        imgDicht:     WATER_IMG,
-        imgOpen:      WATER_IMG,
+        imgDicht:     '/assets/images/Water.gif',
+        imgOpen:      '/assets/images/Water.gif',
         thinking:     EN ? 'The water is considering' : 'Het water overweegt',
         errorTitle:   EN ? 'The water withdraws.' : 'Het water trekt zich terug.',
         overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Water has responded.'
@@ -741,6 +741,11 @@
       if (p.soil && (p.soil.bodemnaam || p.soil.bodemcode)) {
         const bnaam = (p.soil.bodemnaam || '').split(';')[0].trim() || p.soil.bodemcode;
         parts.push('· ' + esc(bnaam));
+      }
+      const gw = Object.values(p.groundwater || {})[0];
+      if (gw && gw.label) parts.push('· grondwater ' + esc(gw.label));
+      for (const k of Object.values(p.climate_pressures || {})) {
+        if (k && k.label) parts.push('· ' + esc((k.thema || '') + ': ' + k.label));
       }
       const n2k = p.protected_areas && p.protected_areas.natura2000;
       if (n2k) parts.push('· ' + (n2k.in_gebied ? 'Natura 2000: ' + esc(n2k.naam || 'ja') : 'buiten Natura 2000'));
@@ -797,7 +802,10 @@
       document.getElementById('personaName').textContent = cfg.personaName;
       document.getElementById('imgDicht').src = cfg.imgDicht;
       document.getElementById('imgOpen').src  = cfg.imgOpen;
-      document.getElementById('chatError').querySelector('.chat-error-img').src = cfg.imgDicht;
+      document.querySelector('.persona-img-frame').classList.toggle('is-water', currentPersona === 'water');
+      const errImg = document.getElementById('chatError').querySelector('.chat-error-img');
+      errImg.src = cfg.imgDicht;
+      errImg.classList.toggle('is-water', currentPersona === 'water');
       document.getElementById('overwEmpty').textContent = cfg.overwEmpty;
 
       // Location

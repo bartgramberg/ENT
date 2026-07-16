@@ -16,7 +16,7 @@ import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
-import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel } from "./lib/systeemprofiel.mjs";
+import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea } from "./lib/systeemprofiel.mjs";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const json = (body, status = 200, extra = {}) =>
@@ -105,8 +105,8 @@ export default async function handler(req) {
   // 3) Parallelle bronnen (graceful degradation)
   // health volgt of een bron *haperde* (koude/trage WMS) i.p.v. legitiem leeg
   // was — dat bepaalt of we het resultaat lang mogen cachen (zie stap 5).
-  const health = { bodemOk: true };
-  const [terrain, natura2000, soil] = await Promise.all([
+  const health = { bodemOk: true, klimaatOk: true };
+  const [terrain, natura2000, soil, klimaat] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
       if (!S.ahn?.wms) { data_gaps.push("terrain (AHN niet geconfigureerd)"); return {}; }
@@ -177,13 +177,33 @@ export default async function handler(req) {
       provenance.push({ dataset: S.bodemkaart.dataset, retrieved: TODAY() });
       return { bodemcode: best.code, bodemnaam: best.naam };
     })(),
+    // Klimaateffectatlas: per laag één punt-query → kale rasterwaarde → klasse
+    // (via classifyKea, met legenda + geldig-bereik dat de no-data-sentinels weert).
+    (async () => {
+      const kea = S.klimaateffectatlas;
+      const lagen = kea?.lagen || [];
+      if (!kea?.wms || !lagen.length) return [];
+      const sample = async (laag) => {
+        try {
+          const props = await wmsPointInfo({ wms: kea.wms, layer: laag.layer }, rd, { timeoutMs: 4000, half: 1 });
+          const raw = props ? Object.values(props).find((v) => v != null && v !== "") : null;
+          return { ok: true, res: classifyKea(raw, laag) };
+        } catch {
+          return { ok: false, res: null };
+        }
+      };
+      const out = await safe("klimaat", () => Promise.all(lagen.map(sample)), { provenance, data_gaps, meta });
+      if (!out) { health.klimaatOk = false; return []; }
+      if (!out.some((o) => o.ok)) { health.klimaatOk = false; return []; }
+      const classified = out.map((o) => o.res).filter(Boolean);
+      if (classified.length) provenance.push({ dataset: kea.dataset, retrieved: TODAY() });
+      return classified;
+    })(),
   ]);
 
-  // 4) Bekende gaten in v1
+  // 4) Bekende gaten in v1 (grondwater + klimaat komen nu uit de Klimaateffectatlas)
   for (const [k, why] of [
     ["soil", S.bodemkaart?.wms ? null : "bodemkaart-endpoint nog te bevestigen"],
-    ["groundwater", S.grondwaterspiegeldiepte?.wms ? null : "grondwater-endpoint nog te bevestigen"],
-    ["climate_pressures", "Klimaateffectatlas — v2 (nationale lagen zijn downloads)"],
     ["species_observations", "NDFF-soorten — v2"],
   ]) {
     if (why) data_gaps.push(`${k} (${why})`);
@@ -191,7 +211,7 @@ export default async function handler(req) {
 
   const profiel = bouwProfiel({
     input: { type: rdParam ? "point" : "address", value: locationText || geo.weergavenaam || idParam || rdParam },
-    geo, gebied, terrain, natura2000, soil, provenance, data_gaps, uncertainties,
+    geo, gebied, terrain, natura2000, soil, klimaat, provenance, data_gaps, uncertainties,
   });
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 
@@ -199,7 +219,7 @@ export default async function handler(req) {
   // Maar cache een *incompleet* resultaat kort: als een bron haperde (koude/
   // trage WMS of een time-out/fout), mag de lege scan niet 24 uur blijven
   // plakken — een volgende bezoeker moet 'm dan vers kunnen ophalen.
-  const gehaperd = !health.bodemOk || data_gaps.some((g) => /niet opgehaald/.test(g));
+  const gehaperd = !health.bodemOk || !health.klimaatOk || data_gaps.some((g) => /niet opgehaald/.test(g));
   const cacheControl = gehaperd ? "public, max-age=60" : "public, max-age=86400";
   return json(profiel, 200, { "Cache-Control": cacheControl });
 }

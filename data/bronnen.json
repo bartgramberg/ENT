@@ -48,10 +48,116 @@
     },
     "klimaateffectatlas": {
       "owner": "Klimaateffectatlas",
-      "dataset": "Klimaateffectatlas (nationale lagen)",
+      "dataset": "Klimaateffectatlas (landelijke lagen)",
       "license": "CC BY 4.0",
+      "attributie": "Klimaateffectatlas, 2026",
+      "wms": "https://cas.cloud.sogelink.com/public/data/org/gws/YWFMLMWERURF/kea_public/wms",
       "kind": "gemodelleerd",
-      "status": "v2 — nationale lagen zijn downloads (GeoTIFF/GeoPackage), geen live punt-WMS; volgt via een import-/COG-pad"
+      "note": "Klassen zijn overgenomen uit de WMS-legenda (GetLegendGraphic, format=application/json, colormap type=intervals). De rasters leveren een kale GRAY_INDEX zonder eenheid; 'klassen' geeft die waarde betekenis en 'geldig' filtert de no-data-sentinels (o.a. -9999, 255, 2147483647, -3.4e38) die anders als echte meting zouden worden gelezen.",
+      "lagen": [
+        {
+          "key": "grondwaterstand_glg",
+          "layer": "GLG_Huidig",
+          "thema": "grondwater",
+          "omschrijving": "Gemiddeld laagste grondwaterstand (huidig)",
+          "eenheid": "m onder maaiveld",
+          "geldig": [0, 50],
+          "klassen": [
+            { "tot": 0.2, "label": "0,2 m of minder onder maaiveld" },
+            { "tot": 0.4, "label": "0,2–0,4 m onder maaiveld" },
+            { "tot": 0.6, "label": "0,4–0,6 m onder maaiveld" },
+            { "tot": 0.8, "label": "0,6–0,8 m onder maaiveld" },
+            { "tot": 1.0, "label": "0,8–1,0 m onder maaiveld" },
+            { "tot": 1.5, "label": "1,0–1,5 m onder maaiveld" },
+            { "tot": 2.0, "label": "1,5–2,0 m onder maaiveld" },
+            { "tot": 100000, "label": "dieper dan 2,0 m onder maaiveld" }
+          ]
+        },
+        {
+          "key": "droogtestress",
+          "layer": "droogtestress_huidig",
+          "thema": "droogte",
+          "omschrijving": "Droogtestress (huidig)",
+          "eenheid": "klasse",
+          "geldig": [0.88, 37],
+          "klassen": [
+            { "tot": 20, "label": "laag (jaarlijkse opbrengstderving <10% bij gras)" },
+            { "tot": 30, "label": "matig (jaarlijkse opbrengstderving 10–20% bij gras)" },
+            { "tot": 37, "label": "hoog (jaarlijkse opbrengstderving >20% bij gras)" }
+          ]
+        },
+        {
+          "key": "hittestress",
+          "layer": "gevoelstemperatuur_2022",
+          "thema": "hitte",
+          "omschrijving": "Gevoelstemperatuur (PET) op een hete dag",
+          "eenheid": "°C",
+          "geldig": [0, 52],
+          "klassen": [
+            { "tot": 32, "label": "gematigde hittestress (onder 32 °C)" },
+            { "tot": 35, "label": "gematigde hittestress (32–34 °C)" },
+            { "tot": 38, "label": "sterke hittestress (35–37 °C)" },
+            { "tot": 41, "label": "sterke hittestress (38–40 °C)" },
+            { "tot": 44, "label": "extreme hittestress niveau 1 (41–43 °C)" },
+            { "tot": 46, "label": "extreme hittestress niveau 1 (44–45 °C)" },
+            { "tot": 49, "label": "extreme hittestress niveau 2 (46–48 °C)" },
+            { "tot": 51, "label": "extreme hittestress niveau 2 (49–50 °C)" },
+            { "tot": 52, "label": "extreme hittestress niveau 3 (boven 50 °C)" }
+          ]
+        },
+        {
+          "key": "hitteeiland",
+          "layer": "hitteeiland",
+          "thema": "hitte",
+          "omschrijving": "Stedelijk hitte-eilandeffect",
+          "eenheid": "°C boven het ommeland",
+          "geldig": [0, 20],
+          "klassen": [
+            { "tot": 0.2, "label": "0–0,2 °C" },
+            { "tot": 0.4, "label": "0,2–0,4 °C" },
+            { "tot": 0.6, "label": "0,4–0,6 °C" },
+            { "tot": 0.8, "label": "0,6–0,8 °C" },
+            { "tot": 1.0, "label": "0,8–1,0 °C" },
+            { "tot": 1.2, "label": "1,0–1,2 °C" },
+            { "tot": 1.4, "label": "1,2–1,4 °C" },
+            { "tot": 1.6, "label": "1,4–1,6 °C" },
+            { "tot": 1.8, "label": "1,6–1,8 °C" },
+            { "tot": 2.0, "label": "1,8–2,0 °C" },
+            { "tot": 9999, "label": "meer dan 2 °C" }
+          ]
+        },
+        {
+          "key": "wateroverlast",
+          "layer": "waterdiepte_neerslag_70mm_2uur",
+          "thema": "wateroverlast",
+          "omschrijving": "Waterdiepte op straat bij een bui van 70 mm in 2 uur",
+          "eenheid": "klasse",
+          "geldig": [1, 5],
+          "klassen": [
+            { "tot": 1, "label": "5–10 cm" },
+            { "tot": 2, "label": "10–15 cm" },
+            { "tot": 3, "label": "15–20 cm" },
+            { "tot": 4, "label": "20–30 cm" },
+            { "tot": 5, "label": "meer dan 30 cm" }
+          ]
+        },
+        {
+          "key": "overstroming",
+          "layer": "maximale_waterdiepte_nederland_grote_kans_20260128",
+          "thema": "overstroming",
+          "omschrijving": "Maximale waterdiepte bij overstroming (grote kans)",
+          "eenheid": "m",
+          "geldig": [0, 100],
+          "klassen": [
+            { "tot": 0.5, "label": "minder dan 0,5 m" },
+            { "tot": 1.0, "label": "0,5–1,0 m" },
+            { "tot": 1.5, "label": "1,0–1,5 m" },
+            { "tot": 2.0, "label": "1,5–2,0 m" },
+            { "tot": 5.0, "label": "2,0–5,0 m" },
+            { "tot": 100, "label": "meer dan 5,0 m" }
+          ]
+        }
+      ]
     }
   }
 }
