@@ -1459,7 +1459,9 @@
           const qs   = intake.locationId
             ? 'id=' + encodeURIComponent(intake.locationId)
             : 'location=' + encodeURIComponent(intake.location);
-          const r    = await fetch('/api/analyse?' + qs, { signal: ctrl.signal });
+          // no-store: de onboarding draait één keer per sessie en moet een verse
+          // scan krijgen — nooit een (mogelijk incomplete) response uit de HTTP-cache.
+          const r    = await fetch('/api/analyse?' + qs, { signal: ctrl.signal, cache: 'no-store' });
           clearTimeout(to);
           if (r.ok) {
             const prof = await r.json();

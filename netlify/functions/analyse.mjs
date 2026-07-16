@@ -103,6 +103,9 @@ export default async function handler(req) {
   const gebied = bepaalOnderzoeksgebied(locationText || geo.weergavenaam || geo.gemeente || "");
 
   // 3) Parallelle bronnen (graceful degradation)
+  // health volgt of een bron *haperde* (koude/trage WMS) i.p.v. legitiem leeg
+  // was — dat bepaalt of we het resultaat lang mogen cachen (zie stap 5).
+  const health = { bodemOk: true };
   const [terrain, natura2000, soil] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
@@ -132,17 +135,47 @@ export default async function handler(req) {
       if (!p) return { in_gebied: false };
       return { in_gebied: true, naam: p[S.natura2000.naamProperty] || p.naamN2K || null, nr: p.nr ?? null };
     })(),
-    // BRO Bodemkaart punt-intersectie → bodemtype + bodemnaam
+    // BRO Bodemkaart → bodemtype + bodemnaam. De kaart karteert geen bebouwing,
+    // dus het adrespunt valt vaak op een pand zonder bodemvlak. Sample daarom
+    // centrum + een ring eromheen en neem het dominante bodemtype uit de directe
+    // omgeving (zoals de buurpunt-terugval bij AHN).
     (async () => {
       if (!S.bodemkaart?.wms || !S.bodemkaart?.layer) return {};
-      const p = await safe("bodem", () => wmsPointInfo(S.bodemkaart, rd, { timeoutMs: 3000, half: 1 }), { provenance, data_gaps, meta });
-      if (!p) return {};
-      const code = p[S.bodemkaart.codeProperty || "soilcode"] ?? null;
-      const naam = p[S.bodemkaart.naamProperty || "first_soilname"] ?? null;
-      if (!code && !naam) return {};
+      const codeProp = S.bodemkaart.codeProperty || "soilcode";
+      const naamProp = S.bodemkaart.naamProperty || "first_soilname";
+      const r1 = 30, r2 = 60;
+      const ring = [
+        [0, 0],
+        [0, r1], [r1, 0], [0, -r1], [-r1, 0],
+        [r1, r1], [r1, -r1], [-r1, r1], [-r1, -r1],
+        [0, r2], [r2, 0], [0, -r2], [-r2, 0],
+      ];
+      const pts = ring.map(([dx, dy]) => ({ x: rd.x + dx, y: rd.y + dy }));
+      // Onderscheid een geslaagde (evt. lege) WMS-response van een fout/time-out,
+      // zodat we "hier ligt geen bodem" niet verwarren met "de service haperde".
+      const sample = async (p) => {
+        try { return { ok: true, props: await wmsPointInfo(S.bodemkaart, p, { timeoutMs: 3000, half: 1 }) }; }
+        catch { return { ok: false, props: null }; }
+      };
+      const res = await safe("bodem", () => Promise.all(pts.map(sample)), { provenance, data_gaps, meta });
+      if (!res) { health.bodemOk = false; return {}; }
+      // Geen enkele geslaagde response → hapering (koude/trage service), geen echte leegte.
+      if (!res.some((r) => r.ok)) { health.bodemOk = false; return {}; }
+      // Tel bodemtypes; centrum weegt dubbel, dan het meest voorkomende.
+      const counts = new Map();
+      res.forEach((r, i) => {
+        const code = r.props && r.props[codeProp];
+        const naam = r.props && r.props[naamProp];
+        if (!code && !naam) return;
+        const key = code || naam;
+        const cur = counts.get(key) || { n: 0, code: code || null, naam: naam || null };
+        cur.n += i === 0 ? 2 : 1;
+        counts.set(key, cur);
+      });
+      if (counts.size === 0) return {};
+      const best = [...counts.values()].sort((a, b) => b.n - a.n)[0];
       provenance.push({ dataset: S.bodemkaart.dataset, retrieved: TODAY() });
-      const helling = p.soilslope && p.soilslope !== "Niet opgenomen" ? p.soilslope : null;
-      return { bodemcode: code, bodemnaam: naam, helling: helling || undefined };
+      return { bodemcode: best.code, bodemnaam: best.naam };
     })(),
   ]);
 
@@ -163,5 +196,10 @@ export default async function handler(req) {
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 
   // Cache op afgerond coördinaat (via CDN); zelfde plek → zelfde profiel.
-  return json(profiel, 200, { "Cache-Control": "public, max-age=86400" });
+  // Maar cache een *incompleet* resultaat kort: als een bron haperde (koude/
+  // trage WMS of een time-out/fout), mag de lege scan niet 24 uur blijven
+  // plakken — een volgende bezoeker moet 'm dan vers kunnen ophalen.
+  const gehaperd = !health.bodemOk || data_gaps.some((g) => /niet opgehaald/.test(g));
+  const cacheControl = gehaperd ? "public, max-age=60" : "public, max-age=86400";
+  return json(profiel, 200, { "Cache-Control": cacheControl });
 }
