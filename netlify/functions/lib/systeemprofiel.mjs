@@ -110,6 +110,29 @@ export function bouwProfiel(inp) {
 const NL = (v) => (v == null || v === "" ? "onbekend" : v);
 
 /**
+ * Hoe zwaar weegt een beleidsstatus bij ruimtelijke plannen? Bepaalt alleen de
+ * volgorde van presentatie, niet of iets wordt getoond — en is nadrukkelijk geen
+ * juridisch oordeel. Vogelrichtlijn scoort laag omdat élke vogel eronder valt;
+ * Habitatrichtlijn en de bedreigde Rode Lijst-klassen zijn het onderscheidend.
+ */
+function gewichtBeleidsstatus(statussen) {
+  let max = 0;
+  for (const s of statussen) {
+    let w = 0;
+    if (/Rode Lijst:\s*ernstig bedreigd/i.test(s)) w = 100;
+    else if (/Rode Lijst:\s*bedreigd/i.test(s)) w = 90;
+    else if (/Habitatrichtlijn/i.test(s)) w = 85;
+    else if (/Rode Lijst:\s*kwetsbaar/i.test(s)) w = 80;
+    else if (/Rode Lijst:\s*gevoelig/i.test(s)) w = 70;
+    else if (/Invasieve|Unielijst/i.test(s)) w = 50;
+    else if (/Vogelrichtlijn/i.test(s)) w = 20;
+    else if (/Andere soorten/i.test(s)) w = 10;
+    if (w > max) max = w;
+  }
+  return max;
+}
+
+/**
  * Render het profiel als compacte, gelabelde markdown voor de prompt.
  * `prioriteit` (optioneel, per identiteit) zet een nadrukregel bovenaan.
  */
@@ -149,19 +172,49 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   }
 
   const sp = p.species_observations || {};
-  if (sp.gebied_naam) {
+  if (sp.hoknummer) {
+    const per = sp.periode ? `${sp.periode[0]}–${sp.periode[1]}` : "onbekende periode";
+    const kop = `NDFF, km-hok ${sp.hoknummer} (${NL(sp.gebied_naam)}), ${per}`;
     if (sp.groepen?.length) {
-      const items = sp.groepen
-        .slice().sort((a, b) => (b.aantal_soorten || 0) - (a.aantal_soorten || 0))
-        .map((g) => {
-          const namen = (g.soorten || []).slice(0, 5).join(", ") + ((g.soorten || []).length > 5 ? ", …" : "");
-          return `${g.soortgroep || "overig"}: ${g.aantal_soorten} soort${g.aantal_soorten === 1 ? "" : "en"} (${namen})`;
-        });
-      L.push(`[waargenomen] Soorten binnen ${sp.radius_m} m (NDFF, peildatum ${sp.peildatum}): ${items.join("; ")}. ` +
-        `Dit is wat in de NDFF-database staat voor dit gebied, geen uitputtende lijst — een niet-genoemde soort kan alsnog aanwezig zijn.`);
+      const totaal = sp.groepen.reduce((a, g) => a + (g.soorten_in_hok || 0), 0);
+      // Alleen de grootste groepen uitschrijven: dit blok gaat elke beurt mee in
+      // de prompt, en 26 groepen à drie voorbeelden verdringt de rest van het
+      // profiel. De staart blijft als telling zichtbaar, dus niets verdwijnt stil.
+      const gevuld = sp.groepen.filter((g) => g.soorten_in_hok > 0);
+      const top = gevuld.slice(0, 10);
+      const rest = gevuld.slice(10);
+      const items = top.map((g) => `${g.soortgroep || "overig"} ${g.soorten_in_hok}` +
+        (g.voorbeelden?.length ? ` (o.a. ${g.voorbeelden.slice(0, 3).join(", ")})` : ""));
+      if (rest.length) {
+        items.push(`en ${rest.length} kleinere groepen (${rest.reduce((a, g) => a + g.soorten_in_hok, 0)} soorten: ` +
+          `${rest.map((g) => g.soortgroep).filter(Boolean).join(", ")})`);
+      }
+      L.push(`[waargenomen] ${totaal} soorten in dit km-vak — ${kop}: ${items.join("; ")}. ` +
+        `Dit geldt exact dit vak van 1×1 km, niet de omgeving of de gemeente. ` +
+        `Het is wat is wáárgenomen en ingevoerd, geen uitputtende inventarisatie: een niet-genoemde soort kan er wel degelijk zijn.`);
+      const vervaagd = sp.groepen.reduce((a, g) => a + (g.soorten_vervaagd || 0), 0);
+      if (vervaagd) {
+        L.push(`[onzeker] Daarnaast ${vervaagd} soorten die NDFF vervaagd levert: hun vindplaats is alleen op 1–10 km ` +
+          `nauwkeurig bekend (bescherming van kwetsbare soorten). Die zijn ergens in de ruimere omgeving gezien, ` +
+          `niet aantoonbaar in dit vak — behandel ze niet als hier aanwezig.`);
+      }
     } else {
-      L.push(`[waargenomen] Geen NDFF-waarnemingen geregistreerd binnen ${sp.radius_m} m (peildatum ${sp.peildatum}) — ` +
-        `dat betekent niet dat er niets leeft, mogelijk is het simpelweg niet waargenomen of ingevoerd.`);
+      L.push(`[waargenomen] Geen NDFF-waarnemingen in km-hok ${sp.hoknummer} over ${per} — ` +
+        `dat zegt dat er niets is ingevoerd, niet dat er niets leeft.`);
+    }
+    // Beleidsrelevante soorten apart: dit is wat in gebiedsontwikkeling weegt.
+    // Op zwaarte sorteren, niet op alfabet of aantal — anders verdringen de
+    // tientallen Vogelrichtlijn-soorten (elke vogel valt eronder) de paar strikt
+    // beschermde soorten die een plan echt raken.
+    const bijz = (sp.bijzonder || []).filter((b) => b.vervagingsniveau === 0);
+    if (bijz.length) {
+      const lijst = bijz
+        .map((b) => ({ b, w: gewichtBeleidsstatus(b.beleidsstatus || []) }))
+        .sort((x, y) => y.w - x.w || (y.b.aantal_waarnemingen || 0) - (x.b.aantal_waarnemingen || 0));
+      const top = lijst.slice(0, 12).map(({ b }) => `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}]`);
+      L.push(`[waargenomen] Beleidsrelevante soorten in dit vak (zwaarst wegend eerst): ${top.join("; ")}` +
+        `${lijst.length > 12 ? `, en nog ${lijst.length - 12} met een lichtere status` : ""}. ` +
+        `Status is een gegeven uit de bron, geen juridisch oordeel over dit plan.`);
     }
   }
 

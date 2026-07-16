@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
 import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea } from "./lib/systeemprofiel.mjs";
-import { gebiedGedekt, nearbyWaarnemingen } from "./lib/ndff.mjs";
+import { ndffDekking, ndffSoorten, ndffBijzonder } from "./lib/ndff.mjs";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const json = (body, status = 200, extra = {}) =>
@@ -204,39 +204,40 @@ export default async function handler(req) {
       if (classified.length) provenance.push({ dataset: kea.dataset, retrieved: TODAY() });
       return classified;
     })(),
-    // NDFF-soorten: geen live bron, dus eerst een dekkingscheck (is dit punt
-    // binnen een al geïmporteerd gebied?). Zonder die check zou een lege
-    // radius-query ten onrechte als "geen soorten hier" gelezen worden i.p.v.
-    // "nog niet geïmporteerd" — dat zou de nooit-afwezigheid-concluderen-regel
-    // schenden. safe() leent zich hier niet voor (die vangt fouten als null,
-    // maar "niet gedekt" is óók legitiem null), dus handmatige try/catch.
+    // NDFF-soorten: geen live bron. Eerst een dekkingscheck — valt dit punt in
+    // een geïmporteerd km-hok? Zonder die check zou een leeg antwoord ten
+    // onrechte als "geen soorten hier" gelezen worden i.p.v. "dit vak is nog
+    // niet geïmporteerd", en dat schendt de nooit-afwezigheid-concluderen-regel.
+    // safe() leent zich hier niet voor (die vangt fouten als null, maar "niet
+    // gedekt" is óók legitiem null), dus handmatige try/catch.
     (async () => {
       const cfg = S.ndff;
       if (!cfg?.url || !cfg?.anonKey) { data_gaps.push("species_observations (NDFF-laag niet geconfigureerd)"); return null; }
       const t = Date.now();
-      let dekking;
       try {
-        dekking = await gebiedGedekt(cfg, rd, { timeoutMs: 3000 });
+        const dekking = await ndffDekking(cfg, rd, { timeoutMs: 3000 });
+        meta.ndff = Date.now() - t;
+        if (!dekking) { data_gaps.push("species_observations (dit km-hok is nog niet geïmporteerd uit NDFF)"); return null; }
+        // Bewust geen radius: de data geldt exact dit km-vak. Zie lib/ndff.mjs.
+        const [groepen, bijzonder] = await Promise.all([
+          ndffSoorten(cfg, rd, { timeoutMs: 4000 }),
+          ndffBijzonder(cfg, rd, { timeoutMs: 4000 }),
+        ]);
+        provenance.push({ dataset: `NDFF-waarnemingen (km-hok ${dekking.hoknummer})`, retrieved: dekking.export_datum });
+        return {
+          hoknummer: dekking.hoknummer,
+          gebied_naam: dekking.gebied_naam,
+          periode: [dekking.periode_start, dekking.periode_eind],
+          export_datum: dekking.export_datum,
+          groepen: groepen || [],
+          bijzonder: bijzonder || [],
+        };
       } catch (e) {
-        meta.ndff_dekking = Date.now() - t;
+        meta.ndff = Date.now() - t;
         data_gaps.push(`species_observations (niet opgehaald: ${e.name === "AbortError" ? "time-out" : "fout"})`);
         health.ndffOk = false;
         return null;
       }
-      meta.ndff_dekking = Date.now() - t;
-      if (!dekking) { data_gaps.push("species_observations (gebied nog niet geïmporteerd uit NDFF)"); return null; }
-
-      const radius = gebied.context_m || 1000;
-      let groepen;
-      try {
-        groepen = await nearbyWaarnemingen(cfg, rd, radius, { timeoutMs: 4000 });
-      } catch (e) {
-        data_gaps.push(`species_observations (niet opgehaald: ${e.name === "AbortError" ? "time-out" : "fout"})`);
-        health.ndffOk = false;
-        return null;
-      }
-      provenance.push({ dataset: `NDFF-waarnemingen (${dekking.gebied_naam})`, retrieved: dekking.peildatum });
-      return { radius_m: radius, groepen: groepen || [], peildatum: dekking.peildatum, gebied_naam: dekking.gebied_naam };
     })(),
   ]);
 

@@ -750,9 +750,9 @@
       const n2k = p.protected_areas && p.protected_areas.natura2000;
       if (n2k) parts.push('· ' + (n2k.in_gebied ? 'Natura 2000: ' + esc(n2k.naam || 'ja') : 'buiten Natura 2000'));
       const sp = p.species_observations;
-      if (sp && sp.gebied_naam) {
-        const totaal = (sp.groepen || []).reduce((a, g) => a + (g.aantal_soorten || 0), 0);
-        parts.push('· ' + totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' (NDFF)');
+      if (sp && sp.hoknummer) {
+        const totaal = (sp.groepen || []).reduce((a, g) => a + (g.soorten_in_hok || 0), 0);
+        parts.push('· ' + totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' in dit km-vak (NDFF)');
       }
 
       // Bronnen als klikbare dropdown: aantal gelinkte bronnen; open toont welke

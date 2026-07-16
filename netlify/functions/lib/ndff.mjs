@@ -1,13 +1,17 @@
 /**
  * netlify/functions/lib/ndff.mjs
- * Dunne client voor de eigen NDFF-laag (Supabase/PostGIS). NDFF zelf heeft geen
- * live query-API of landelijke bulk-dump — waarnemingen komen uit handmatige
- * Flora & Fauna Verkenner-exports, geïmporteerd in deze database per pilotgebied.
+ * Dunne client voor de eigen NDFF-laag (Supabase/PostGIS). NDFF heeft geen live
+ * query-API en geen landelijke bulk-dump; waarnemingen komen uit handmatige
+ * Flora & Fauna Verkenner-exports, per pilotgebied geïmporteerd (zie
+ * scripts/ndff-import.mjs).
  *
- * De twee RPC's hieronder zijn de enige toegang: RLS staat aan op de tabellen,
- * dus alleen deze SECURITY DEFINER-functies mogen naar buiten — en die geven
- * nooit individuele waarnemingspunten terug, alleen aggregaten per soortgroep
- * (zelfde privacyhouding als NDFF's eigen vertroebeling van kwetsbare soorten).
+ * De data is per 1x1 km-hok geaggregeerd, niet per punt. Daarom géén radius:
+ * een vraag geldt exact het km-vak waarin het punt valt. Een radius zou soorten
+ * uit naburige vakken meetellen die daar niet zijn waargenomen.
+ *
+ * De RPC's zijn de enige toegang: RLS houdt de tabellen dicht, en de functies
+ * geven nooit individuele waarnemingen terug — alleen aggregaten per soortgroep
+ * plus de beleidsrelevante soorten.
  */
 
 async function rpc(cfg, fn, args, { timeoutMs = 3000 } = {}) {
@@ -31,14 +35,21 @@ async function rpc(cfg, fn, args, { timeoutMs = 3000 } = {}) {
   }
 }
 
-/** Is dit punt binnen een al geïmporteerd NDFF-gebied? Retourneert null indien niet. */
-export async function gebiedGedekt(cfg, rd, opts) {
-  const rows = await rpc(cfg, "gebied_gedekt", { px: rd.x, py: rd.y }, opts);
+/**
+ * Valt dit punt in een geïmporteerd km-hok? Zo nee: null — dan is er geen
+ * uitspraak te doen over soorten hier (data_gap, geen "niets aangetroffen").
+ */
+export async function ndffDekking(cfg, rd, opts) {
+  const rows = await rpc(cfg, "ndff_dekking", { px: rd.x, py: rd.y }, opts);
   return rows?.[0] || null;
 }
 
-/** Geaggregeerde waarnemingen per soortgroep binnen radius_m van het punt. */
-export async function nearbyWaarnemingen(cfg, rd, radius_m, opts) {
-  const rows = await rpc(cfg, "nearby_waarnemingen", { px: rd.x, py: rd.y, radius_m }, opts);
-  return rows || [];
+/** Soorten per soortgroep in het km-hok; vervaagde records apart geteld. */
+export async function ndffSoorten(cfg, rd, opts) {
+  return (await rpc(cfg, "ndff_soorten", { px: rd.x, py: rd.y }, opts)) || [];
+}
+
+/** Soorten met beleidsstatus (Rode Lijst, Ow-bescherming, exoten). */
+export async function ndffBijzonder(cfg, rd, opts) {
+  return (await rpc(cfg, "ndff_bijzonder", { px: rd.x, py: rd.y }, opts)) || [];
 }
