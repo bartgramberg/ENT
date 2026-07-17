@@ -263,6 +263,19 @@
       object-fit: cover; object-position: center;
       transition: opacity 0.08s;
     }
+    /* Spreken: een zachte ademhaling in plaats van de oude mond-wissel. Die
+       wisselde twee frames af en werd betekenisloos toen beide identiteiten
+       één animated gif kregen. Subtiel houden — het is een boom, geen knipperlicht. */
+    .persona-img-frame.speaking {
+      animation: spreken 1.9s ease-in-out infinite;
+    }
+    @keyframes spreken {
+      0%, 100% { transform: scale(1);     box-shadow: 0 0 0 0 rgba(72,115,91,0); }
+      50%      { transform: scale(1.018); box-shadow: 0 0 0 5px rgba(72,115,91,0.09); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .persona-img-frame.speaking { animation: none; }
+    }
     .thinking-glow {
       position: absolute; inset: 0;
       background: radial-gradient(circle at center, rgba(72,115,91,0.10) 0%, transparent 70%);
@@ -285,25 +298,33 @@
       color: var(--color-text-light);
     }
     .persona-location-dot { font-size: 10px; }
+    /* Compact gehouden: dit paneel is context, geen hoofdzaak. De overwegingen
+       eronder zijn waar de gebruiker naar kijkt en die hebben de ruimte nodig.
+       Vandaar: geen kader, geen vulling, klein, en "bronnen" inline achter de
+       feiten i.p.v. op een eigen regel. */
     .systeemscan {
-      margin-top: 14px; padding: 10px 12px; text-align: left;
-      background: rgba(72,115,91,0.06); border: 1px solid var(--border-light);
-      border-radius: 8px; font-size: 11px; line-height: 1.55; color: var(--color-text-mid);
+      margin-top: 10px; text-align: left;
+      font-size: 10px; line-height: 1.5; color: var(--color-text-light);
     }
-    .systeemscan b { color: var(--color-green); font-weight: 600; }
-    .systeemscan .src-details { margin-top: 6px; }
-    /* Bewust onopvallend: het aantal live bronnen is maar een deel van wat ENT
-       gebruikt (er zit een vaste kennislaag achter), dus dit mag geen claim
-       lijken over de volledige onderbouwing. */
+    .systeemscan .feit { color: var(--color-text-mid); }
+    .systeemscan .feit + .feit::before {
+      content: '·'; margin: 0 4px; color: var(--border-light);
+    }
+    /* Inline achter de feiten, niet als eigen blok. Bewust onopvallend: het
+       aantal live bronnen is maar een deel van wat ENT gebruikt (er zit een
+       vaste kennislaag achter), dus dit mag geen claim lijken over de
+       volledige onderbouwing. */
+    .systeemscan .src-details { display: inline; }
     .systeemscan .src-details summary {
-      cursor: pointer; color: var(--color-text-light); font-weight: 400;
-      font-style: italic; list-style: none; user-select: none;
+      display: inline; cursor: pointer; color: var(--color-text-light);
+      font-weight: 400; font-style: italic; list-style: none; user-select: none;
     }
+    .systeemscan .src-details summary:hover { color: var(--color-green); }
     .systeemscan .src-details summary::-webkit-details-marker { display: none; }
-    .systeemscan .src-details summary::after { content: ' ▾'; font-size: 9px; }
+    .systeemscan .src-details summary::after { content: ' ▾'; font-size: 8px; }
     .systeemscan .src-details[open] summary::after { content: ' ▴'; }
     .systeemscan .src-list { list-style: none; margin: 6px 0 0; padding: 0; }
-    .systeemscan .src-list li { padding: 2px 0 2px 16px; position: relative; }
+    .systeemscan .src-list li { padding: 2px 0 2px 14px; position: relative; }
     .systeemscan .src-on::before  { content: '●'; position: absolute; left: 0; top: 3px; font-size: 8px; color: var(--color-green); }
     .systeemscan .src-off { color: var(--color-text-light); }
     .systeemscan .src-off::before { content: '○'; position: absolute; left: 0; top: 3px; font-size: 8px; color: var(--color-text-light); }
@@ -560,8 +581,7 @@
       <div class="persona-card">
         <div class="persona-img-frame">
           <div class="thinking-glow" id="thinkingGlow"></div>
-          <img id="imgDicht" class="persona-img" src="" alt="Persona" style="opacity:1">
-          <img id="imgOpen"  class="persona-img" src="" alt="Persona praat" style="opacity:0">
+          <img id="personaImg" class="persona-img" src="" alt="Persona">
         </div>
         <div class="persona-name" id="personaName">De Boom</div>
         <div class="persona-location">
@@ -635,7 +655,6 @@
     let   usage         = JSON.parse(localStorage.getItem('ent_usage') || '{"input_tokens":0,"output_tokens":0,"requests":0}');
 
     let isThinking    = false;
-    let mouthInterval = null;
     let lastUserMessage = '';   // for retry
 
     // CO₂ constants (must be declared before init IIFE that calls updateKlimaatimpact)
@@ -696,12 +715,22 @@
     ══════════════════════════════════════ */
     const EN = currentLang === 'en';
 
+    /* "Dodeweg 1, 3832RB Leusden" → "Dodeweg 1, Leusden". Zie index.html:
+       de postcode is ruis voor een mens; de precisie zit in location_id. */
+    function zonderPostcode(s) {
+      return String(s || '')
+        .replace(/\b\d{4}\s?[A-Z]{2}\b/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/,\s*,/g, ',')
+        .replace(/\s+,/g, ',')
+        .trim();
+    }
+
     const PERSONA = {
       boom: {
         title:        'ENT — Boom als vertegenwoordiger van de natuur',
         personaName:  EN ? 'The Tree' : 'De Boom',
-        imgDicht:     '/assets/images/Boom.gif',
-        imgOpen:      '/assets/images/Boom.gif',
+        img:          '/assets/images/Boom.gif',
         thinking:     EN ? 'The tree is considering' : 'De boom overweegt',
         errorTitle:   EN ? 'The tree is resting.' : 'De boom rust.',
         overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Tree has responded.'
@@ -713,8 +742,7 @@
       water: {
         title:        'ENT — Water als vertegenwoordiger van de natuur',
         personaName:  EN ? 'The Water' : 'Het Water',
-        imgDicht:     '/assets/images/Water.gif',
-        imgOpen:      '/assets/images/Water.gif',
+        img:          '/assets/images/Water.gif',
         thinking:     EN ? 'The water is considering' : 'Het water overweegt',
         errorTitle:   EN ? 'The water withdraws.' : 'Het water trekt zich terug.',
         overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Water has responded.'
@@ -732,30 +760,44 @@
       const el = document.getElementById('systeemscan');
       if (!el || !p || !p.location) return;
       const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
-      const ac = p.location.administrative_context || {};
-      const parts = ['<b>Systeemscan</b>'];
-      const admin = [ac.gemeente, ac.provincie].filter(Boolean).map(esc).join(', ');
-      if (admin) parts.push('· ' + admin);
+      // Kort houden: dit is een feitenstrip, geen rapport. De bronlabels dragen
+      // uitleg mee tussen haakjes ("laag (jaarlijkse opbrengstderving <10% bij
+      // gras)"); die nuance hoort in het gesprek thuis, niet in dit hoekje.
+      const kort = (s) => String(s || '').split(' (')[0].replace(/ onder maaiveld$/, '').trim();
+      const parts = [];
+      const feit = (s) => parts.push('<span class="feit">' + esc(s) + '</span>');
+      // Gemeente en provincie weggelaten: de locatie staat al boven dit paneel.
       if (p.terrain && p.terrain.hoogte_nap_m != null) {
-        let t = '· ' + esc(p.terrain.hoogte_nap_m) + ' m NAP';
-        if (p.terrain.relief) t += ' (' + esc(p.terrain.relief.ligging) + ')';
-        parts.push(t);
+        feit(p.terrain.hoogte_nap_m + ' m NAP' +
+          (p.terrain.relief ? ' (' + kort(p.terrain.relief.ligging) + ')' : ''));
       }
       if (p.soil && (p.soil.bodemnaam || p.soil.bodemcode)) {
-        const bnaam = (p.soil.bodemnaam || '').split(';')[0].trim() || p.soil.bodemcode;
-        parts.push('· ' + esc(bnaam));
+        feit((p.soil.bodemnaam || '').split(';')[0].trim() || p.soil.bodemcode);
       }
       const gw = Object.values(p.groundwater || {})[0];
-      if (gw && gw.label) parts.push('· grondwater ' + esc(gw.label));
+      if (gw && gw.label) feit('grondwater ' + kort(gw.label));
+      // Per laag een eigen naam: op thema groeperen liet twee hittelagen
+      // allebei als "hitte" opduiken. Waar het label zichzelf al beschrijft
+      // ("sterke hittestress") blijft de naam leeg.
+      const KLIMAAT_NL = {
+        droogtestress: 'droogte',
+        hittestress:   '',
+        hitteeiland:   'hitte-eiland',
+        wateroverlast: 'wateroverlast',
+        overstroming:  'overstroming',
+      };
       for (const k of Object.values(p.climate_pressures || {})) {
-        if (k && k.label) parts.push('· ' + esc((k.thema || '') + ': ' + k.label));
+        if (!k || !k.label) continue;
+        const naam = KLIMAAT_NL[k.key] !== undefined ? KLIMAAT_NL[k.key] : (k.thema || '');
+        feit((naam ? naam + ' ' : '') + kort(k.label));
       }
       const n2k = p.protected_areas && p.protected_areas.natura2000;
-      if (n2k) parts.push('· ' + (n2k.in_gebied ? 'Natura 2000: ' + esc(n2k.naam || 'ja') : 'buiten Natura 2000'));
+      if (n2k) feit(n2k.in_gebied ? 'Natura 2000: ' + (n2k.naam || 'ja') : 'buiten Natura 2000');
       const sp = p.species_observations;
       if (sp && sp.hoknummer) {
+        // "(NDFF)" weggelaten: de herkomst staat onder 'bronnen'.
         const totaal = (sp.groepen || []).reduce((a, g) => a + (g.soorten_in_hok || 0), 0);
-        parts.push('· ' + totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' in dit km-vak (NDFF)');
+        feit(totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' op deze km\u00b2');
       }
 
       // Bronnen als klikbare dropdown. Geen aantal in de samenvatting: dat telde
@@ -786,7 +828,8 @@
       const dropdown =
         '<details class="src-details"><summary>bronnen</summary>' +
         '<ul class="src-list">' + vasteItems + linked + gaps + '</ul></details>';
-      el.innerHTML = parts.join(' ') + dropdown;
+      // 'bronnen' sluit inline aan achter de laatste feit — scheelt een regel.
+      el.innerHTML = parts.join('') + ' &middot; ' + dropdown;
       el.hidden = false;
     }
 
@@ -816,23 +859,23 @@
       // Apply identiteit (portret + naam)
       document.title = cfg.title;
       document.getElementById('personaName').textContent = cfg.personaName;
-      document.getElementById('imgDicht').src = cfg.imgDicht;
-      document.getElementById('imgOpen').src  = cfg.imgOpen;
+      document.getElementById('personaImg').src = cfg.img;
       document.querySelector('.persona-img-frame').classList.toggle('is-water', currentPersona === 'water');
       const errImg = document.getElementById('chatError').querySelector('.chat-error-img');
-      errImg.src = cfg.imgDicht;
+      errImg.src = cfg.img;
       errImg.classList.toggle('is-water', currentPersona === 'water');
       document.getElementById('overwEmpty').textContent = cfg.overwEmpty;
 
-      // Location
-      const loc = intakeConfig.location || '';
+      // Location — postcode eruit; die is ruis voor een mens en de precisie
+      // zit toch in location_id. Ook defensief voor configs van vóór deze fix.
+      const loc = zonderPostcode(intakeConfig.location || '');
       document.getElementById('personaLocation').textContent = loc ? loc.toUpperCase() : '';
 
       // Hyperlokale systeemscan-samenvatting (Fase 2c), indien beschikbaar
       renderSysteemscan(intakeConfig.systeemprofiel);
 
       // Welcome message — identiteit-specifiek, locatie-bewust
-      const _loc = (intakeConfig.location || '').trim();
+      const _loc = loc.trim();
       document.getElementById('welcomeBubble').textContent =
         _loc ? cfg.welcomeLoc(_loc) : cfg.welcomeNoLoc;
 
@@ -892,17 +935,10 @@
        MOUTH ANIMATION
     ══════════════════════════════════════ */
     function startMouth() {
-      let open = false;
-      mouthInterval = setInterval(() => {
-        open = !open;
-        document.getElementById('imgDicht').style.opacity = open ? '0' : '1';
-        document.getElementById('imgOpen').style.opacity  = open ? '1' : '0';
-      }, 200);
+      document.querySelector('.persona-img-frame').classList.add('speaking');
     }
     function stopMouth() {
-      if (mouthInterval) { clearInterval(mouthInterval); mouthInterval = null; }
-      document.getElementById('imgDicht').style.opacity = '1';
-      document.getElementById('imgOpen').style.opacity  = '0';
+      document.querySelector('.persona-img-frame').classList.remove('speaking');
     }
 
     /* ══════════════════════════════════════

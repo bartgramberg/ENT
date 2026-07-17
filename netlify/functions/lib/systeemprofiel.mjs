@@ -109,6 +109,11 @@ export function bouwProfiel(inp) {
 
 const NL = (v) => (v == null || v === "" ? "onbekend" : v);
 
+/** "Dodeweg 1, 3832RB Leusden" → "Dodeweg 1, Leusden". Een postcode zegt de
+ *  identiteit niets en zou alleen maar in haar antwoord kunnen belanden. */
+const zonderPostcode = (v) =>
+  String(v || "").replace(/\b\d{4}\s?[A-Z]{2}\b/g, "").replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").trim();
+
 /**
  * Hoe zwaar weegt een beleidsstatus bij ruimtelijke plannen? Bepaalt alleen de
  * volgorde van presentatie, niet of iets wordt getoond — en is nadrukkelijk geen
@@ -141,7 +146,7 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   const L = [];
   const loc = p.location || {};
   const ac = loc.administrative_context || {};
-  L.push(`**Locatie:** ${NL(loc.weergavenaam)}` +
+  L.push(`**Locatie:** ${NL(zonderPostcode(loc.weergavenaam))}` +
     (loc.rd ? ` (RD ${Math.round(loc.rd.x)}, ${Math.round(loc.rd.y)})` : "") +
     ` — gemeente ${NL(ac.gemeente)}, provincie ${NL(ac.provincie)}` +
     (ac.waterschap ? `, waterschap ${ac.waterschap}` : ""));

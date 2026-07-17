@@ -257,7 +257,10 @@ export async function compose(config = {}) {
 
   // Session context
   const ctx = [`Taal / Language: ${config.lang || "nl"}`];
-  const location = (config.location || "").trim();
+  // Postcode eruit: een boom praat niet in postcodes, en zodra het in de prompt
+  // staat kan het model het napraten. De precisie zit in location_id, waarmee
+  // /api/analyse exact geocodeert — niet in deze weergavetekst.
+  const location = (config.location || "").replace(/\b\d{4}\s?[A-Z]{2}\b/g, "").replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").trim();
   const situation = (config.situation || "").trim();
   if (location) ctx.push(`Locatie: ${location}`);
   if (situation) ctx.push(`Context: ${situation}`);

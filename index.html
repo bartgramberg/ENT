@@ -156,6 +156,8 @@
       width: 100%; max-width: 600px;
       padding: 40px 44px 44px;
     }
+    /* Bevestigingsscherm: de avatar vult de kaart, dus geen eigen vulling. */
+    .card.card-bleed { padding: 0; overflow: hidden; max-width: 680px; }
 
     @media (max-width: 600px) {
       .card { padding: 28px 20px 32px; }
@@ -439,20 +441,56 @@
     .skip-error { font-size: 12px; color: var(--color-magenta); margin-top: 8px; font-style: italic; }
     .skip-error[hidden] { display: none; }
 
-    /* ── CONFIRM ── */
+    /* ── CONFIRM ──
+       De identiteit die je zo gaat spreken vult het scherm; de tekst ligt er
+       linksonder overheen. Bewust niet gecentreerd: dan zou de tekst precies
+       op de boom vallen, en juist die wil je zien voor je begint. */
+    .confirm-hero {
+      position: relative;
+      min-height: 68vh;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      isolation: isolate;
+    }
+    .confirm-hero-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 38%;
+      z-index: -2;
+    }
+    /* Leesbaarheid van de tekst zonder de avatar plat te leggen: verloop dat
+       alleen onderin dekkend wordt. */
+    .confirm-hero-scrim {
+      position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(to top,
+        rgba(20,28,22,0.92) 0%,
+        rgba(20,28,22,0.78) 26%,
+        rgba(20,28,22,0.30) 52%,
+        rgba(20,28,22,0.02) 78%);
+    }
+    .confirm-hero-content {
+      padding: 28px 30px 30px;
+      max-width: 460px;   /* smal: laat rechts de avatar vrij */
+    }
+    .confirm-hero .back-btn { color: rgba(255,255,255,0.75); margin-bottom: 12px; }
+    .confirm-hero .back-btn:hover { color: #fff; }
+    .confirm-hero .q-title {
+      color: #fff; font-size: 30px; margin-bottom: 4px;
+      text-shadow: 0 1px 12px rgba(0,0,0,0.35);
+    }
+    .confirm-hero .progress { margin-bottom: 14px; }
+    .confirm-hero .dot { background: rgba(255,255,255,0.3); }
+    .confirm-hero .dot.done { background: rgba(255,255,255,0.85); }
+
     .confirm-summary {
-      font-size: 18px; font-weight: 300; font-style: italic;
-      color: var(--color-green); line-height: 1.6;
-      padding: 24px 0;
-      border-top: 1px solid var(--border-light);
-      border-bottom: 1px solid var(--border-light);
-      margin: 8px 0 8px;
+      font-size: 16px; font-weight: 300; font-style: italic;
+      color: rgba(255,255,255,0.94); line-height: 1.5;
+      padding: 10px 0 2px;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.4);
     }
 
     .confirm-docs-note {
-      font-size: 13px; color: var(--color-text-mid);
-      font-style: italic; margin-bottom: 20px;
-      padding-top: 10px;
+      font-size: 12px; color: rgba(255,255,255,0.7);
+      font-style: italic; margin-bottom: 4px;
     }
     .confirm-docs-note[hidden] { display: none; }
 
@@ -486,11 +524,36 @@
     }
     .btn-edit:hover { color: var(--color-green); border-color: var(--color-green); }
 
+    /* Knoppen in de hero: naast elkaar i.p.v. onder elkaar (scheelt hoogte),
+       en leesbaar op de donkere onderkant van het verloop. */
+    .confirm-hero .confirm-btns { flex-direction: row; gap: 8px; margin-top: 14px; }
+    .confirm-hero .btn-start {
+      width: auto; flex: 0 1 auto; padding: 13px 22px; white-space: nowrap;
+    }
+    .confirm-hero .btn-edit {
+      width: auto; flex: 0 0 auto; padding: 13px 18px;
+      color: rgba(255,255,255,0.8);
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(6px);
+    }
+    .confirm-hero .btn-edit:hover { color: #fff; border-color: rgba(255,255,255,0.7); }
+
     .confirm-status {
       text-align: center; font-size: 13px; font-style: italic;
       color: var(--color-green); margin-top: 12px; min-height: 20px;
     }
     .confirm-status.error { color: var(--color-magenta); }
+    .confirm-hero .confirm-status { color: rgba(255,255,255,0.9); text-align: left; }
+    .confirm-hero .confirm-status.error { color: #ff9ad2; }
+
+    @media (max-width: 600px) {
+      .confirm-hero { min-height: 76vh; }
+      .confirm-hero-content { padding: 20px 20px 22px; max-width: none; }
+      .confirm-hero .q-title { font-size: 24px; }
+      .confirm-hero .confirm-btns { flex-direction: column; }
+      .confirm-hero .btn-start, .confirm-hero .btn-edit { width: 100%; }
+    }
 
     /* ── UPLOAD ZONE ── */
     .upload-section { margin-top: 4px; }
@@ -851,28 +914,37 @@
 
       <!-- ── SCREEN CONFIRM ── -->
       <div id="screen-confirm" hidden>
-        <div class="progress">
-          <div class="progress-dots">
-            <div class="dot done"></div><div class="dot done"></div>
-            <div class="dot done"></div><div class="dot done"></div>
+        <div class="confirm-hero">
+          <img class="confirm-hero-img" id="confirmHeroImg" src="/assets/images/Boom.gif" alt="">
+          <div class="confirm-hero-scrim"></div>
+          <div class="confirm-hero-content">
+            <div class="progress">
+              <div class="progress-dots">
+                <div class="dot done"></div><div class="dot done"></div>
+                <div class="dot done"></div><div class="dot done"></div>
+              </div>
+            </div>
+
+            <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
+
+            <h1 class="q-title" data-i18n="confirm_title">Klopt dit?</h1>
+
+            <div class="confirm-summary" id="confirmSummary" aria-live="polite"></div>
+            <div class="confirm-docs-note" id="confirmDocsNote" hidden></div>
+
+            <div class="confirm-btns">
+              <button class="btn-start" onclick="startSession()">
+                <span data-i18n="confirm_yes">Ja, start de sessie</span>
+                <span class="btn-arrow">&#8594;</span>
+              </button>
+              <!-- Naar stap 4: daar staat de stemkeuze en de context. Terug naar
+                   stap 1 sturen betekende vier schermen doorklikken voor wie alleen
+                   even van boom naar water wil. -->
+              <button class="btn-edit" onclick="goTo(4)" data-i18n="confirm_edit">Antwoorden aanpassen</button>
+            </div>
+            <div class="confirm-status" id="confirmStatus"></div>
           </div>
         </div>
-
-        <button class="back-btn" onclick="goTo(4)" data-i18n="back">&#8592; Terug</button>
-
-        <h1 class="q-title" data-i18n="confirm_title">Klopt dit?</h1>
-
-        <div class="confirm-summary" id="confirmSummary" aria-live="polite"></div>
-        <div class="confirm-docs-note" id="confirmDocsNote" hidden></div>
-
-        <div class="confirm-btns">
-          <button class="btn-start" onclick="startSession()">
-            <span data-i18n="confirm_yes">Ja, start de sessie</span>
-            <span class="btn-arrow">&#8594;</span>
-          </button>
-          <button class="btn-edit" onclick="goTo(1)" data-i18n="confirm_edit">Antwoorden aanpassen</button>
-        </div>
-        <div class="confirm-status" id="confirmStatus"></div>
       </div>
 
     </div><!-- /card -->
@@ -1158,6 +1230,9 @@
     function goTo(screen) {
       currentScreen = screen;
       q2bVisible = false;
+      // Het bevestigingsscherm is full-bleed (avatar vult de kaart), dus de
+      // vaste kaartvulling moet daar weg.
+      document.getElementById('mainCard').classList.toggle('card-bleed', screen === 'confirm');
       showScreen(screen === 'confirm' ? 'screen-confirm' : 'screen-' + screen);
     }
 
@@ -1391,14 +1466,22 @@
     function buildConfirmSummary() {
       const nl      = intake.lang === 'nl';
       const voice   = t('voice_' + (intake.voice_subject || 'boom'));
-      const sitSnip = intake.situation
-        ? (intake.situation.length > 80 ? intake.situation.slice(0, 77) + '…' : intake.situation)
-        : '';
+      // De identiteit die je zo gaat spreken vult het scherm.
+      const isWater = intake.voice_subject === 'water';
+      const hero    = document.getElementById('confirmHeroImg');
+      hero.src = isWater ? '/assets/images/Water.gif' : '/assets/images/Boom.gif';
+      hero.alt = voice;
+      // De situatie is losse invoer die middenin een lopende zin belandt: haal
+      // de slotpunt weg (anders ".." ) en zet de beginhoofdletter om, tenzij het
+      // een eigennaam of afkorting lijkt (twee hoofdletters achter elkaar).
+      let sit = (intake.situation || '').trim().replace(/[.!?]+$/, '');
+      if (sit && !/^[A-Z]{2}/.test(sit)) sit = sit.charAt(0).toLowerCase() + sit.slice(1);
+      const sitSnip = sit.length > 80 ? sit.slice(0, 77) + '…' : sit;
 
       // Lopende zin, geen label, geen em dash:
       // "Je gaat in gesprek met de boom op <locatie> over <situatie>."
       let summary = nl ? `Je gaat in gesprek met ${voice}` : `You're going to talk with ${voice}`;
-      if (intake.location) summary += (nl ? ' op ' : ' at ') + intake.location;
+      if (intake.location) summary += (nl ? ' op ' : ' at ') + zonderPostcode(intake.location);
       if (sitSnip)         summary += (nl ? ' over ' : ' about ') + sitSnip;
       summary += '.';
 
@@ -1531,8 +1614,18 @@
       _preselect('q2b-options', intake.audience_type);
       _preselect('q3-options', intake.purpose);
 
+      // Selecteer de opgeslagen stem, zodat stap 4 klopt met de lopende sessie.
+      const stem = intake.voice_subject || 'boom';
+      document.querySelectorAll('.voice-grid .voice-tile').forEach(el => {
+        const isDeze = el.getAttribute('onclick').includes(`'${stem}'`);
+        el.classList.toggle('selected', isDeze);
+        el.setAttribute('aria-checked', isDeze ? 'true' : 'false');
+      });
+
       buildConfirmSummary();
-      goTo('confirm');
+      // Land op stap 4 (stem + context), niet op het bevestigingsscherm: wie
+      // "aanpassen" kiest wil iets wijzigen, niet nog eens bevestigen.
+      goTo(4);
     }
 
     function _preselect(groupId, value) {
@@ -1574,6 +1667,18 @@
 
     // PDOK Locatieserver — same geocoder the server uses for the hyperlocal scan,
     // so the picked place resolves identically (no Amstelveen-for-Leusden drift).
+    /* PDOK levert "Dodeweg 1, 3832RB Leusden". De postcode is voor een mens
+       ruis — en onnodig, want de precisie zit in intake.locationId, niet in
+       deze tekst. Weg ermee, ook in de dubbele spatie/komma die overblijft. */
+    function zonderPostcode(s) {
+      return String(s || '')
+        .replace(/\b\d{4}\s?[A-Z]{2}\b/g, '')
+        .replace(/\s{2,}/g, ' ')
+        .replace(/,\s*,/g, ',')
+        .replace(/\s+,/g, ',')
+        .trim();
+    }
+
     async function fetchSuggestions(query) {
       try {
         const resp = await fetch(
@@ -1583,7 +1688,10 @@
         const data = await resp.json();
         const docs = (data && data.response && data.response.docs) || [];
         if (!docs.length) { hideSuggestions(); return; }
-        renderSuggestions(docs.map(d => ({ label: d.weergavenaam, value: d.weergavenaam, id: d.id })));
+        renderSuggestions(docs.map(d => {
+          const naam = zonderPostcode(d.weergavenaam);
+          return { label: naam, value: naam, id: d.id };
+        }));
       } catch(e) { hideSuggestions(); }
     }
 
