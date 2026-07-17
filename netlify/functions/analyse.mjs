@@ -22,6 +22,7 @@ import path from "node:path";
 import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
 import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea } from "./lib/systeemprofiel.mjs";
 import { ndffDekking, ndffSoorten, ndffBijzonder } from "./lib/ndff.mjs";
+import { plekVerhaal } from "./lib/plek.mjs";
 
 const TODAY = () => new Date().toISOString().slice(0, 10);
 const json = (body, status = 200, extra = {}) =>
@@ -111,7 +112,7 @@ export default async function handler(req) {
   // health volgt of een bron *haperde* (koude/trage WMS) i.p.v. legitiem leeg
   // was — dat bepaalt of we het resultaat lang mogen cachen (zie stap 5).
   const health = { bodemOk: true, klimaatOk: true, ndffOk: true };
-  const [terrain, natura2000, soil, klimaat, soorten] = await Promise.all([
+  const [terrain, natura2000, soil, klimaat, soorten, plek] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
       if (!S.ahn?.wms) { data_gaps.push("terrain (AHN niet geconfigureerd)"); return {}; }
@@ -239,6 +240,24 @@ export default async function handler(req) {
         return null;
       }
     })(),
+    // Sociale/verhalende context via Wikipedia (gratis, geen sleutel). Geen
+    // harde data, geen health/cache-invloed: puur achtergrond voor de toon.
+    // Bewust géén safe(): een Wikipedia-hik mag geen data_gap worden (dat zou
+    // de scan naar de korte cache trekken) en is voor de gebruiker geen gemis.
+    // Faalt stil — dan valt ENT terug op zijn algemene kennis van de streek.
+    (async () => {
+      if (!geo.ll) return null;
+      const t = Date.now();
+      try {
+        const v = await plekVerhaal(geo.ll, { timeoutMs: 4000 });
+        meta.plek = Date.now() - t;
+        if (v?.omgeving?.length) provenance.push({ dataset: "Wikipedia", retrieved: TODAY() });
+        return v;
+      } catch {
+        meta.plek = Date.now() - t;
+        return null;
+      }
+    })(),
   ]);
 
   // 4) Bekende gaten (bodem/grondwater/klimaat/soorten worden hierboven al
@@ -247,7 +266,7 @@ export default async function handler(req) {
 
   const profiel = bouwProfiel({
     input: { type: rdParam ? "point" : "address", value: locationText || geo.weergavenaam || idParam || rdParam },
-    geo, gebied, terrain, natura2000, soil, klimaat, soorten, provenance, data_gaps, uncertainties,
+    geo, gebied, terrain, natura2000, soil, klimaat, soorten, plek, provenance, data_gaps, uncertainties,
   });
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 

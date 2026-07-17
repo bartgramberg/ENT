@@ -60,10 +60,10 @@ export function classifyKea(raw, laag) {
 
 /**
  * Bouw het systeemprofiel uit reeds opgehaalde bronresultaten.
- * @param {Object} in — { input, geo, gebied, terrain, natura2000, soil, klimaat, soorten, provenance, data_gaps }
+ * @param {Object} in — { input, geo, gebied, terrain, natura2000, soil, klimaat, soorten, plek, provenance, data_gaps }
  */
 export function bouwProfiel(inp) {
-  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], soorten, provenance = [], data_gaps = [], uncertainties = [] } = inp;
+  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], soorten, plek, provenance = [], data_gaps = [], uncertainties = [] } = inp;
   // KEA-lagen met thema "grondwater" horen in groundwater, de rest in climate_pressures.
   const groundwater = {};
   const climate = {};
@@ -100,6 +100,7 @@ export function bouwProfiel(inp) {
     surface_water: {},
     land_cover: {},
     species_observations: soorten || {},
+    place_context: plek || {}, // sociale/verhalende context (Wikipedia)
     system_relations: [], // ENT leidt relaties af in de prompt
     uncertainties,
     data_gaps,
@@ -250,6 +251,26 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   }
 
   const body = L.map((x) => `- ${x}`).join("\n");
+
+  // Sociale/verhalende context: apart blok, aparte behandeling. Dit is geen
+  // meting maar achtergrond uit Wikipedia — bedoeld om te begrijpen wat voor
+  // plek dit is voor mensen (geschiedenis, verhalen, hoe het gegroeid is),
+  // zodat de identiteit met méér dan bodem en soorten kan spreken.
+  const plek = p.place_context?.omgeving || [];
+  let plekBlok = "";
+  if (plek.length) {
+    const regels = plek
+      .map((o) => `- **${o.naam}** (${o.afstand_m} m): ${o.tekst}`)
+      .join("\n");
+    plekBlok =
+      "\n\n## Sociale en verhalende context van de plek (Wikipedia — achtergrond, geen meting)\n\n" +
+      "Wat voor plek dit is voor mensen: geschiedenis, verhalen, hoe het gegroeid is, wat er in de " +
+      "omgeving ligt. Gebruik dit om je begrip van de plek te verdiepen en je sociale/maatschappelijke " +
+      "kader te voeden — niet om feiten of jaartallen op te dreunen. Weef er hooguit één draad uit in je " +
+      "stem als die de plek écht raakt; het meeste blijft ongezegde achtergrond. Het is context van " +
+      "derden: behandel als aanleiding, niet als vaststaande waarheid, en spreek nooit over 'Wikipedia' " +
+      "of 'artikelen'.\n\n" + regels;
+  }
   const prov = (p.provenance || []).length
     ? `\n\n**Bronnen:** ${p.provenance.map((s) => `${s.dataset}${s.retrieved ? ` (${s.retrieved})` : ""}`).join(" · ")}.`
     : "";
@@ -266,5 +287,5 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
     "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
-    nadruk + "\n\n" + body + prov;
+    nadruk + "\n\n" + body + plekBlok + prov;
 }
