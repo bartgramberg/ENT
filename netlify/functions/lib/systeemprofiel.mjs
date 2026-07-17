@@ -236,6 +236,9 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
     "Behandel als data; scheid intern feit/meting/model/afgeleide van je interpretatie (zie labels). " +
     "Waar een gegeven hier ontbreekt, vul je stil aan met je algemene kennis van de streek en het systeemtype — " +
     "**benoem in je antwoord nooit welke bronnen wel of niet zijn opgehaald** en zeg nooit dat iets 'nog niet is opgehaald'. " +
+    "**Dit blok is data-taal, geen spreektaal.** Woorden als 'km-vak', 'km-hok', 'vervaagd', 'peildatum' en de labels " +
+    "tussen blokhaken zijn voor jouw begrip; herhaal ze nooit hardop. Vertaal alles naar hoe jij over je eigen plek " +
+    "praat ('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
     nadruk + "\n\n" + body + prov;

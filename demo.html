@@ -292,9 +292,12 @@
     }
     .systeemscan b { color: var(--color-green); font-weight: 600; }
     .systeemscan .src-details { margin-top: 6px; }
+    /* Bewust onopvallend: het aantal live bronnen is maar een deel van wat ENT
+       gebruikt (er zit een vaste kennislaag achter), dus dit mag geen claim
+       lijken over de volledige onderbouwing. */
     .systeemscan .src-details summary {
-      cursor: pointer; color: var(--color-green); font-weight: 600;
-      list-style: none; user-select: none;
+      cursor: pointer; color: var(--color-text-light); font-weight: 400;
+      font-style: italic; list-style: none; user-select: none;
     }
     .systeemscan .src-details summary::-webkit-details-marker { display: none; }
     .systeemscan .src-details summary::after { content: ' ▾'; font-size: 9px; }
@@ -755,26 +758,34 @@
         parts.push('· ' + totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' in dit km-vak (NDFF)');
       }
 
-      // Bronnen als klikbare dropdown: aantal gelinkte bronnen; open toont welke
-      // bronnen zijn gebruikt (●) en, indien van toepassing, welke niet (○).
+      // Bronnen als klikbare dropdown. Geen aantal in de samenvatting: dat telde
+      // alleen de live opgehaalde geodata en wekte de indruk dát alles is — terwijl
+      // de vaste kennislaag (domeinkennis, wetgeving, beleid per bestuurslaag) en
+      // eventuele projectdocumenten er net zo goed in zitten. Die staan daarom
+      // hieronder expliciet mee in de lijst.
       const prov = p.provenance || [];
-      let dropdown = '';
-      if (prov.length) {
-        const linked = prov.map(s =>
-          '<li class="src-on">' + esc(s.dataset) +
-          (s.retrieved ? ' <span class="src-date">' + esc(s.retrieved) + '</span>' : '') + '</li>'
-        ).join('');
-        const GAP_NL = { soil:'bodem', groundwater:'grondwater', climate_pressures:'klimaat',
-          species_observations:'soorten', terrain:'maaiveld', protected_areas:'beschermde gebieden' };
-        const gaps = (p.data_gaps || []).map(g => {
-          const key = String(g).split(' (')[0].trim();
-          return '<li class="src-off">' + esc(GAP_NL[key] || key) + '</li>';
-        }).join('');
-        const n = prov.length;
-        dropdown =
-          '<details class="src-details"><summary>' + n + ' bron' + (n > 1 ? 'nen' : '') + '</summary>' +
-          '<ul class="src-list">' + linked + gaps + '</ul></details>';
+      const vast = [
+        'Systemische natuurkennis (ecologie, bodem, water, biodiversiteit, klimaat)',
+        'Beleid en wetgeving — nationaal, provinciaal, regionaal en gemeentelijk',
+      ];
+      if (intakeConfig.documents && intakeConfig.documents.length) {
+        const n = intakeConfig.documents.length;
+        vast.push('Projectdocumenten (' + n + ' bestand' + (n === 1 ? '' : 'en') + ')');
       }
+      const vasteItems = vast.map(v => '<li class="src-on">' + esc(v) + '</li>').join('');
+      const linked = prov.map(s =>
+        '<li class="src-on">' + esc(s.dataset) +
+        (s.retrieved ? ' <span class="src-date">' + esc(s.retrieved) + '</span>' : '') + '</li>'
+      ).join('');
+      const GAP_NL = { soil:'bodem', groundwater:'grondwater', climate_pressures:'klimaat',
+        species_observations:'soorten', terrain:'maaiveld', protected_areas:'beschermde gebieden' };
+      const gaps = (p.data_gaps || []).map(g => {
+        const key = String(g).split(' (')[0].trim();
+        return '<li class="src-off">' + esc(GAP_NL[key] || key) + '</li>';
+      }).join('');
+      const dropdown =
+        '<details class="src-details"><summary>bronnen</summary>' +
+        '<ul class="src-list">' + vasteItems + linked + gaps + '</ul></details>';
       el.innerHTML = parts.join(' ') + dropdown;
       el.hidden = false;
     }
@@ -848,6 +859,14 @@
         return fullText.split('[OVERWEGINGEN]', 2)[0].trim();
       }
       return fullText.trim();
+    }
+
+    /* Het overwegingen-deel van een opgeslagen beurt (de analist-lens).
+       parseFullText() gooit dit weg omdat de chatbubbel alleen de stem toont;
+       de export heeft het juist nodig — daar zitten de concrete actiepunten in. */
+    function parseOverwegingenText(fullText) {
+      const i = fullText.indexOf('[OVERWEGINGEN]');
+      return i === -1 ? '' : fullText.slice(i + '[OVERWEGINGEN]'.length).trim();
     }
 
     /* ══════════════════════════════════════
@@ -1167,9 +1186,15 @@
         txt += '(geen berichten)\n';
       } else {
         for (const msg of conversation) {
-          const label = msg.role === 'user' ? 'Deelnemer' : cfg.personaName;
-          const text  = msg.role === 'assistant' ? parseFullText(msg.content) : msg.content;
-          txt += `${label}\n${text}\n\n`;
+          if (msg.role !== 'assistant') {
+            txt += `Deelnemer\n${msg.content}\n\n`;
+            continue;
+          }
+          txt += `${cfg.personaName}\n${parseFullText(msg.content)}\n\n`;
+          // De overwegingen horen bij deze beurt: dit is de analist-lens met de
+          // feiten en actiepunten, en juist dat deel wil je terugzien in een verslag.
+          const ovw = parseOverwegingenText(msg.content);
+          if (ovw) txt += `  Overwegingen\n${ovw.split('\n').map(r => r ? '  ' + r : '').join('\n')}\n\n`;
         }
       }
 

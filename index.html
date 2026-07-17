@@ -342,6 +342,14 @@
       letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--color-green); margin-bottom: 8px;
     }
+    /* Verplicht veld: sterretje via CSS, zodat het niet in elke vertaling
+       apart onderhouden hoeft te worden. aria-hidden houdt het uit de
+       schermlezer; die krijgt het al via required/aria-required op de input. */
+    .field-label.required::after {
+      content: ' *';
+      color: var(--color-magenta);
+      font-weight: 700;
+    }
     .field-group { margin-bottom: 20px; }
     .field-group:last-child { margin-bottom: 0; }
 
@@ -784,7 +792,7 @@
         <p  class="q-subtitle" data-i18n="q4_subtitle">Hoe specifieker, hoe sterker de stem.</p>
 
         <div class="field-group">
-          <span class="field-label" data-i18n="q4_voice_label">Welke stem?</span>
+          <span class="field-label required" data-i18n="q4_voice_label">Welke stem?</span>
           <div class="voice-grid">
             <div class="voice-tile selected" role="radio" aria-checked="true" tabindex="0"
                  onclick="selectVoice(this,'boom')" onkeydown="voiceKey(event,this,'boom')">
@@ -802,19 +810,19 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label" for="q4-location" data-i18n="q4_location_label">Waar?</label>
+          <label class="field-label required" for="q4-location" data-i18n="q4_location_label">Waar?</label>
           <div class="location-wrap">
-            <input class="text-input" id="q4-location" type="text"
+            <input class="text-input" id="q4-location" type="text" required aria-required="true"
                    data-i18n-placeholder="q4_location_placeholder"
-                   placeholder="Locatie, type plek..."
+                   placeholder="Adres, bijv. Dodeweg 1, Leusden"
                    oninput="handleLocationInput()" onblur="hideSuggestions()" autocomplete="off">
             <div class="location-suggestions" id="locationSuggestions"></div>
           </div>
         </div>
 
         <div class="field-group">
-          <label class="field-label" for="q4-situation" data-i18n="q4_situation_label">Wat speelt er?</label>
-          <textarea class="text-input" id="q4-situation"
+          <label class="field-label required" for="q4-situation" data-i18n="q4_situation_label">Wat speelt er?</label>
+          <textarea class="text-input" id="q4-situation" required aria-required="true"
                     data-i18n-placeholder="q4_situation_placeholder"
                     placeholder="Het plan, project of de vraag die op tafel ligt..."></textarea>
         </div>
@@ -992,7 +1000,7 @@
         q4_boom: 'De Boom', q4_boom_sub: 'Geworteld, systemisch, geduldig',
         q4_water: 'Het Water', q4_water_sub: 'Stromend, verbindend, systemisch',
         q4_more: 'Meer natuur', q4_more_sub: 'Binnenkort',
-        q4_location_label: 'Waar?',       q4_location_placeholder: 'Locatie, type plek...',
+        q4_location_label: 'Waar?',       q4_location_placeholder: 'Adres, bijv. Dodeweg 1, Leusden',
         q4_situation_label: 'Wat speelt er?', q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
         q4_docs_label: 'Documenten (optioneel)',
         q4_docs_sub:   'Upload projectdocumenten. ENT gebruikt ze om specifieker te spreken.',
@@ -1073,7 +1081,7 @@
         q4_boom: 'The Tree',   q4_boom_sub: 'Rooted, systemic, patient',
         q4_water: 'The Water', q4_water_sub: 'Flowing, connecting, systemic',
         q4_more: 'More nature', q4_more_sub: 'Coming soon',
-        q4_location_label: 'Where?',          q4_location_placeholder: 'Location, type of site...',
+        q4_location_label: 'Where?',          q4_location_placeholder: 'Address, e.g. Dodeweg 1, Leusden',
         q4_situation_label: "What's happening there?", q4_situation_placeholder: 'The plan, project, or question on the table...',
         q4_docs_label: 'Documents (optional)',
         q4_docs_sub:   'Upload project documents. ENT uses them to speak more specifically.',
