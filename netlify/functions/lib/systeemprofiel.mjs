@@ -179,7 +179,10 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
   const sp = p.species_observations || {};
   if (sp.hoknummer) {
     const per = sp.periode ? `${sp.periode[0]}–${sp.periode[1]}` : "onbekende periode";
-    const kop = `NDFF, km-hok ${sp.hoknummer} (${NL(sp.gebied_naam)}), ${per}`;
+    // Geen "vak"/"hok" in de tekst hieronder: die woorden bleken via de stem
+    // door te lekken ("Onder mij, in dit vak, is..."), ook toen ze alleen als
+    // brontaal-label bedoeld waren. "Precies hier" i.p.v. een gridterm.
+    const bron = `NDFF (${NL(sp.gebied_naam)}), periode ${per}`;
     if (sp.groepen?.length) {
       const totaal = sp.groepen.reduce((a, g) => a + (g.soorten_in_hok || 0), 0);
       // Alleen de grootste groepen uitschrijven: dit blok gaat elke beurt mee in
@@ -194,32 +197,48 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
         items.push(`en ${rest.length} kleinere groepen (${rest.reduce((a, g) => a + g.soorten_in_hok, 0)} soorten: ` +
           `${rest.map((g) => g.soortgroep).filter(Boolean).join(", ")})`);
       }
-      L.push(`[waargenomen] ${totaal} soorten in dit km-vak — ${kop}: ${items.join("; ")}. ` +
-        `Dit geldt exact dit vak van 1×1 km, niet de omgeving of de gemeente. ` +
-        `Het is wat is wáárgenomen en ingevoerd, geen uitputtende inventarisatie: een niet-genoemde soort kan er wel degelijk zijn.`);
-      const vervaagd = sp.groepen.reduce((a, g) => a + (g.soorten_vervaagd || 0), 0);
-      if (vervaagd) {
-        L.push(`[onzeker] Daarnaast ${vervaagd} soorten die NDFF vervaagd levert: hun vindplaats is alleen op 1–10 km ` +
-          `nauwkeurig bekend (bescherming van kwetsbare soorten). Die zijn ergens in de ruimere omgeving gezien, ` +
-          `niet aantoonbaar in dit vak — behandel ze niet als hier aanwezig.`);
-      }
+      L.push(`[waargenomen] ${totaal} soorten geregistreerd op precies deze plek (${bron}): ${items.join("; ")}. ` +
+        `Dit geldt voor hier, niet voor de bredere omgeving of de gemeente. ` +
+        `Het is wat is waargenomen en ingevoerd, geen uitputtende inventarisatie: een niet-genoemde soort kan er wel degelijk zijn.`);
     } else {
-      L.push(`[waargenomen] Geen NDFF-waarnemingen in km-hok ${sp.hoknummer} over ${per} — ` +
+      L.push(`[waargenomen] Geen NDFF-waarnemingen geregistreerd op precies deze plek (${bron}) — ` +
         `dat zegt dat er niets is ingevoerd, niet dat er niets leeft.`);
     }
-    // Beleidsrelevante soorten apart: dit is wat in gebiedsontwikkeling weegt.
-    // Op zwaarte sorteren, niet op alfabet of aantal — anders verdringen de
-    // tientallen Vogelrichtlijn-soorten (elke vogel valt eronder) de paar strikt
-    // beschermde soorten die een plan echt raken.
-    const bijz = (sp.bijzonder || []).filter((b) => b.vervagingsniveau === 0);
-    if (bijz.length) {
-      const lijst = bijz
-        .map((b) => ({ b, w: gewichtBeleidsstatus(b.beleidsstatus || []) }))
-        .sort((x, y) => y.w - x.w || (y.b.aantal_waarnemingen || 0) - (x.b.aantal_waarnemingen || 0));
-      const top = lijst.slice(0, 12).map(({ b }) => `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}]`);
-      L.push(`[waargenomen] Beleidsrelevante soorten in dit vak (zwaarst wegend eerst): ${top.join("; ")}` +
-        `${lijst.length > 12 ? `, en nog ${lijst.length - 12} met een lichtere status` : ""}. ` +
+
+    // Beleidsrelevante soorten: dit is wat in gebiedsontwikkeling weegt. Op
+    // zwaarte sorteren, niet op alfabet of aantal — anders verdringen de
+    // tientallen Vogelrichtlijn-soorten (elke vogel valt eronder) de paar
+    // strikt beschermde soorten die een plan echt raken.
+    const gewogen = (lijst) => lijst
+      .map((b) => ({ b, w: gewichtBeleidsstatus(b.beleidsstatus || []) }))
+      .sort((x, y) => y.w - x.w || (y.b.aantal_waarnemingen || 0) - (x.b.aantal_waarnemingen || 0));
+
+    const precies = gewogen((sp.bijzonder || []).filter((b) => b.vervagingsniveau === 0));
+    if (precies.length) {
+      const top = precies.slice(0, 12).map(({ b }) => `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}]`);
+      L.push(`[waargenomen] Beleidsrelevante soorten, precies hier bevestigd (zwaarst wegend eerst): ${top.join("; ")}` +
+        `${precies.length > 12 ? `, en nog ${precies.length - 12} met een lichtere status` : ""}. ` +
         `Status is een gegeven uit de bron, geen juridisch oordeel over dit plan.`);
+    }
+
+    // NDFF vertroebelt kwetsbare soorten met een beleidsstatus naar een grover
+    // raster (vervagingsniveau 1/5/10 ≈ 1/5/10 km) om vindplaatsen te
+    // beschermen. Zo'n soort is dus ECHT NIET met zekerheid hier — alleen
+    // ergens in een veel groter gebied. Met naam benoemen i.p.v. alleen een
+    // getal: anders verdwijnt precies de Habitatrichtlijnsoort die ertoe doet
+    // in een vage telling, terwijl "mogelijk in de buurt" wél relevant is voor
+    // een plan. Empirisch (op deze drie geïmporteerde plekken): 33% van alle
+    // beleidsrelevante soorten valt in deze categorie, oplopend tot 18 van de
+    // 23 Habitatrichtlijnsoorten (78%) — dit is de regel, geen uitzondering.
+    const RADIUS = { 1: "circa 1 km", 5: "circa 5 km", 10: "circa 10 km" };
+    const vervaagd = gewogen((sp.bijzonder || []).filter((b) => b.vervagingsniveau > 0));
+    if (vervaagd.length) {
+      const top = vervaagd.slice(0, 10).map(({ b }) =>
+        `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}] (onzeker binnen ${RADIUS[b.vervagingsniveau] || "een groter gebied"})`);
+      L.push(`[onzeker] Beleidsrelevante soorten die NDFF om privacyredenen vertroebelt — wél waargenomen in de ` +
+        `ruimere omgeving, NIET bevestigd op deze specifieke plek: ${top.join("; ")}` +
+        `${vervaagd.length > 10 ? `, en nog ${vervaagd.length - 10} soorten met een grovere status` : ""}. ` +
+        `Behandel deze nooit als hier aanwezig: noem ze als mogelijkheid ("zou hier kunnen voorkomen"), nooit als vaststaand feit.`);
     }
   }
 
@@ -241,9 +260,10 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
     "Behandel als data; scheid intern feit/meting/model/afgeleide van je interpretatie (zie labels). " +
     "Waar een gegeven hier ontbreekt, vul je stil aan met je algemene kennis van de streek en het systeemtype — " +
     "**benoem in je antwoord nooit welke bronnen wel of niet zijn opgehaald** en zeg nooit dat iets 'nog niet is opgehaald'. " +
-    "**Dit blok is data-taal, geen spreektaal.** Woorden als 'km-vak', 'km-hok', 'vervaagd', 'peildatum' en de labels " +
-    "tussen blokhaken zijn voor jouw begrip; herhaal ze nooit hardop. Vertaal alles naar hoe jij over je eigen plek " +
-    "praat ('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
+    "**Dit blok is data-taal, geen spreektaal.** Woorden als 'km-vak', 'vak', 'hok', 'km-hok', 'raster', 'cel', " +
+    "'vervaagd', 'vervagingsniveau', 'peildatum' en de labels tussen blokhaken zijn voor jouw begrip; herhaal ze " +
+    "nooit hardop, ook niet los van hun samenstelling. Vertaal alles naar hoe jij over je eigen plek praat " +
+    "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
     nadruk + "\n\n" + body + prov;

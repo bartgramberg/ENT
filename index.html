@@ -157,7 +157,7 @@
       padding: 40px 44px 44px;
     }
     /* Bevestigingsscherm: de avatar vult de kaart, dus geen eigen vulling. */
-    .card.card-bleed { padding: 0; overflow: hidden; max-width: 680px; }
+    .card.card-bleed { padding: 0; overflow: hidden; max-width: 860px; }
 
     @media (max-width: 600px) {
       .card { padding: 28px 20px 32px; }
@@ -442,54 +442,50 @@
     .skip-error[hidden] { display: none; }
 
     /* ── CONFIRM ──
-       De identiteit die je zo gaat spreken vult het scherm; de tekst ligt er
-       linksonder overheen. Bewust niet gecentreerd: dan zou de tekst precies
-       op de boom vallen, en juist die wil je zien voor je begint. */
-    .confirm-hero {
-      position: relative;
-      min-height: 68vh;
-      display: flex; flex-direction: column; justify-content: flex-end;
-      isolation: isolate;
+       Twee vlakken naast elkaar: links een groot vierkant met de identiteit
+       die je zo gaat spreken, rechts de tekst. Geen overlay/scrim meer (dat
+       oogde niet goed) — gewoon twee panelen, normale typografie rechts. */
+    .confirm-split {
+      display: flex; align-items: center;
     }
-    .confirm-hero-img {
+    /* Vaste breedte i.p.v. op flex-stretch vertrouwen voor de hoogte: de img
+       erin staat position:absolute (voor object-fit:cover) en draagt daardoor
+       geen eigen grootte bij, dus aspect-ratio had niets om op te steunen en
+       viel terug op 0px breed. Met een vaste breedte is het gegarandeerd
+       vierkant, ongeacht hoe hoog de tekst ernaast wordt. */
+    .confirm-split-imgwrap {
+      position: relative; width: 380px;
+      aspect-ratio: 1; flex: 0 0 auto;
+      overflow: hidden; background: var(--color-creme);
+    }
+    .confirm-split-imgwrap img {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
-      object-fit: cover; object-position: center 38%;
-      z-index: -2;
+      object-fit: cover; object-position: center;
     }
-    /* Leesbaarheid van de tekst zonder de avatar plat te leggen: verloop dat
-       alleen onderin dekkend wordt. */
-    .confirm-hero-scrim {
-      position: absolute; inset: 0; z-index: -1;
-      background: linear-gradient(to top,
-        rgba(20,28,22,0.92) 0%,
-        rgba(20,28,22,0.78) 26%,
-        rgba(20,28,22,0.30) 52%,
-        rgba(20,28,22,0.02) 78%);
+    .confirm-split-content {
+      flex: 1 1 320px; min-width: 260px;
+      padding: 36px 38px;
+      display: flex; flex-direction: column; justify-content: center;
     }
-    .confirm-hero-content {
-      padding: 28px 30px 30px;
-      max-width: 460px;   /* smal: laat rechts de avatar vrij */
+    .confirm-split-content .back-btn { margin-bottom: 12px; }
+    .confirm-split-content .q-title { margin-bottom: 2px; }
+    .confirm-split-content .progress { margin-bottom: 14px; }
+
+    @media (max-width: 640px) {
+      .confirm-split { flex-direction: column; }
+      .confirm-split-imgwrap { aspect-ratio: 16 / 9; width: 100%; }
+      .confirm-split-content { padding: 24px 22px 28px; }
     }
-    .confirm-hero .back-btn { color: rgba(255,255,255,0.75); margin-bottom: 12px; }
-    .confirm-hero .back-btn:hover { color: #fff; }
-    .confirm-hero .q-title {
-      color: #fff; font-size: 30px; margin-bottom: 4px;
-      text-shadow: 0 1px 12px rgba(0,0,0,0.35);
-    }
-    .confirm-hero .progress { margin-bottom: 14px; }
-    .confirm-hero .dot { background: rgba(255,255,255,0.3); }
-    .confirm-hero .dot.done { background: rgba(255,255,255,0.85); }
 
     .confirm-summary {
       font-size: 16px; font-weight: 300; font-style: italic;
-      color: rgba(255,255,255,0.94); line-height: 1.5;
-      padding: 10px 0 2px;
-      text-shadow: 0 1px 10px rgba(0,0,0,0.4);
+      color: var(--color-green); line-height: 1.55;
+      padding: 8px 0 2px;
     }
 
     .confirm-docs-note {
-      font-size: 12px; color: rgba(255,255,255,0.7);
+      font-size: 12px; color: var(--color-text-light);
       font-style: italic; margin-bottom: 4px;
     }
     .confirm-docs-note[hidden] { display: none; }
@@ -524,36 +520,11 @@
     }
     .btn-edit:hover { color: var(--color-green); border-color: var(--color-green); }
 
-    /* Knoppen in de hero: naast elkaar i.p.v. onder elkaar (scheelt hoogte),
-       en leesbaar op de donkere onderkant van het verloop. */
-    .confirm-hero .confirm-btns { flex-direction: row; gap: 8px; margin-top: 14px; }
-    .confirm-hero .btn-start {
-      width: auto; flex: 0 1 auto; padding: 13px 22px; white-space: nowrap;
-    }
-    .confirm-hero .btn-edit {
-      width: auto; flex: 0 0 auto; padding: 13px 18px;
-      color: rgba(255,255,255,0.8);
-      border-color: rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(6px);
-    }
-    .confirm-hero .btn-edit:hover { color: #fff; border-color: rgba(255,255,255,0.7); }
-
     .confirm-status {
       text-align: center; font-size: 13px; font-style: italic;
       color: var(--color-green); margin-top: 12px; min-height: 20px;
     }
     .confirm-status.error { color: var(--color-magenta); }
-    .confirm-hero .confirm-status { color: rgba(255,255,255,0.9); text-align: left; }
-    .confirm-hero .confirm-status.error { color: #ff9ad2; }
-
-    @media (max-width: 600px) {
-      .confirm-hero { min-height: 76vh; }
-      .confirm-hero-content { padding: 20px 20px 22px; max-width: none; }
-      .confirm-hero .q-title { font-size: 24px; }
-      .confirm-hero .confirm-btns { flex-direction: column; }
-      .confirm-hero .btn-start, .confirm-hero .btn-edit { width: 100%; }
-    }
 
     /* ── UPLOAD ZONE ── */
     .upload-section { margin-top: 4px; }
@@ -914,10 +885,11 @@
 
       <!-- ── SCREEN CONFIRM ── -->
       <div id="screen-confirm" hidden>
-        <div class="confirm-hero">
-          <img class="confirm-hero-img" id="confirmHeroImg" src="/assets/images/Boom.gif" alt="">
-          <div class="confirm-hero-scrim"></div>
-          <div class="confirm-hero-content">
+        <div class="confirm-split">
+          <div class="confirm-split-imgwrap">
+            <img id="confirmHeroImg" src="/assets/images/Boom.gif" alt="">
+          </div>
+          <div class="confirm-split-content">
             <div class="progress">
               <div class="progress-dots">
                 <div class="dot done"></div><div class="dot done"></div>
