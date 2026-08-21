@@ -752,6 +752,19 @@
         welcomeLoc:   (loc) => EN ? `I flow through ${loc} and far beyond. What's happening, and where does it go?`
                                   : `Ik stroom door ${loc} en ver daarbuiten. Wat speelt er, en waar gaat het heen?`,
       },
+      winterkoning: {
+        title:        'ENT — Winterkoninkje als vertegenwoordiger van de natuur',
+        personaName:  EN ? 'The Wren' : 'Het Winterkoninkje',
+        img:          '/assets/images/Winterkoning.jpg',
+        thinking:     EN ? 'The wren is looking around' : 'Het winterkoninkje kijkt rond',
+        errorTitle:   EN ? 'The wren has flitted off.' : 'Het winterkoninkje is weggewipt.',
+        overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Wren has responded.'
+                         : 'Ecologische feiten en afwegingen verschijnen hier zodra het Winterkoninkje heeft gereageerd.',
+        welcomeNoLoc: EN ? "I'm quick and I see a lot. Who lives here — shall we look?"
+                         : 'Ik ben snel en ik zie veel. Wie woont hier — zullen we kijken?',
+        welcomeLoc:   (loc) => EN ? `I flit all through ${loc}. Who lives here — shall we look?`
+                                  : `Ik wip overal rond ${loc}. Wie woont hier — zullen we kijken?`,
+      },
     };
     const cfg = PERSONA[currentPersona] || PERSONA.boom;
 

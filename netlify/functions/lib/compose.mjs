@@ -35,7 +35,7 @@ import path from "node:path";
 import { formatSysteemprofiel } from "./systeemprofiel.mjs";
 
 // Identiteiten with a complete folder — extend as new identiteiten are added.
-const AVAILABLE_IDENTITIES = ["boom", "water"];
+const AVAILABLE_IDENTITIES = ["boom", "water", "winterkoning"];
 const DEFAULT_IDENTITY = "boom";
 
 // Maps user_role (Q1) → audience prompt file (without .md)
