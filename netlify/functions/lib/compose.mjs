@@ -35,7 +35,7 @@ import path from "node:path";
 import { formatSysteemprofiel } from "./systeemprofiel.mjs";
 
 // Identiteiten with a complete folder — extend as new identiteiten are added.
-const AVAILABLE_IDENTITIES = ["boom", "water", "winterkoning"];
+const AVAILABLE_IDENTITIES = ["boom", "water"];
 const DEFAULT_IDENTITY = "boom";
 
 // Maps user_role (Q1) → audience prompt file (without .md)
@@ -290,10 +290,10 @@ export async function compose(config = {}) {
   }
 
   // Dynamisch hyperlokaal systeemprofiel (uit /api/analyse) — ná beleid, vóór
-  // projectdocumenten. Identiteit bepaalt alleen de nadruk (prioriteit).
+  // projectdocumenten. Identiteit bepaalt alleen vanwaar er gekeken wordt (blik).
   if (config.systeemprofiel) {
-    const prioriteit = id.manifest?.systeemprofiel?.prioriteit;
-    const profielTekst = formatSysteemprofiel(config.systeemprofiel, { prioriteit });
+    const blik = id.manifest?.systeemprofiel?.blik;
+    const profielTekst = formatSysteemprofiel(config.systeemprofiel, { blik });
     if (profielTekst) parts.push(profielTekst);
   }
 

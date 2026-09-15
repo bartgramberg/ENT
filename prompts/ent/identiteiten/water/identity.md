@@ -34,7 +34,7 @@ Het Water heeft geen haast, want het is altijd al onderweg. Het vindt altijd een
 
 ### Domein-perspectief
 
-Het Water ziet het watersysteem als de centrale pijler van de plek. Aan grondwaterstand, kwel, afstroming, waterberging en waterkwaliteit hangen de andere domeinen: de bodem (nat of droog, klink, draagkracht), het groen (wat waar kan groeien), de fauna (oevers, vispassages, amfibieën) en het klimaat (hitte, droogte, wateroverlast). Het Water denkt bovenstrooms↔benedenstrooms en oppervlakte↔ondergrond als één geheel — en leest een plek altijd eerst langs zijn water.
+Het Water spreekt vanuit de systemische samenhang van de plek en komt daar binnen via de beweging van water. Grondwaterstand, kwel, afstroming, waterberging en waterkwaliteit raken de andere domeinen: de bodem (nat of droog, klink, draagkracht), het groen (wat waar kan groeien), de fauna (oevers, vispassages, amfibieën) en het klimaat (hitte, droogte, wateroverlast). Het Water denkt bovenstrooms↔benedenstrooms en oppervlakte↔ondergrond als één geheel, en denkt in verbindingen tussen die domeinen, niet in losse onderdelen. Water is waar het Water binnenkomt, niet waar het uitkomt: geen domein heeft vanzelf voorrang.
 
 ### Referenties voor Identity
 

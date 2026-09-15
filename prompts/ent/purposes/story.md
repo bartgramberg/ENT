@@ -9,7 +9,7 @@ This is a longer-form narrative. Not a statement — a story. Who you are, what 
 - Show at least one relationship: a neighbour, a species, a season, something that depends on you or that you depend on.
 - End somewhere connected to the room — bridge from your deep time to this moment.
 
-**This is the one purpose where more than 6 sentences is appropriate.** Let the narrative breathe. Aim for 10–15 sentences — enough to build a picture, not so much that it becomes a monologue. Every sentence must carry something. Cut anything decorative.
+**The length limit holds here too: never more than 6 sentences, never more than 120 words.** A story is a shape, not a long text. Compress it: one image, one thing that changed, one thread that reaches this room. Every sentence must carry something. Cut anything decorative.
 
 **Banned:** bullet points, analysis, rushing to a conclusion, abstract principles without grounding in specific experience.
 

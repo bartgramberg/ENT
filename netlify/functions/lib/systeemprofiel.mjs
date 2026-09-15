@@ -4,7 +4,7 @@
  * formatter die het als beknopte, gelabelde referentie in de prompt zet.
  *
  * Eén gedeeld profiel (identiteit-onafhankelijk); de identiteit bepaalt alleen
- * de nadruk in de presentatie (zie `formatSysteemprofiel`, arg `prioriteit`).
+ * vanwaar er gekeken wordt (zie `formatSysteemprofiel`, arg `blik`).
  */
 
 /** Kies primair type + buffers op basis van een grove locatie-hint. */
@@ -140,9 +140,12 @@ function gewichtBeleidsstatus(statussen) {
 
 /**
  * Render het profiel als compacte, gelabelde markdown voor de prompt.
- * `prioriteit` (optioneel, per identiteit) zet een nadrukregel bovenaan.
+ * `blik` (optioneel, per identiteit) beschrijft vanwaar deze identiteit kijkt.
+ * Bewust een standpunt en geen themalijst: een opsomming van onderwerpen leest
+ * als agenda en laat de stem afvinken, terwijl principes.md en methodiek.md
+ * juist vragen om samenhang ("verkokering is de vijand").
  */
-export function formatSysteemprofiel(p, { prioriteit } = {}) {
+export function formatSysteemprofiel(p, { blik } = {}) {
   if (!p) return "";
   const L = [];
   const loc = p.location || {};
@@ -266,15 +269,21 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
       "\n\n## Sociale en verhalende context van de plek (Wikipedia — achtergrond, geen meting)\n\n" +
       "Wat voor plek dit is voor mensen: geschiedenis, verhalen, hoe het gegroeid is, wat er in de " +
       "omgeving ligt. Gebruik dit om je begrip van de plek te verdiepen en je sociale/maatschappelijke " +
-      "kader te voeden — niet om feiten of jaartallen op te dreunen. Weef er hooguit één draad uit in je " +
-      "stem als die de plek écht raakt; het meeste blijft ongezegde achtergrond. Het is context van " +
+      "kader te voeden — niet om feiten of jaartallen op te dreunen. Weef er in de regel één korte " +
+      "verwijzing uit in je stem: een half zinsdeel waaruit blijkt dat je deze plek werkelijk kent. " +
+      "Terloops aangeraakt, nooit uitgeweid, nooit een verhaal apart — en laat het weg als het niets " +
+      "toevoegt aan wat er nú speelt. Het meeste blijft ongezegde achtergrond. Het is context van " +
       "derden: behandel als aanleiding, niet als vaststaande waarheid, en spreek nooit over 'Wikipedia' " +
       "of 'artikelen'.\n\n" + regels;
   }
   const prov = (p.provenance || []).length
     ? `\n\n**Bronnen:** ${p.provenance.map((s) => `${s.dataset}${s.retrieved ? ` (${s.retrieved})` : ""}`).join(" · ")}.`
     : "";
-  const nadruk = prioriteit?.length ? `\n\n_Nadruk voor deze identiteit: ${prioriteit.join(", ")}._` : "";
+  const blikRegel = blik
+    ? `\n\n_Jouw blik: ${blik}. Dat is vanwaar je kijkt, niet waarover je praat. ` +
+      `Lees dit profiel als één samenhangend geheel: geen domein heeft vanzelf voorrang, ` +
+      `ook niet het domein dat het dichtst bij je eigen aard ligt._`
+    : "";
 
   return "# HYPERLOKAAL SYSTEEMPROFIEL (dynamisch, referentie)\n\n" +
     "Plek-specifieke data uit open bronnen, als aanvulling op de vaste kennislaag én je algemene kennis. " +
@@ -287,5 +296,5 @@ export function formatSysteemprofiel(p, { prioriteit } = {}) {
     "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
-    nadruk + "\n\n" + body + plekBlok + prov;
+    blikRegel + "\n\n" + body + plekBlok + prov;
 }

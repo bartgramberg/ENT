@@ -842,12 +842,6 @@
               <span class="voice-name" data-i18n="q4_water">Het Water</span>
               <span class="voice-sub"  data-i18n="q4_water_sub">Stromend, verbindend, systemisch</span>
             </div>
-            <div class="voice-tile" role="radio" aria-checked="false" tabindex="0"
-                 onclick="selectVoice(this,'winterkoning')" onkeydown="voiceKey(event,this,'winterkoning')">
-              <img class="voice-img" src="/assets/images/Winterkoning.jpg" alt="Het Winterkoninkje">
-              <span class="voice-name" data-i18n="q4_winterkoning">Het Winterkoninkje</span>
-              <span class="voice-sub"  data-i18n="q4_winterkoning_sub">Fladderend, kwetterend, systemisch</span>
-            </div>
           </div>
         </div>
 
@@ -1051,7 +1045,6 @@
         q4_voice_label: 'Welke stem?',
         q4_boom: 'De Boom', q4_boom_sub: 'Geworteld, systemisch, geduldig',
         q4_water: 'Het Water', q4_water_sub: 'Stromend, verbindend, systemisch',
-        q4_winterkoning: 'Het Winterkoninkje', q4_winterkoning_sub: 'Fladderend, kwetterend, systemisch',
         q4_more: 'Meer natuur', q4_more_sub: 'Binnenkort',
         q4_location_label: 'Waar?',       q4_location_placeholder: 'Adres, bijv. Dodeweg 1, Leusden',
         q4_situation_label: 'Wat speelt er?', q4_situation_placeholder: 'Het plan, project of de vraag die op tafel ligt...',
@@ -1072,7 +1065,6 @@
 
         voice_boom: 'de boom',
         voice_water: 'het water',
-        voice_winterkoning: 'het winterkoninkje',
         aud_self_prefix: 'spreekt met jou',
         aud_group_residents:     'spreekt tot bewoners',
         aud_group_professionals: 'spreekt tot professionals',
@@ -1088,7 +1080,6 @@
         purpose_other: 'voor een vrij gesprek',
         loading_boom: 'De boom luistert…',
         loading_water: 'Het water luistert…',
-        loading_winterkoning: 'Het winterkoninkje luistert…',
         confirm_docs: '+ {n} projectdocument(en) geladen',
       },
       en: {
@@ -1135,7 +1126,6 @@
         q4_voice_label: 'Which voice?',
         q4_boom: 'The Tree',   q4_boom_sub: 'Rooted, systemic, patient',
         q4_water: 'The Water', q4_water_sub: 'Flowing, connecting, systemic',
-        q4_winterkoning: 'The Wren', q4_winterkoning_sub: 'Flitting, chirping, systemic',
         q4_more: 'More nature', q4_more_sub: 'Coming soon',
         q4_location_label: 'Where?',          q4_location_placeholder: 'Address, e.g. Dodeweg 1, Leusden',
         q4_situation_label: "What's happening there?", q4_situation_placeholder: 'The plan, project, or question on the table...',
@@ -1156,7 +1146,6 @@
 
         voice_boom: 'the tree',
         voice_water: 'the water',
-        voice_winterkoning: 'the wren',
         aud_self_prefix: 'speaks with you',
         aud_group_residents:     'speaks to residents',
         aud_group_professionals: 'speaks to professionals',
@@ -1172,7 +1161,6 @@
         purpose_other: 'for a free conversation',
         loading_boom: 'The tree is listening…',
         loading_water: 'The water is listening…',
-        loading_winterkoning: 'The wren is listening…',
         confirm_docs: '+ {n} project document(s) loaded',
       }
     };
@@ -1437,12 +1425,11 @@
       });
     }
 
-    /* Avatar per identiteit. Winterkoning en boom delen de standaard
-       beeldverhouding (540:304); alleen water is iets breder (is-water). */
+    /* Avatar per identiteit. Boom heeft de standaard beeldverhouding
+       (540:304); water is iets breder (is-water). */
     const AVATARS = {
       boom:         { src: '/assets/images/Boom.gif',         wide: false },
       water:        { src: '/assets/images/Water.gif',        wide: true  },
-      winterkoning: { src: '/assets/images/Winterkoning.jpg', wide: false },
     };
     function avatarFor(voice) { return AVATARS[voice] || AVATARS.boom; }
 
