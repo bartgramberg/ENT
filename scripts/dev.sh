@@ -33,6 +33,8 @@ haal() {
 
 export ANTHROPIC_API_KEY="$(haal ANTHROPIC_API_KEY)"
 export ENT_ACCESS_PASSWORD="$(haal ENT_ACCESS_PASSWORD)"
+export ELEVENLABS_API_KEY="$(haal ELEVENLABS_API_KEY)"
+export ELEVENLABS_VOICE_ID="$(haal ELEVENLABS_VOICE_ID)"
 export ANTHROPIC_BASE_URL="https://api.anthropic.com"
 
 echo "⬥ Start zonder AI Gateway → api.anthropic.com"

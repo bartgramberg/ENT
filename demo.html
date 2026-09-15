@@ -163,6 +163,21 @@
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
+    /* ── TTS (spraak bij een antwoord) ── */
+    .tts-btn {
+      align-self: flex-start;
+      margin: -10px 0 0 4px;   /* trekt de flex-gap van .chat-messages terug tot ~6px */
+      padding: 0; border: none; background: none;
+      line-height: 0; cursor: pointer;
+      color: var(--color-text-light);
+      opacity: 0.55;
+      transition: color 0.2s, opacity 0.2s;
+    }
+    .tts-btn:hover      { opacity: 1; color: var(--color-green); }
+    .tts-btn.is-loading { opacity: 0.3; cursor: default; }
+    .tts-btn.is-playing { opacity: 1; color: var(--color-green); }
+    .tts-btn svg        { display: block; width: 16px; height: 16px; }
+
     /* ── ERROR SCREEN (replaces chat panel on 503) ── */
     .chat-error {
       display: none;
@@ -752,19 +767,6 @@
         welcomeLoc:   (loc) => EN ? `I flow through ${loc} and far beyond. What's happening, and where does it go?`
                                   : `Ik stroom door ${loc} en ver daarbuiten. Wat speelt er, en waar gaat het heen?`,
       },
-      winterkoning: {
-        title:        'ENT — Winterkoninkje als vertegenwoordiger van de natuur',
-        personaName:  EN ? 'The Wren' : 'Het Winterkoninkje',
-        img:          '/assets/images/Winterkoning.jpg',
-        thinking:     EN ? 'The wren is looking around' : 'Het winterkoninkje kijkt rond',
-        errorTitle:   EN ? 'The wren has flitted off.' : 'Het winterkoninkje is weggewipt.',
-        overwEmpty:   EN ? 'Ecological facts and considerations appear here once the Wren has responded.'
-                         : 'Ecologische feiten en afwegingen verschijnen hier zodra het Winterkoninkje heeft gereageerd.',
-        welcomeNoLoc: EN ? "I'm quick and I see a lot. Who lives here — shall we look?"
-                         : 'Ik ben snel en ik zie veel. Wie woont hier — zullen we kijken?',
-        welcomeLoc:   (loc) => EN ? `I flit all through ${loc}. Who lives here — shall we look?`
-                                  : `Ik wip overal rond ${loc}. Wie woont hier — zullen we kijken?`,
-      },
     };
     const cfg = PERSONA[currentPersona] || PERSONA.boom;
 
@@ -1022,9 +1024,10 @@
         if (i >= text.length) {
           clearInterval(interval);
           div.classList.remove('typing-cursor');
-          if (onDone) onDone();
+          if (onDone) onDone(div);
         }
       }, 16);
+      return div;
     }
 
     function addEntBubble(text) {
@@ -1068,6 +1071,81 @@
     }
 
     /* ══════════════════════════════════════
+       TEXT TO SPEECH
+       Speech is generated while the answer is still typing out, so the audio
+       is usually ready the moment the text lands. Any failure here stays
+       local to one bubble — the text chat must keep working regardless.
+    ══════════════════════════════════════ */
+    let currentAudio = null;
+
+    function stopSpeech() {
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    }
+
+    // Always settles, never rejects: the handler is attached only once the text
+    // finishes typing, so a rejection raised before then would surface as an
+    // unhandled rejection in the console.
+    function fetchSpeech(text) {
+      return fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, text, lang: currentLang })
+      }).then(async res => {
+        if (!res.ok) throw new Error('tts ' + res.status);
+        return { url: URL.createObjectURL(await res.blob()) };
+      }).catch(() => ({ url: null }));
+    }
+
+    const ICON_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+
+    function _ttsPlay(audio) {
+      stopSpeech();
+      currentAudio = audio;
+      return audio.play();
+    }
+
+    function attachSpeech(bubbleEl, speechPromise) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tts-btn is-loading';
+      btn.disabled = true;
+      btn.innerHTML = ICON_PLAY;
+      bubbleEl.insertAdjacentElement('afterend', btn);
+
+      speechPromise.then(({ url }) => {
+        if (!url) { btn.remove(); return; }   // no speech: show nothing at all
+
+        const audio = new Audio(url);
+        const setIcon = (playing) => {
+          btn.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+          btn.classList.toggle('is-playing', playing);
+          btn.setAttribute('aria-label', playing
+            ? (EN ? 'Pause answer' : 'Antwoord pauzeren')
+            : (EN ? 'Play answer'  : 'Antwoord afspelen'));
+        };
+
+        audio.addEventListener('play',  () => setIcon(true));
+        audio.addEventListener('pause', () => setIcon(false));
+        audio.addEventListener('ended', () => {
+          if (currentAudio === audio) currentAudio = null;
+        });
+
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+        setIcon(false);
+        btn.addEventListener('click', () => {
+          if (audio.paused) _ttsPlay(audio).catch(() => {});
+          else audio.pause();
+        });
+
+        // A browser may refuse autoplay without a recent user gesture. The
+        // button is already there, so a refusal simply leaves it on play.
+        _ttsPlay(audio).catch(() => {});
+      });
+    }
+
+    /* ══════════════════════════════════════
        ERROR SCREEN
     ══════════════════════════════════════ */
     function showErrorScreen() {
@@ -1104,6 +1182,7 @@
 
     function _doSend(message) {
       lastUserMessage = message;
+      stopSpeech();   // don't let the previous answer talk over the new one
 
       // Build messages array: existing conversation + new user message
       const messages = [
@@ -1168,14 +1247,21 @@
         // Update CO2 indicator
         updateKlimaatimpact(usage);
 
-        // Render response
+        // Render response. Speech generation starts now, in parallel with the
+        // typing animation, so the audio is usually ready when the text lands.
+        const stem = data.stem || '';
+        const speechPromise = stem ? fetchSpeech(stem) : null;
+
         startMouth();
-        typeEntBubble(data.stem || '', () => {
+        const bubbleEl = typeEntBubble(stem, () => {
           stopMouth();
           if (data.overwegingen && data.overwegingen.length) {
             typeOverwegingen(data.overwegingen);
           }
         });
+        // Attached now, not when typing ends, so the voice starts as soon as
+        // the audio is ready instead of waiting for the animation.
+        if (speechPromise) attachSpeech(bubbleEl, speechPromise);
       })
       .catch(() => {
         removeThinkingBubble(thinkingId);

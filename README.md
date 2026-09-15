@@ -39,6 +39,8 @@ ENT is an AI conversation tool by Protopia Studio. A user converses with the Tre
 Set environment variables via the **Netlify dashboard → Site settings → Environment variables**:
 - `ANTHROPIC_API_KEY`
 - `ENT_ACCESS_PASSWORD`
+- `ELEVENLABS_API_KEY`
+- `ELEVENLABS_VOICE_ID`
 
 ---
 
@@ -50,6 +52,7 @@ Set environment variables via the **Netlify dashboard → Site settings → Envi
 | `demo.html` | Chat interface with the Tree |
 | `compose.js` | Client-side prompt assembly from modular markdown files |
 | `netlify/functions/chat.mjs` | Stateless Anthropic API proxy |
+| `netlify/functions/speak.mjs` | Stateless ElevenLabs text-to-speech proxy |
 | `netlify.toml` | Netlify build config + redirects |
 | `prompts/ent/` | Modular voice, audience, purpose and format prompt files |
 | `assets/images/` | Avatar and background images |
