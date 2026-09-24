@@ -132,9 +132,8 @@ function parseOverwegingen(raw) {
       blocks.push({ title: lines[0], body: lines[0] });
     }
   }
-  if (blocks.length === 0) {
-    blocks.push({ title: "Ecologische afweging", body: raw });
-  }
+  // Leeg mag: geen overwegingen is een geldig antwoord (geen stub met een
+  // ecologische titel bij een vraag over mobiliteit).
   return blocks;
 }
 
@@ -193,8 +192,10 @@ export default async function handler(req, context) {
     const composed = await compose(config || {}, { opening: isOpening });
     const { stable, session } = composed;
     system = [];
-    if (stable)  system.push({ type: "text", text: stable,  cache_control: { type: "ephemeral" } });
-    if (session) system.push({ type: "text", text: session, cache_control: { type: "ephemeral" } });
+    // Bewaartijd een uur: in een gefaciliteerde sessie zit er makkelijk meer dan
+    // vijf minuten tussen twee vragen, en dan was de cache verlopen.
+    if (stable)  system.push({ type: "text", text: stable,  cache_control: { type: "ephemeral", ttl: "1h" } });
+    if (session) system.push({ type: "text", text: session, cache_control: { type: "ephemeral", ttl: "1h" } });
     // After the last breakpoint: the first real turn reuses the cached session block.
     if (composed.opening) system.push({ type: "text", text: composed.opening });
   } catch (err) {

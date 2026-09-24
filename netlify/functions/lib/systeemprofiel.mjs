@@ -285,16 +285,33 @@ export function formatSysteemprofiel(p, { blik } = {}) {
       `ook niet het domein dat het dichtst bij je eigen aard ligt._`
     : "";
 
+  // Gaten expliciet maken: wat niet is opgehaald of (nog) geen bron heeft, moet
+  // het model als 'niet bekend' zien — anders vult het stil aan (dotterbloem,
+  // waterviolier en kwel uit de Veluweflank in de test van 22 sept 2026).
+  const gaten = [];
+  const gapKeys = (p.data_gaps || []).map((g) => String(g).split(" (")[0].trim());
+  const NAAM = { species_observations: "soorten", soil: "bodem", groundwater: "grondwater",
+    climate_pressures: "klimaatdruk", terrain: "maaiveld", protected_areas: "beschermde gebieden" };
+  for (const k of gapKeys) gaten.push(NAAM[k] || k);
+  if (!sp.hoknummer && !gapKeys.includes("species_observations")) gaten.push("soorten");
+  if (!Object.keys(p.surface_water || {}).length) gaten.push("oppervlaktewater (beken, sloten, waterlichaam)");
+  if (!Object.keys(p.land_cover || {}).length) gaten.push("landgebruik");
+  const gatenRegel = gaten.length
+    ? `\n\n**Niet bekend over deze plek:** ${[...new Set(gaten)].join(", ")}. Daarover weet je hier niets; ` +
+      `wat je er in het algemeen over weet, klinkt hoorbaar als algemeen ("in dit soort beekdalen", "zou hier kunnen"), ` +
+      `nooit als iets wat je hier hebt gezien.`
+    : "";
+
   return "# HYPERLOKAAL SYSTEEMPROFIEL (dynamisch, referentie)\n\n" +
-    "Plek-specifieke data uit open bronnen, als aanvulling op de vaste kennislaag én je algemene kennis. " +
-    "Behandel als data; scheid intern feit/meting/model/afgeleide van je interpretatie (zie labels). " +
-    "Waar een gegeven hier ontbreekt, vul je stil aan met je algemene kennis van de streek en het systeemtype — " +
-    "**benoem in je antwoord nooit welke bronnen wel of niet zijn opgehaald** en zeg nooit dat iets 'nog niet is opgehaald'. " +
+    "Plek-specifieke data uit open bronnen. Behandel als data; scheid intern feit/meting/model/afgeleide " +
+    "van je interpretatie (zie labels). Wat hier staat mag je als 'hier' zeggen, in je eigen woorden. " +
+    "Wat hier niet staat, weet je van deze plek niet: vul het niet aan alsof je het hebt gezien. " +
     "**Dit blok is data-taal, geen spreektaal.** Woorden als 'km-vak', 'vak', 'hok', 'km-hok', 'raster', 'cel', " +
-    "'vervaagd', 'vervagingsniveau', 'peildatum' en de labels tussen blokhaken zijn voor jouw begrip; herhaal ze " +
+    "'vervaagd', 'vervagingsniveau', 'peildatum', datasetnamen en de labels tussen blokhaken zijn voor jouw begrip; herhaal ze " +
     "nooit hardop, ook niet los van hun samenstelling. Vertaal alles naar hoe jij over je eigen plek praat " +
-    "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen. " +
+    "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen; " +
+    "een getal (hoogte, grondwaterstand) is achtergrond, geen gespreksstof. " +
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
-    blikRegel + "\n\n" + body + plekBlok + prov;
+    blikRegel + "\n\n" + body + gatenRegel + plekBlok + prov;
 }

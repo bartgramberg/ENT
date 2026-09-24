@@ -58,12 +58,27 @@ neigt daardoor naar hydrologie, ongeacht de prompt.
 ## Architectuur
 
 De systeemprompt wordt **server-side** samengesteld in
-`netlify/functions/lib/compose.mjs`, zodat de kennislaag nooit in de browser
-komt en het stabiele deel gecachet kan worden. Promptbestanden worden per
-request van schijf gelezen — een wijziging werkt direct, zonder herstart.
+`netlify/functions/lib/compose.mjs`, zodat de volledige prompt nooit in de
+browser komt en het stabiele deel gecachet kan worden. Promptbestanden worden
+per request van schijf gelezen — een wijziging werkt direct, zonder herstart.
+Dat betekent ook: terwijl `scripts/eval.sh` draait, raak je de promptbestanden
+niet aan, anders meet je een mengsel.
+
+**De vaste kennislaag is weg** (24 september 2026). Hij was 61% van de prompt en
+het model gebruikte er in de test aantoonbaar niets uit in de stem; de analist
+haalde er wel zijn wetsartikelen uit, en die komen nu uit het kennisprofiel van
+de sessie of, hoorbaar algemeen, uit het model zelf. De bestanden staan in
+`voorbeelden/kennis/` als startmateriaal voor een kennisprofiel; `compose.mjs`
+leest ze niet meer. Zet ze niet terug in de prompt.
+
+Het profielblok zei vroeger "waar een gegeven ontbreekt, vul je stil aan met je
+algemene kennis". Dat leverde verzonnen soorten en kwel op. Nu somt het blok
+op wat níet bekend is over de plek (uit `data_gaps` en lege velden), en mag het
+model daarover alleen hoorbaar algemeen spreken.
 
 Elk antwoord heeft twee delen, gescheiden door `[OVERWEGINGEN]`: de stem en de
-analist. `chat.mjs` splitst daarop en geeft ze apart terug.
+analist. `chat.mjs` splitst daarop en geeft ze apart terug. Geen overwegingen is
+een geldig antwoord: de parser vult niets op.
 
 ## De opening
 
@@ -93,12 +108,26 @@ De functions zijn staatloos. Alle sessiestatus staat in localStorage van de
 browser. Het wachtwoord wordt bij élke request server-side gecontroleerd; de
 gate in `index.html` is maar een overlay.
 
+## Meten
+
+Vóór en na elke wijziging aan prompt of compose: `node scripts/eval-compose.mjs`
+(offline structuur) en `./scripts/eval.sh` (tien vragen via de echte function).
+De nulmeting van 24 september staat in `eval/README.md`; leg elke meting
+daarnaast. `ENT_PROMPT_LOG=<map> ./scripts/dev.sh` logt tijdens handmatig
+testen per beurt de complete prompt.
+
 ## Werkwijze
 
 Werk op `dev`. Netlify deployt van `main`, dus mergen naar `main` is het moment
-dat iets live gaat. Environment variables worden bij de build ingebakken: wijzig
-je er een in het Netlify-dashboard, dan is een nieuwe deploy nodig voordat de
-functions hem zien.
+dat iets live gaat. Het herbouwplan van september 2026 staat in
+`~/.claude/plans/context-aanleiding-luminous-melody.md` (Joris); de
+promptarchitectuur die daaruit volgt is beschreven in
+`prompts/ent/personages/README.md`. Joris herschrijft de personages zelf;
+`prompts/ent/personages/HERKOMST.md` legt vast wat waarheen gaat.
+
+Environment variables worden bij de build ingebakken: wijzig je er een in het
+Netlify-dashboard, dan is een nieuwe deploy nodig voordat de functions hem
+zien.
 
 Bart Gramberg en Joris werken beiden in deze repo. Grotere ingrepen in de
 promptarchitectuur zijn Barts terrein — stem af voordat je die verbouwt.

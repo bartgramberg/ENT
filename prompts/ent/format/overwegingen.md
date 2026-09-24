@@ -53,16 +53,14 @@ Wat keert hier terug als jullie klaar zijn?
 
 [OVERWEGINGEN]
 
-Grondwaterstand
-Dit gebied valt binnen de grondwaterbeschermingszone van de gemeente.
-Verharding van meer dan 30% van het maaiveld vereist een watertoets (Waterwet art. 3.6).
+Ecologische status laaglandbeken
+Laaglandbeken zoals deze vallen onder de Kaderrichtlijn Water; de doelen zijn vastgelegd in het stroomgebiedbeheerplan van het waterschap en moeten vóór 2027 gehaald zijn.
 
-Beschermde soorten
-Ingrepingen in bomen met een stamdiameter > 30 cm zijn meldingsplichtig
-onder de Bomenverordening; check de gemeentelijke bomenlijst voordat de sloopfase start.
+Beschermde soorten in beekoevers
+Beekoevers in de Gelderse Vallei zijn potentieel leefgebied voor beschermde soorten zoals de waterspitsmuis, de kleine modderkruiper en vleermuizen; aanwezigheid moet worden vastgesteld via een soortenonderzoek voordat ingrepen plaatsvinden.
 
 Vervolgstap
-Laat een quickscan flora en fauna uitvoeren voor de vergunningaanvraag.
+Vraag bij het waterschap de leggerstatus van deze beek op voordat de oeverbreedte wordt besproken.
 
 ## Language
 

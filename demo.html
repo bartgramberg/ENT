@@ -853,16 +853,11 @@
         feit(totaal + ' soort' + (totaal === 1 ? '' : 'en') + ' op deze km\u00b2');
       }
 
-      // Bronnen als klikbare dropdown. Geen aantal in de samenvatting: dat telde
-      // alleen de live opgehaalde geodata en wekte de indruk dát alles is — terwijl
-      // de vaste kennislaag (domeinkennis, wetgeving, beleid per bestuurslaag) en
-      // eventuele projectdocumenten er net zo goed in zitten. Die staan daarom
-      // hieronder expliciet mee in de lijst.
+      // Bronnen als klikbare dropdown: de live opgehaalde geodata plus de
+      // aangeleverde projectdocumenten. (De vaste kennislaag is per 24 sept 2026
+      // uit de prompt; wat ENT verder weet is algemene kennis.)
       const prov = p.provenance || [];
-      const vast = [
-        'Systemische natuurkennis (ecologie, bodem, water, biodiversiteit, klimaat)',
-        'Beleid en wetgeving — nationaal, provinciaal, regionaal en gemeentelijk',
-      ];
+      const vast = [];
       if (intakeConfig.documents && intakeConfig.documents.length) {
         const n = intakeConfig.documents.length;
         vast.push('Projectdocumenten (' + n + ' bestand' + (n === 1 ? '' : 'en') + ')');
@@ -977,6 +972,8 @@
         const u = data.usage || {};
         usage.input_tokens  += u.input_tokens  || 0;
         usage.output_tokens += u.output_tokens || 0;
+        usage.cache_read_tokens  = (usage.cache_read_tokens  || 0) + (u.cache_read_input_tokens     || 0);
+        usage.cache_write_tokens = (usage.cache_write_tokens || 0) + (u.cache_creation_input_tokens || 0);
         usage.requests      += 1;
         return data.stem.trim();
       })
@@ -1328,6 +1325,10 @@
         const newUsage = data.usage || {};
         usage.input_tokens  += newUsage.input_tokens  || 0;
         usage.output_tokens += newUsage.output_tokens || 0;
+        // Cache-tokens apart: ze zijn het grootste deel van de prompt en tellen
+        // anders niet mee (in de test 211 vs 44.364 per beurt).
+        usage.cache_read_tokens  = (usage.cache_read_tokens  || 0) + (newUsage.cache_read_input_tokens     || 0);
+        usage.cache_write_tokens = (usage.cache_write_tokens || 0) + (newUsage.cache_creation_input_tokens || 0);
         usage.requests      += 1;
 
         // Persist

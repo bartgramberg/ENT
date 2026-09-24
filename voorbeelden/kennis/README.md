@@ -1,3 +1,11 @@
+> **Niet meer in de prompt.** Deze bestanden werden tot 24 september 2026 door
+> `compose.mjs` in elke systeemprompt geladen (61% van de prompt). Ze staan hier
+> als startmateriaal voor een kennisprofiel: kopieer wat voor een sessie
+> relevant is naar laag 2 (beleid) of laag 1 (ecologie), lees het na op datum en
+> status, en laat de rest liggen. De schrijfdiscipline hieronder is nog steeds
+> een goede richtlijn voor eigen md-bestanden — behalve de labels tussen
+> blokhaken: gebruik "Status: wetgeving" of "wetgeving —", geen `[wetgeving]`.
+
 # ENT vaste kennislaag v2
 
 Deze map bevat uitsluitend platte Markdownbestanden die de applicatie volledig en statisch in de promptprefix kan injecteren. Er is geen index, retrieval, chunking of citaat-ID nodig.
