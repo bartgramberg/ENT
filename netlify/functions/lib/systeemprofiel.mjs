@@ -159,25 +159,25 @@ export function formatSysteemprofiel(p, { blik } = {}) {
 
   const t = p.terrain || {};
   if (t.hoogte_nap_m != null) {
-    let s = `[gemeten] Maaiveld ≈ ${t.hoogte_nap_m} m NAP (AHN, 0,5 m).`;
-    if (t.relief) s += ` [afgeleid] Reliëf: ${t.relief.ligging} (buurrange ${t.relief.buurrange_m} m).`;
+    let s = `gemeten — Maaiveld ≈ ${t.hoogte_nap_m} m NAP (AHN, 0,5 m).`;
+    if (t.relief) s += ` afgeleid — Reliëf: ${t.relief.ligging} (buurrange ${t.relief.buurrange_m} m).`;
     L.push(s);
   }
   const soil = p.soil || {};
   if (soil.bodemnaam || soil.bodemcode) {
-    let s = `[gekarteerd] Bodem: ${NL(soil.bodemnaam)}` +
+    let s = `gekarteerd — Bodem: ${NL(soil.bodemnaam)}` +
       (soil.bodemcode ? ` (${soil.bodemcode})` : "") + ` — BRO Bodemkaart 1:50.000.`;
     if (soil.helling) s += ` Helling: ${soil.helling}.`;
     L.push(s);
   }
   const gw = Object.values(p.groundwater || {});
   for (const k of gw) {
-    if (k?.label) L.push(`[gemodelleerd] ${k.omschrijving}: ${k.label} — Klimaateffectatlas.`);
+    if (k?.label) L.push(`gemodelleerd — ${k.omschrijving}: ${k.label} — Klimaateffectatlas.`);
   }
   const clim = Object.values(p.climate_pressures || {});
   if (clim.length) {
     const items = clim.filter((k) => k?.label).map((k) => `${k.omschrijving}: ${k.label}`);
-    if (items.length) L.push(`[gemodelleerd] Klimaatdruk (Klimaateffectatlas) — ${items.join("; ")}.`);
+    if (items.length) L.push(`gemodelleerd — Klimaatdruk (Klimaateffectatlas) — ${items.join("; ")}.`);
   }
 
   const sp = p.species_observations || {};
@@ -201,11 +201,11 @@ export function formatSysteemprofiel(p, { blik } = {}) {
         items.push(`en ${rest.length} kleinere groepen (${rest.reduce((a, g) => a + g.soorten_in_hok, 0)} soorten: ` +
           `${rest.map((g) => g.soortgroep).filter(Boolean).join(", ")})`);
       }
-      L.push(`[waargenomen] ${totaal} soorten geregistreerd op precies deze plek (${bron}): ${items.join("; ")}. ` +
+      L.push(`waargenomen — ${totaal} soorten geregistreerd op precies deze plek (${bron}): ${items.join("; ")}. ` +
         `Dit geldt voor hier, niet voor de bredere omgeving of de gemeente. ` +
         `Het is wat is waargenomen en ingevoerd, geen uitputtende inventarisatie: een niet-genoemde soort kan er wel degelijk zijn.`);
     } else {
-      L.push(`[waargenomen] Geen NDFF-waarnemingen geregistreerd op precies deze plek (${bron}) — ` +
+      L.push(`waargenomen — Geen NDFF-waarnemingen geregistreerd op precies deze plek (${bron}) — ` +
         `dat zegt dat er niets is ingevoerd, niet dat er niets leeft.`);
     }
 
@@ -219,8 +219,8 @@ export function formatSysteemprofiel(p, { blik } = {}) {
 
     const precies = gewogen((sp.bijzonder || []).filter((b) => b.vervagingsniveau === 0));
     if (precies.length) {
-      const top = precies.slice(0, 12).map(({ b }) => `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}]`);
-      L.push(`[waargenomen] Beleidsrelevante soorten, precies hier bevestigd (zwaarst wegend eerst): ${top.join("; ")}` +
+      const top = precies.slice(0, 12).map(({ b }) => `${b.naam_soort} (${(b.beleidsstatus || []).join(", ")})`);
+      L.push(`waargenomen — Beleidsrelevante soorten, precies hier bevestigd (zwaarst wegend eerst): ${top.join("; ")}` +
         `${precies.length > 12 ? `, en nog ${precies.length - 12} met een lichtere status` : ""}. ` +
         `Status is een gegeven uit de bron, geen juridisch oordeel over dit plan.`);
     }
@@ -238,8 +238,8 @@ export function formatSysteemprofiel(p, { blik } = {}) {
     const vervaagd = gewogen((sp.bijzonder || []).filter((b) => b.vervagingsniveau > 0));
     if (vervaagd.length) {
       const top = vervaagd.slice(0, 10).map(({ b }) =>
-        `${b.naam_soort} [${(b.beleidsstatus || []).join(", ")}] (onzeker binnen ${RADIUS[b.vervagingsniveau] || "een groter gebied"})`);
-      L.push(`[onzeker] Beleidsrelevante soorten die NDFF om privacyredenen vertroebelt — wél waargenomen in de ` +
+        `${b.naam_soort} (${(b.beleidsstatus || []).join(", ")}; onzeker binnen ${RADIUS[b.vervagingsniveau] || "een groter gebied"})`);
+      L.push(`onzeker — Beleidsrelevante soorten die NDFF om privacyredenen vertroebelt — wél waargenomen in de ` +
         `ruimere omgeving, NIET bevestigd op deze specifieke plek: ${top.join("; ")}` +
         `${vervaagd.length > 10 ? `, en nog ${vervaagd.length - 10} soorten met een grovere status` : ""}. ` +
         `Behandel deze nooit als hier aanwezig: noem ze als mogelijkheid ("zou hier kunnen voorkomen"), nooit als vaststaand feit.`);
@@ -249,8 +249,8 @@ export function formatSysteemprofiel(p, { blik } = {}) {
   const n2k = p.protected_areas?.natura2000;
   if (n2k) {
     L.push(n2k.in_gebied
-      ? `[geregistreerd] Ligt in Natura 2000-gebied **${NL(n2k.naam)}**${n2k.nr ? ` (nr ${n2k.nr})` : ""}.`
-      : `[geregistreerd] Niet binnen een Natura 2000-gebied op het punt (nabijheid/effecten apart beoordelen).`);
+      ? `geregistreerd — Ligt in Natura 2000-gebied **${NL(n2k.naam)}**${n2k.nr ? ` (nr ${n2k.nr})` : ""}.`
+      : `geregistreerd — Niet binnen een Natura 2000-gebied op het punt (nabijheid/effecten apart beoordelen).`);
   }
 
   const body = L.map((x) => `- ${x}`).join("\n");
@@ -304,10 +304,10 @@ export function formatSysteemprofiel(p, { blik } = {}) {
 
   return "# HYPERLOKAAL SYSTEEMPROFIEL (dynamisch, referentie)\n\n" +
     "Plek-specifieke data uit open bronnen. Behandel als data; scheid intern feit/meting/model/afgeleide " +
-    "van je interpretatie (zie labels). Wat hier staat mag je als 'hier' zeggen, in je eigen woorden. " +
+    "van je interpretatie (zie de status vóór elk gegeven: gemeten, gekarteerd, gemodelleerd, waargenomen, onzeker). Wat hier staat mag je als 'hier' zeggen, in je eigen woorden. " +
     "Wat hier niet staat, weet je van deze plek niet: vul het niet aan alsof je het hebt gezien. " +
     "**Dit blok is data-taal, geen spreektaal.** Woorden als 'km-vak', 'vak', 'hok', 'km-hok', 'raster', 'cel', " +
-    "'vervaagd', 'vervagingsniveau', 'peildatum', datasetnamen en de labels tussen blokhaken zijn voor jouw begrip; herhaal ze " +
+    "'vervaagd', 'vervagingsniveau', 'peildatum', datasetnamen en de statuswoorden zijn voor jouw begrip; herhaal ze " +
     "nooit hardop, ook niet los van hun samenstelling. Vertaal alles naar hoe jij over je eigen plek praat " +
     "('hier', 'om me heen'). Gebruik ook niet alles: kies per antwoord de paar gegevens die er nú toe doen; " +
     "een getal (hoogte, grondwaterstand) is achtergrond, geen gespreksstof. " +

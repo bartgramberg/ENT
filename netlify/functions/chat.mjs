@@ -3,10 +3,15 @@
  * Stateless proxy to the Anthropic API for the ENT public demo.
  *
  * Accepts POST with JSON body:
- *   { password, messages, config, opening? }
+ *   { password, messages, config, opening?, deel?, stem? }
  *
  * With `opening: true` the function writes ENT's first turn from the intake
  * alone; `messages` is ignored and the reply has no overwegingen.
+ *
+ * A normal turn is two calls, so the spoken text is on screen in half the
+ * time: `deel: "stem"` returns only the stem (max_tokens from the word limit);
+ * `deel: "overwegingen"` with the stem it just got returns only the analist's
+ * items. Without `deel` it does both in one call (the old single-shot).
  *
  * The system prompt is composed server-side from `config` (see lib/compose.mjs)
  * so the knowledge layer and the full prompt are never shipped to the browser,
@@ -97,6 +102,15 @@ const EFFORT     = (process.env.ENT_EFFORT || "").trim();
 const THINKING_UIT = !/^claude-(opus-5-5|fable|mythos)/.test(MODEL);
 const MAX_TOKENS = 1024;
 const OPENING_MAX_TOKENS = 400;
+const OVERWEGINGEN_MAX_TOKENS = 600;
+// Nederlands tokeniseert op Sonnet 5 rond 2,2 tekens/token ≈ 2,5 tokens/woord;
+// ruim nemen, want afkappen kost de marker of het einde van de zin.
+const tokensVoorWoorden = (w) => Math.ceil(w * 3.2) + 60;
+
+const STEM_INSTRUCTIE = "# Nu\n\nSchrijf alleen de stem. Geen `[OVERWEGINGEN]`-marker en geen overwegingen; die volgen apart.";
+const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen bij je vorige antwoord, in de vorm uit het antwoordformaat " +
+  "(titel, één zin, herkomst; hooguit drie; leeg of één regel mag). Begin direct met de eerste titel. Herhaal de stem niet.";
+const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij dat antwoord.";
 
 // The conversation starts with ENT's opening, but the API expects a user turn
 // first. This stands in for it — in the opening call and in front of every
@@ -126,10 +140,15 @@ function parseOverwegingen(raw) {
   const paragraphs = raw.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
   for (const para of paragraphs) {
     const lines = para.split(/\n/).map(l => l.trim()).filter(Boolean);
+    // Laatste regel 'Herkomst: …' apart, zodat de UI hem als label kan tonen.
+    let herkomst = "";
+    if (lines.length >= 2 && /^herkomst\s*:/i.test(lines[lines.length - 1])) {
+      herkomst = lines.pop().replace(/^herkomst\s*:\s*/i, "").trim();
+    }
     if (lines.length >= 2) {
-      blocks.push({ title: lines[0], body: lines.slice(1).join(" ") });
+      blocks.push({ title: lines[0], body: lines.slice(1).join(" "), herkomst });
     } else if (lines.length === 1) {
-      blocks.push({ title: lines[0], body: lines[0] });
+      blocks.push({ title: lines[0], body: lines[0], herkomst });
     }
   }
   // Leeg mag: geen overwegingen is een geldig antwoord (geen stub met een
@@ -166,8 +185,13 @@ export default async function handler(req, context) {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { password, messages, config, opening } = body;
+  const { password, messages, config, opening, deel, stem: vorigeStem } = body;
   const isOpening = opening === true;
+  const alleenStem = deel === "stem";
+  const alleenOverwegingen = deel === "overwegingen";
+  if (alleenOverwegingen && typeof vorigeStem !== "string") {
+    return json({ error: "deel 'overwegingen' vereist de stem" }, 400);
+  }
 
   // Verify password
   if (!password || password !== envPass) {
@@ -184,20 +208,18 @@ export default async function handler(req, context) {
     return json({ status: "ok" });
   }
 
-  // Compose the system prompt server-side. Two cache breakpoints:
-  //  - stable prefix (voice + knowledge) is byte-identical across sessions
-  //  - session block is stable within one conversation (cached across turns)
-  let system;
+  // Compose the system prompt server-side: één cachebreekpunt per blok
+  // (basis+personage, profiel, sessie), bewaartijd een uur — in een
+  // gefaciliteerde sessie zit er makkelijk meer dan vijf minuten tussen twee
+  // vragen. Wat per aanroep wisselt (opening, 'nu de stem') komt ná het
+  // laatste breekpunt, zodat de blokken byte-identiek blijven.
+  let system, composed;
   try {
-    const composed = await compose(config || {}, { opening: isOpening });
-    const { stable, session } = composed;
-    system = [];
-    // Bewaartijd een uur: in een gefaciliteerde sessie zit er makkelijk meer dan
-    // vijf minuten tussen twee vragen, en dan was de cache verlopen.
-    if (stable)  system.push({ type: "text", text: stable,  cache_control: { type: "ephemeral", ttl: "1h" } });
-    if (session) system.push({ type: "text", text: session, cache_control: { type: "ephemeral", ttl: "1h" } });
-    // After the last breakpoint: the first real turn reuses the cached session block.
+    composed = await compose(config || {}, { opening: isOpening });
+    system = composed.blokken.map((b) => ({ type: "text", text: b.tekst, cache_control: { type: "ephemeral", ttl: "1h" } }));
     if (composed.opening) system.push({ type: "text", text: composed.opening });
+    else if (alleenStem) system.push({ type: "text", text: STEM_INSTRUCTIE });
+    else if (alleenOverwegingen) system.push({ type: "text", text: OVERWEGINGEN_INSTRUCTIE });
   } catch (err) {
     console.error("compose error:", err);
     return json({ error: "Kon de systeemprompt niet samenstellen." }, 500);
@@ -211,16 +233,28 @@ export default async function handler(req, context) {
   } else {
     apiMessages = messages;
   }
+  if (alleenOverwegingen) {
+    apiMessages = [...apiMessages, { role: "assistant", content: vorigeStem || "…" }, { role: "user", content: OVERWEGINGEN_VRAAG }];
+  }
+
+  const maxTokens = isOpening ? OPENING_MAX_TOKENS
+    : alleenStem ? tokensVoorWoorden(composed.max_woorden)
+    : alleenOverwegingen ? OVERWEGINGEN_MAX_TOKENS
+    : MAX_TOKENS;
 
   // Call Anthropic API
   const anthropicBody = {
     model:      MODEL,
-    max_tokens: isOpening ? OPENING_MAX_TOKENS : MAX_TOKENS,
+    max_tokens: maxTokens,
     messages:   apiMessages,
   };
   // Sonnet 5: thinking uit voor de snelle single-shot. Modellen die thinking
   // niet kunnen uitzetten krijgen alleen een effort-niveau.
   if (THINKING_UIT) anthropicBody.thinking = { type: "disabled" };
+  // Stem-aanroep: het model begint na de stem soms tóch aan de marker en de
+  // overwegingen, tot max_tokens (gemeten: 7 van 20 beurten, 600-800 tokens).
+  // De stopsequentie kapt precies daar af; de stem is dan compleet.
+  if (alleenStem || isOpening) anthropicBody.stop_sequences = ["[OVERWEGINGEN]"];
   if (EFFORT) anthropicBody.output_config = { effort: EFFORT };
   if (system.length) anthropicBody.system = system;
 
@@ -251,7 +285,7 @@ export default async function handler(req, context) {
       detail = await anthropicRes.text().catch(() => "");
     }
     console.error(`Anthropic API ${anthropicRes.status}: ${detail}`);
-    return json({ error: `De boom rust even (${anthropicRes.status}). Probeer het zo opnieuw.` }, 503);
+    return json({ error: `ENT is even niet bereikbaar (${anthropicRes.status}). Probeer het zo opnieuw.` }, 503);
   }
 
   let result;
@@ -274,7 +308,15 @@ export default async function handler(req, context) {
   // a meta-preamble) must not corrupt the split into an empty stem.
   const markerRe = /^[ \t]*\[OVERWEGINGEN\][ \t]*$/m;
   const m = markerRe.exec(fullText);
-  if (m) {
+  if (alleenOverwegingen) {
+    // Alles is analist; een marker die het model toch zet, negeren we.
+    stem         = "";
+    overwegingen = parseOverwegingen(fullText.replace(markerRe, "").trim());
+  } else if (alleenStem) {
+    // Alles vóór een eventuele marker is de stem; wat erna komt hoort hier niet.
+    stem         = (m ? fullText.slice(0, m.index) : fullText).trim();
+    overwegingen = [];
+  } else if (m) {
     stem         = fullText.slice(0, m.index).trim();
     // The opening is asked for without overwegingen; drop any the model adds anyway.
     overwegingen = isOpening ? [] : parseOverwegingen(fullText.slice(m.index + m[0].length).trim());
@@ -285,14 +327,15 @@ export default async function handler(req, context) {
     overwegingen = [];
   }
   // Defensive: strip any stray inline marker mentions left in the stem so the
-  // literal token never surfaces in the chat bubble.
-  stem = stem.replace(/\[OVERWEGINGEN\]/g, "").trim();
+  // literal token never surfaces in the chat bubble. Regels die met een
+  // blokhaak beginnen zijn regieaanwijzingen of overgenomen labels: weg.
+  stem = stem.replace(/\[OVERWEGINGEN\]/g, "").split("\n").filter((r) => !/^\s*\[/.test(r)).join("\n").trim();
 
   await logBeurt({
-    kind: isOpening ? "opening" : "beurt",
+    kind: isOpening ? "opening" : alleenStem ? "stem" : alleenOverwegingen ? "overwegingen" : "beurt",
     config, system, messages: apiMessages,
     stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
   });
 
-  return json({ stem, overwegingen, usage, stop_reason: stopReason });
+  return json({ stem, overwegingen, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden });
 }

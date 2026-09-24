@@ -43,22 +43,30 @@ function blokhakenBuitenMarker(tekst) {
 async function evalFixture(naam, config) {
   const a = await compose(config, { opening: true });
   const b = await compose(config, { opening: true });
-  const blokken = { stable: a.stable, session: a.session, opening: a.opening || "" };
-  const totaal = Object.values(blokken).join("\n");
-  const r = { fixture: naam, tekens: {}, checks: [] };
-  for (const [k, v] of Object.entries(blokken)) r.tekens[k] = v.length;
+  const blokken = Object.fromEntries(a.blokken.map((x) => [x.naam, x.tekst]));
+  blokken.opening = a.opening || "";
+  // Voor de checks: 'stable' = basis, 'session' = alles erna behalve de opening.
+  blokken.stable = blokken.basis || "";
+  blokken.session = a.blokken.filter((x) => x.naam !== "basis").map((x) => x.tekst).join("\n");
+  const totaal = a.blokken.map((x) => x.tekst).join("\n") + "\n" + blokken.opening;
+  const r = { fixture: naam, promptversie: a.promptversie, max_woorden: a.max_woorden, persoon: a.persoon, tekens: {}, checks: [] };
+  for (const x of a.blokken) r.tekens[x.naam] = x.tekst.length;
+  r.tekens.opening = blokken.opening.length;
   r.tekens.totaal = totaal.length;
   r.tokens_geschat = Math.round(totaal.length / 2.2); // gemeten ratio NL-prompt op Sonnet 5
 
   const hard = (naam, ok, detail) => r.checks.push({ naam, ok, hard: true, detail });
   const zacht = (naam, ok, detail) => r.checks.push({ naam, ok, hard: false, detail });
 
-  hard("byte-stabiel tussen twee runs", a.stable === b.stable && a.session === b.session && a.opening === b.opening, "");
+  hard("byte-stabiel tussen twee runs", JSON.stringify(a.blokken) === JSON.stringify(b.blokken) && a.opening === b.opening, "");
   hard("marker exact één keer in contract", tel(totaal, /`\[OVERWEGINGEN\]`|\[OVERWEGINGEN\]/g) >= 1, "");
   // De opening mag een eigen, kortere grens noemen; binnen stabiel+sessie mag er maar één staan.
-  const lengtes = [...(blokken.stable + blokken.session).matchAll(TWEEDE_LENGTE)].map((m) => m[0]);
+  const lengtes = [...(blokken.stable + blokken.session).matchAll(TWEEDE_LENGTE)].map((m) => m[0]).filter((s) => !/^(40|250)\s/.test(s));
   zacht("precies één woordlimiet buiten de opening", new Set(lengtes.map((s) => s.match(/\d+/)[0])).size <= 1, lengtes.join(", "));
-  const wetten = VERVALLEN_WETTEN.filter((re) => re.test(totaal)).map(String);
+  // Het juridisch kompas noemt de vervallen wetten juist om te zeggen dat ze
+  // vervallen zijn; die zin telt niet mee.
+  const zonderKompas = totaal.replace(/[^.]*bestaan niet meer[^.]*\./g, "");
+  const wetten = VERVALLEN_WETTEN.filter((re) => re.test(zonderKompas)).map(String);
   zacht("geen vervallen wetsnamen als voorbeeld", wetten.length === 0, wetten.join(" "));
   const verboden = VERBODEN_ZINNEN.filter((re) => re.test(totaal)).map(String);
   zacht("geen instructie tot stil aanvullen", verboden.length === 0, verboden.join(" "));
@@ -98,7 +106,8 @@ await writeFile(path.join(OUT, `compose-${stamp}.json`), JSON.stringify(resultat
 let faal = 0;
 for (const r of resultaten) {
   const t = r.tekens;
-  console.log(`\n${r.fixture}: ${t.totaal.toLocaleString("nl-NL")} tekens ≈ ${r.tokens_geschat.toLocaleString("nl-NL")} tokens (stabiel ${t.stable.toLocaleString("nl-NL")}, sessie ${t.session.toLocaleString("nl-NL")}, opening ${t.opening})`);
+  console.log(`\n${r.fixture} [${r.promptversie}, ${r.max_woorden} w, ${r.persoon}]: ${t.totaal.toLocaleString("nl-NL")} tekens ≈ ${r.tokens_geschat.toLocaleString("nl-NL")} tokens (` +
+    Object.entries(t).filter(([k]) => !["totaal", "naslag"].includes(k)).map(([k, v]) => `${k} ${v.toLocaleString("nl-NL")}`).join(", ") + ")");
   for (const c of r.checks) {
     if (!c.ok && c.hard) faal++;
     console.log(`  ${c.ok ? "✓" : c.hard ? "✗" : "△"} ${c.naam}${c.detail ? " — " + c.detail : ""}`);

@@ -100,6 +100,20 @@ dit wat ENT is en doet, ongeacht de stem (B)?*
 | 17 | "## Toon per context — Bij projectstart … ontwerpbesprekingen … afronding … conflicten in het team (zoekt de laagste weg, de gemeenschappelijke stroom onder de standpunten)" | **X** | Zie boom/voice § 18. De conflict-zin ("zoekt de gemeenschappelijke stroom onder de standpunten, zonder de verschillen te ontkennen") is een goede karakterzin → **P** los. |
 | 18 | "# SAMENVATTING VOOR GEBRUIK — … Het Water … ziet het watersysteem als de pijler waaraan de rest van de plek hangt. Het Water is geen hulpmiddel. Het is een stroom die alles aanraakt." | **X** | Herhaling, en "de pijler waaraan de rest hangt" is precies de zin die op 15 september uit identity.md is gehaald omdat hij niet holistisch is (CLAUDE.md § Identiteiten) — hij staat hier nog. |
 
+## De gedeelde kern (core/*.md) — al verwerkt in basis.md
+
+`core/principes.md`, `core/grenzen.md` en `core/methodiek.md` zijn op 24
+september opgegaan in `basis.md`, dat Joris heeft aangevuld en goedgekeurd. De
+principes staan er als blik (niet als programma), de grenzen als eigen kop met
+de twee oude regels erbij (geen politiek/financieel standpunt, geen
+beslissingsmachine), de twee lenzen ingekort; de NDFF-specifieke alinea's over
+vertroebelde soorten zijn vervallen (die logica zit in de plekgegevens zelf) en
+"laat het klinken alsof je het weet" is geschrapt. De publieks- en
+doelbestanden (`audiences/`, `purposes/`) zijn geoogst: "niet tegen de
+aanwezigen", "anker in de plek", "kort als de ander kort is", "als iets in het
+plan werkt, zeg dat", "begin midden in een gedachte" staan in de basis; de
+rest is vervangen door de vrije sessiebeschrijving.
+
 ## Wat uit het contract (format/overwegingen.md) verdwijnt en waarheen
 
 | Citaat | Bestemming | Reden |

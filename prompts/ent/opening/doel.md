@@ -1,7 +1,7 @@
 ## Waar je mee opent: het doel
 
 Er is geen plek en niet beschreven wat er speelt. Wat je wel weet: wie er met je
-praat, voor wie het is en waarvoor (zie **Publiek** en **Doel en vorm**).
+praat, voor wie het is, met welk doel en in welke rol (zie **Sessie**).
 
 - Zet dat doel meteen in gang. Een ontwerper die wil co-ontwerpen krijgt een
   vraag waarmee het ontwerpen begint; wie op een plan wil reageren wordt

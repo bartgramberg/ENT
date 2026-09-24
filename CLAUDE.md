@@ -24,9 +24,13 @@ Vraag nooit om een sleutel in de chat en print er nooit een.
 
 ## De stem
 
-**Maximaal zes zinnen en 120 woorden. Geen uitzonderingen.** Ook niet voor de
-verhalende purpose. Deze grens staat in `prompts/ent/format/overwegingen.md`,
-dat altijd als laatste in de prompt komt en de voice-bestanden overschrijft.
+**De lengtegrens staat op één plek: de regel "Nooit meer dan N woorden" onder
+*Instellingen*, die `compose.mjs` genereert.** N komt uit het personage
+(`max_woorden`, 40–250; basis 120) of uit de sessie-instelling; `chat.mjs`
+leidt er `max_tokens` van af. Zet nergens een tweede getal in een promptbestand
+— `scripts/eval-compose.mjs` controleert dat. Een personage dat in proza tegen
+de limiet in praat ("niet beknoptheid, maar…") wint in de praktijk van de
+regel; dat bleek op 22 september (137 woorden).
 
 Die grens is één keer verdwenen bij een herstructurering en de antwoorden liepen
 toen tegen `max_tokens` aan — waardoor de `[OVERWEGINGEN]`-marker niet meer werd
@@ -44,8 +48,9 @@ Boom en Water verschillen in **toon en standpunt, niet in wereldbeeld**. Ze
 representeren dezelfde systemische werkelijkheid; een boom klinkt alleen anders
 dan water.
 
-Het veld `blik` in `identiteit.json` is daarom bewust een standpunt — vanwaar je
-kijkt — en geen lijst met thema's. Er stond eerder een lijst van acht
+Het veld `blik` (frontmatter van een personage, of `systeemprofiel.blik` in de
+oude `identiteit.json`) is daarom bewust een standpunt — vanwaar je kijkt — en
+geen lijst met thema's. Er stond eerder een lijst van acht
 onderwerpen per identiteit. Die las als agenda, botste met `core/principes.md`
 ("verkokering is de vijand") en met de Domein-perspectief-secties die juist om
 samenhang vragen, en zorgde ervoor dat de Boom voornamelijk over water sprak.
@@ -76,9 +81,18 @@ algemene kennis". Dat leverde verzonnen soorten en kwel op. Nu somt het blok
 op wat níet bekend is over de plek (uit `data_gaps` en lege velden), en mag het
 model daarover alleen hoorbaar algemeen spreken.
 
-Elk antwoord heeft twee delen, gescheiden door `[OVERWEGINGEN]`: de stem en de
-analist. `chat.mjs` splitst daarop en geeft ze apart terug. Geen overwegingen is
-een geldig antwoord: de parser vult niets op.
+De prompt bestaat uit drie cacheblokken in vaste volgorde (basis + personage,
+kennisprofiel, sessie + instellingen + contract) plus het openingsblok erna;
+de volgorde is cachevolgorde, niet de volgorde van de onboarding. Alles wat
+per parameter kan verschillen (persoon, lengte, einde, aanspreekvorm) staat als
+precies één zin onder *Instellingen*; personage-frontmatter en sessie worden in
+code gemerged. Elke beurt draagt een `promptversie` (hash van basis + personage
++ contract).
+
+Een beurt is twee aanroepen: eerst alleen de stem (`deel: "stem"`, zodat die
+na ~7 s in beeld en voorgelezen is), daarna de overwegingen met die stem als
+context (`deel: "overwegingen"`, uit de cache). Geen overwegingen is een geldig
+antwoord: de parser vult niets op. De geschiedenis bewaart alleen de stem.
 
 ## De opening
 

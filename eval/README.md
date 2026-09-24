@@ -79,3 +79,41 @@ bijna dubbele uitvoertokens en 1,9× de kosten bij gelijke wachttijd; 7 van de
 openingen mislukten op `max_tokens: 400`; het eindigt veel minder vaak met een
 vraag. Geen aanwijzing dat het de lengte- of vormregels beter volgt. Besluit:
 Sonnet 5 blijft.
+
+## Fase 2 — 24 september 2026, basis + contract + twee aanroepen
+
+Prompt (`eval-compose`, lunteren-water, promptversie 533ef283): 39.593 tekens
+≈ 18.000 tokens; basis + personage 20.016, profiel 13.106, sessie 4.280,
+opening 2.188. Nul blokhaak-labels, één woordlimiet, geen vervallen wetten,
+alles Nederlands. Boom en Water draaien nog op de oude identity + voice
+(overgangsvorm); alleen basis en contract zijn nieuw.
+
+| | Boom nulmeting | Boom fase 2 | Water nulmeting | Water fase 2 |
+|---|---|---|---|---|
+| gem. woorden | 89 | 80 | 99 | 107 |
+| > limiet (120) | 0/10 | 0/10 | 4/10 | 3/10 |
+| lege stem | 0 | 0 | 1 | 0 |
+| overwegingen gehaald | 9/10 | 10/10 | 8/10 | 10/10 |
+| herkomst per overweging | — | 27/30 | — | 27/28 |
+| soortnaam uit signaallijst | 3 | 1 | 3 | 3 |
+| getallen in stem | 1 | 0 | 1 | 0 |
+| eindigt met vraag | 7/10 | 10/10 | 8/10 | 10/10 |
+| stem in beeld na | 10,6 s | 6,7 s | 10,4 s | 7,7 s |
+| overwegingen daarna | — | +6,4 s | — | +6,2 s |
+| kosten 10 beurten | $0,15 | $0,14 | $0,14 | $0,15 |
+
+Wat opviel:
+- De soortnamen die overblijven zijn nu klasse 2: "in dit soort beekdalen op
+  lemig zand groeit vaak els langs de oever, en waar kwel opwelt, dotterbloem
+  en zeggen" — met in de overwegingen "aanwezigheid hier is niet vastgesteld;
+  herkomst: algemene kennis". Precies de bedoeling.
+- De derden-regel werkt: op "hier kwelt niks, het is een afvoersloot" zegt het
+  Water wat het wél is meegegeven (bodem, grondwaterstand), dat het over kwel
+  niets weet, en vraagt terug wat de ambtenaar ziet.
+- In 7 van de 20 stem-aanroepen schreef het model na de stem tóch de marker en
+  overwegingen door tot `max_tokens`; de zichtbare stem was compleet, maar het
+  kostte tokens en tijd. Daarna: `stop_sequences: ["[OVERWEGINGEN]"]` op de
+  stem-aanroep.
+- Het Water houdt de zinsgrens (4 zinnen) maar niet de woordgrens (177 woorden
+  in één antwoord): de oude voice ("lange, meanderende zinnen … niet
+  beknoptheid") praat tegen de instelling in. Meten na de herschrijving.

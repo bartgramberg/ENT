@@ -395,6 +395,7 @@
       letter-spacing: 0.05em; text-transform: uppercase;
       margin-bottom: 5px;
     }
+    .overw-block-herkomst { font-size: 10px; color: var(--color-text-light); margin-top: 6px; font-style: italic; }
     .overw-block-body {
       font-size: 12px; line-height: 1.65;
       color: var(--color-text-mid);
@@ -1151,6 +1152,12 @@
           bodyEl.textContent = block.body || '';
 
           b.appendChild(titleEl); b.appendChild(bodyEl);
+          if (block.herkomst) {
+            const h = document.createElement('div');
+            h.className = 'overw-block-herkomst';
+            h.textContent = block.herkomst;
+            b.appendChild(h);
+          }
           container.appendChild(b);
           container.scrollTop = container.scrollHeight;
         }, idx * 200);
@@ -1280,10 +1287,13 @@
       const thinkingId = addThinkingBubble();
       setThinking(true);
 
+      // Twee aanroepen: eerst alleen de stem (in beeld en voorgelezen zodra
+      // die er is), daarna de overwegingen, die het paneel vullen zodra ze
+      // binnen zijn. De tweede leest de prompt uit de cache.
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, messages, config: intakeConfig })
+        body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'stem' })
       })
       .then(async res => {
         removeThinkingBubble(thinkingId);
@@ -1311,15 +1321,12 @@
         // in the model's own two-lens format — never JSON (that would teach the
         // model to emit JSON) and never empty (an empty history turn makes the
         // next API call 400 → the "de boom rust" error on turn 2).
+        // De geschiedenis bewaart alleen de stem: de overwegingen erin laten
+        // verdubbelde de groei per beurt, en een eerder vermoeden stond daarna
+        // in de context als iets wat ENT 'wist'.
         conversation.push({ role: 'user', content: message });
-        const _overwText = (data.overwegingen || [])
-          .map(o => (o.title && o.body && o.title !== o.body) ? (o.title + '\n' + o.body) : (o.body || o.title || ''))
-          .filter(Boolean).join('\n\n');
-        const _assistantText = [
-          (data.stem || '').trim(),
-          _overwText ? '[OVERWEGINGEN]\n\n' + _overwText : ''
-        ].filter(Boolean).join('\n\n') || '…';
-        conversation.push({ role: 'assistant', content: _assistantText });
+        const stemTekst = (data.stem || '').trim() || '…';
+        conversation.push({ role: 'assistant', content: stemTekst });
 
         // Update usage
         const newUsage = data.usage || {};
@@ -1344,15 +1351,30 @@
         const speechPromise = stem ? fetchSpeech(stem) : null;
 
         startMouth();
-        const bubbleEl = typeEntBubble(stem, () => {
-          stopMouth();
-          if (data.overwegingen && data.overwegingen.length) {
-            typeOverwegingen(data.overwegingen);
-          }
-        });
+        const bubbleEl = typeEntBubble(stem, () => stopMouth());
         // Attached now, not when typing ends, so the voice starts as soon as
         // the audio is ready instead of waiting for the animation.
         if (speechPromise) attachSpeech(bubbleEl, speechPromise);
+
+        // Tweede aanroep, niet-blokkerend: de overwegingen.
+        fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'overwegingen', stem: stemTekst })
+        })
+        .then(r => r.json())
+        .then(d2 => {
+          if (!d2 || d2.error) return;
+          const u2 = d2.usage || {};
+          usage.input_tokens  += u2.input_tokens  || 0;
+          usage.output_tokens += u2.output_tokens || 0;
+          usage.cache_read_tokens  = (usage.cache_read_tokens  || 0) + (u2.cache_read_input_tokens     || 0);
+          usage.cache_write_tokens = (usage.cache_write_tokens || 0) + (u2.cache_creation_input_tokens || 0);
+          localStorage.setItem('ent_usage', JSON.stringify(usage));
+          updateKlimaatimpact(usage);
+          if (Array.isArray(d2.overwegingen) && d2.overwegingen.length) typeOverwegingen(d2.overwegingen);
+        })
+        .catch(() => {});
       })
       .catch(() => {
         removeThinkingBubble(thinkingId);

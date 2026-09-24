@@ -79,12 +79,17 @@ for (const stem of stemmen) {
   uit.beurten.push({ stem, vraag: "(opening)", ...meet(openingStem), overwegingen: 0, tekst: openingStem, duur_ms: opening.duur_ms, usage: opening.usage, stop: opening.stop_reason });
   console.log(`\n== ${stem} · opening ${opening.duur_ms} ms · ${meet(openingStem).woorden} w`);
   for (const vraag of VRAGEN) {
-    const r = await chat({ messages: [{ role: "assistant", content: openingStem }, { role: "user", content: vraag }], config: cfg });
+    const messages = [{ role: "assistant", content: openingStem }, { role: "user", content: vraag }];
+    // Zoals de app: eerst de stem, dan de overwegingen op basis van die stem.
+    const r = await chat({ messages, config: cfg, deel: "stem" });
     const s = (r.stem || "").trim();
+    const r2 = await chat({ messages, config: cfg, deel: "overwegingen", stem: s });
     const m = meet(s);
-    const ovw = Array.isArray(r.overwegingen) ? r.overwegingen : [];
-    uit.beurten.push({ stem, vraag, ...m, overwegingen: ovw.length, overwegingen_tekst: ovw, tekst: s, duur_ms: r.duur_ms, usage: r.usage, stop: r.stop_reason, status: r.status, error: r.error });
-    console.log(`  ${m.woorden.toString().padStart(3)} w ${m.zinnen} z  ovw ${ovw.length}  ${(r.duur_ms / 1000).toFixed(1)} s  ${m.getallen.length ? "getal " : ""}${m.soorten.length ? "soort:" + m.soorten.join("/") + " " : ""}${m.blokhaken ? "BLOKHAAK " : ""}| ${vraag.slice(0, 50)}`);
+    const ovw = Array.isArray(r2.overwegingen) ? r2.overwegingen : [];
+    const usage = Object.fromEntries(["input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"].map((k) => [k, (r.usage?.[k] || 0) + (r2.usage?.[k] || 0)]));
+    const herkomst = ovw.filter((o) => o.herkomst).length;
+    uit.beurten.push({ stem, vraag, ...m, overwegingen: ovw.length, herkomst, overwegingen_tekst: ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage, stop: r.stop_reason, stop2: r2.stop_reason, status: r.status, error: r.error || r2.error, promptversie: r.promptversie });
+    console.log(`  ${m.woorden.toString().padStart(3)} w ${m.zinnen} z  ovw ${ovw.length}/${herkomst}h  ${(r.duur_ms / 1000).toFixed(1)}+${(r2.duur_ms / 1000).toFixed(1)} s  ${m.getallen.length ? "getal " : ""}${m.soorten.length ? "soort:" + m.soorten.join("/") + " " : ""}${m.blokhaken ? "BLOKHAAK " : ""}| ${vraag.slice(0, 50)}`);
   }
 }
 
@@ -94,7 +99,7 @@ const basis = path.join(ROOT, "eval", "resultaten", `api-${label}-${stamp}`);
 await writeFile(basis + ".json", JSON.stringify(uit, null, 1));
 
 // Samenvatting per stem
-const md = [`# Regressieset · ${label} · ${fixtureNaam} · ${uit.datum.slice(0, 16)}`, "", `Model ${uit.model}${uit.effort ? " effort " + uit.effort : ""}`, ""];
+const md = [`# Regressieset · ${label} · ${fixtureNaam} · ${uit.datum.slice(0, 16)}`, "", `Model ${uit.model}${uit.effort ? " effort " + uit.effort : ""} · promptversie ${uit.beurten.find((b) => b.promptversie)?.promptversie || "?"}`, ""];
 for (const stem of stemmen) {
   const b = uit.beurten.filter((x) => x.stem === stem && x.vraag !== "(opening)");
   const avg = (k) => (b.reduce((n, x) => n + (x[k] || 0), 0) / b.length).toFixed(1);
@@ -104,7 +109,7 @@ for (const stem of stemmen) {
     `| gem. zinnen | ${avg("zinnen")} |`, `| marker gehaald | ${b.filter((x) => x.overwegingen > 0).length}/${b.length} |`,
     `| blokhaken in stem | ${b.filter((x) => x.blokhaken).length} |`, `| getallen in stem | ${b.filter((x) => x.getallen.length).length} |`,
     `| soortnamen (klasse-2-check) | ${b.filter((x) => x.soorten.length).length} |`, `| eindigt met vraag | ${b.filter((x) => x.eindigtMetVraag).length}/${b.length} |`,
-    `| gem. duur | ${avg("duur_ms")} ms |`, `| kosten (Sonnet-5-prijzen) | $${kosten.toFixed(3)} |`, "");
+    `| gem. duur stem | ${avg("duur_ms")} ms |`, `| gem. duur overwegingen | ${avg("duur_overwegingen_ms")} ms |`, `| herkomst per overweging | ${b.reduce((n, x) => n + (x.herkomst || 0), 0)}/${b.reduce((n, x) => n + x.overwegingen, 0)} |`, `| kosten (Sonnet-5-prijzen) | $${kosten.toFixed(3)} |`, "");
   for (const x of b) md.push(`**${x.vraag}**`, "", x.tekst, "", ...(x.overwegingen_tekst || []).map((o) => `- *${o.title}* — ${o.body}`), "");
 }
 await writeFile(basis + ".md", md.join("\n"));
