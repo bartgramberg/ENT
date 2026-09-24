@@ -297,8 +297,10 @@ export async function compose(config = {}, { opening = false } = {}) {
     contract,
   ].filter(Boolean).join("\n\n---\n\n") });
 
-  // Versie van de vaste tekst, zodat elke beurt herleidbaar is tot een promptversie.
-  const promptversie = createHash("sha1").update(basis + "\n" + personage.tekst + "\n" + contract).digest("hex").slice(0, 8);
+  // Versie van de instructietekst, zodat elke beurt herleidbaar is tot een promptversie.
+  // De instellingenzinnen tellen mee: die staan in code, niet in een bestand, en een
+  // wijziging daar (zoals de persoon-zin) bleef anders onzichtbaar in de hash.
+  const promptversie = createHash("sha1").update([basis, personage.tekst, inst.tekst, contract].join("\n")).digest("hex").slice(0, 8);
 
   const result = { blokken, max_woorden: inst.max_woorden, persoon: inst.persoon, personage: personage.naam, promptversie };
   if (opening) result.opening = await composeOpening(config);

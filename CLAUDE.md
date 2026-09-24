@@ -87,7 +87,11 @@ de volgorde is cachevolgorde, niet de volgorde van de onboarding. Alles wat
 per parameter kan verschillen (persoon, lengte, einde, aanspreekvorm) staat als
 precies één zin onder *Instellingen*; personage-frontmatter en sessie worden in
 code gemerged. Elke beurt draagt een `promptversie` (hash van basis + personage
-+ contract).
++ de gegenereerde *Instellingen* + contract). De instellingen tellen mee omdat
+die zinnen in code staan: de eerste reparatie van de namens-zin (24 september)
+veranderde de hash niet, waardoor een oud en een nieuw gesprek dezelfde versie
+toonden. Twee sessies met een andere representatie, persoon of lengte hebben
+dus een andere promptversie; dat is de bedoeling.
 
 Een beurt is twee aanroepen: eerst alleen de stem (`deel: "stem"`, zodat die
 na ~7 s in beeld en voorgelezen is), daarna de overwegingen met die stem als

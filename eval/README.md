@@ -197,3 +197,35 @@ geen ambtenaar; ik spreek namens het watersysteem hier, de beek en de bodem
 eronder, zonder daar zelf uit te bestaan."* In 8 van 10 antwoorden geen enkele
 ik-vorm voor het water; twee keer een halve uitglijder ("ik voel"). Gemiddeld
 82 woorden, langste 115.
+
+## Joris' testprofiel Water als Kompas — 24 september 2026
+
+Zijn geëxporteerde profiel (`eval/sessies/…73f8f7f5.json`: standaardstem,
+`persoon: namens`, 120 woorden, 69k tokens profiel met KWR-rapport,
+meeloopdagverslag en vijf startpakketten, zes plekgegevens geselecteerd) door
+de tien vragen na commit d6455b1. `eval.sh --fixture` accepteert nu zo'n pad.
+
+| | Standaard (namens, 120) |
+|---|---|
+| gem. woorden | 94,6 (1 van 10 boven 120: 137) |
+| marker / herkomst | 10/10 · 25/26 |
+| ik-vorm voor het water | 0 van 11 beurten |
+| getallen / soortnamen in stem | 1 / 1 (beide klasse 1 resp. 2) |
+| duur stem / overwegingen | 6,2 s / 6,3 s |
+| kosten | $0,35 |
+
+Zijn eigen gesprek van dezelfde middag (`eval/sessies/ENT-gesprek-…txt`, vóór
+de reparatie) was in alle vier de beurten het water zelf ("Al twintig jaar loop
+ik hetzelfde traject… wat wil deze groep met die rand tussen het land en mij").
+Met dezelfde invoer nu: opening zonder "ik" over het water; "Ik spreek namens
+het watersysteem van de Gelderse Vallei: het grondwater onder de zandkoppen, de
+beken die het naar buiten laten"; "weet ik van hier niet". De opening van zijn
+gesprek bevatte ook verzonnen geschiedenis ("al twintig jaar", "lager dan wie
+hier ooit voor stond"); `opening/basis.md` verbiedt dat nu expliciet.
+
+De overwegingen putten zichtbaar uit zijn lagen: het meeloopdagverslag
+(grasland versus bouwland, differentiatie naar goed boerschap), het
+Vallei-en-Veluwe-pakket (5 m onderhoudszone), en de plekdata (beekeerdgrond,
+GLG 1,0–1,5 m). Eén lege overweging ("Geen aanvullende harde kaders", titel =
+tekst) bij "vertel eens over jezelf".
+
