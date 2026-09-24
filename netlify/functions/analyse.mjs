@@ -19,8 +19,8 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo } from "./lib/geo.mjs";
-import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea } from "./lib/systeemprofiel.mjs";
+import { geocode, lookupById, ahnHeight, wfsIntersect, wmsPointInfo, top10Water, wfsNabij } from "./lib/geo.mjs";
+import { bepaalOnderzoeksgebied, reliefIndicatie, bouwProfiel, classifyKea, profielItems } from "./lib/systeemprofiel.mjs";
 import { ndffDekking, ndffSoorten, ndffBijzonder } from "./lib/ndff.mjs";
 import { plekVerhaal } from "./lib/plek.mjs";
 
@@ -73,6 +73,10 @@ export default async function handler(req) {
   const locationText = (url.searchParams.get("location") || "").trim();
   const idParam = (url.searchParams.get("id") || "").trim(); // PDOK Locatieserver-id (exact)
   const rdParam = url.searchParams.get("rd"); // "x,y"
+  // Gebiedstype door de gebruiker gekozen (stedelijk/agrarisch/natuur); anders geraden.
+  const gebiedParam = (url.searchParams.get("gebied") || "").trim();
+  // Wikipedia-context alleen op verzoek: ruis (kerken, monumenten) bleek de regel.
+  const metVerhaal = url.searchParams.get("verhaal") === "1";
   if (!locationText && !idParam && !rdParam) return json({ error: "location, id of rd vereist" }, 400);
 
   const cfg = await bronnen();
@@ -106,13 +110,15 @@ export default async function handler(req) {
   const rd = geo.rd;
 
   // 2) Onderzoeksgebied
-  const gebied = bepaalOnderzoeksgebied(locationText || geo.weergavenaam || geo.gemeente || "");
+  const gebied = ["stedelijk", "agrarisch", "natuur"].includes(gebiedParam)
+    ? { type: gebiedParam, direct_m: gebiedParam === "stedelijk" ? 150 : 250, context_m: gebiedParam === "natuur" ? 2500 : gebiedParam === "agrarisch" ? 1500 : 1000 }
+    : bepaalOnderzoeksgebied(locationText || geo.weergavenaam || geo.gemeente || "");
 
   // 3) Parallelle bronnen (graceful degradation)
   // health volgt of een bron *haperde* (koude/trage WMS) i.p.v. legitiem leeg
   // was — dat bepaalt of we het resultaat lang mogen cachen (zie stap 5).
   const health = { bodemOk: true, klimaatOk: true, ndffOk: true };
-  const [terrain, natura2000, soil, klimaat, soorten, plek] = await Promise.all([
+  const [terrain, natura2000, soil, klimaat, soorten, plek, water, nabij] = await Promise.all([
     // AHN: punt + vier buren (±50 m) → reliëf-indicatie
     (async () => {
       if (!S.ahn?.wms) { data_gaps.push("terrain (AHN niet geconfigureerd)"); return {}; }
@@ -203,6 +209,8 @@ export default async function handler(req) {
       if (!out.some((o) => o.ok)) { health.klimaatOk = false; return []; }
       const classified = out.map((o) => o.res).filter(Boolean);
       if (classified.length) provenance.push({ dataset: kea.dataset, retrieved: TODAY() });
+      // Per laag die niets opleverde een gat, anders verdwijnt 'droogte' stil.
+      lagen.forEach((laag, i) => { if (!out[i]?.res) data_gaps.push(`klimaat:${laag.key} (geen waarde op dit punt)`); });
       return classified;
     })(),
     // NDFF-soorten: geen live bron. Eerst een dekkingscheck — valt dit punt in
@@ -246,7 +254,7 @@ export default async function handler(req) {
     // de scan naar de korte cache trekken) en is voor de gebruiker geen gemis.
     // Faalt stil — dan valt ENT terug op zijn algemene kennis van de streek.
     (async () => {
-      if (!geo.ll) return null;
+      if (!geo.ll || !metVerhaal) return null;
       const t = Date.now();
       try {
         const v = await plekVerhaal(geo.ll, { timeoutMs: 4000 });
@@ -258,7 +266,20 @@ export default async function handler(req) {
         return null;
       }
     })(),
+    // Oppervlaktewater (Top10NL): waterdelen binnen de directe buffer.
+    (async () => {
+      if (!S.top10nl?.ogc || !geo.ll) { data_gaps.push("surface_water (Top10NL niet geconfigureerd)"); return null; }
+      const w = await safe("surface_water", () => top10Water(S.top10nl, geo.ll, { radiusM: gebied.direct_m || 250, timeoutMs: 4000 }), { provenance, data_gaps, meta });
+      if (w) provenance.push({ dataset: S.top10nl.dataset, retrieved: TODAY() });
+      return w;
+    })(),
+    // Natura 2000 in de omgeving: dichtstbijzijnde gebied in ringen tot 10 km.
+    (async () => {
+      if (!S.natura2000?.wfs) return null;
+      return safe("natura2000_nabij", () => wfsNabij(S.natura2000, rd, { timeoutMs: 3000 }), { provenance, data_gaps, meta });
+    })(),
   ]);
+  if (natura2000 && nabij) natura2000.nabij = nabij;
 
   // 4) Bekende gaten (bodem/grondwater/klimaat/soorten worden hierboven al
   // dynamisch als data_gap gerapporteerd wanneer hun bron ontbreekt of leeg is)
@@ -266,8 +287,10 @@ export default async function handler(req) {
 
   const profiel = bouwProfiel({
     input: { type: rdParam ? "point" : "address", value: locationText || geo.weergavenaam || idParam || rdParam },
-    geo, gebied, terrain, natura2000, soil, klimaat, soorten, plek, provenance, data_gaps, uncertainties,
+    geo, gebied, terrain, natura2000, soil, klimaat, soorten, plek, water, provenance, data_gaps, uncertainties,
   });
+  // Losse, aanvinkbare gegevens met laag, bron en soort — voor de beoordeling in de onboarding.
+  profiel.items = profielItems(profiel);
   profiel.meta = { ms: Date.now() - t0, per_bron_ms: meta, bronversie: cfg.version };
 
   // Cache op afgerond coördinaat (via CDN); zelfde plek → zelfde profiel.

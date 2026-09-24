@@ -63,7 +63,7 @@ export function classifyKea(raw, laag) {
  * @param {Object} in — { input, geo, gebied, terrain, natura2000, soil, klimaat, soorten, plek, provenance, data_gaps }
  */
 export function bouwProfiel(inp) {
-  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], soorten, plek, provenance = [], data_gaps = [], uncertainties = [] } = inp;
+  const { input, geo, gebied, terrain, natura2000, soil, klimaat = [], soorten, plek, water, provenance = [], data_gaps = [], uncertainties = [] } = inp;
   // KEA-lagen met thema "grondwater" horen in groundwater, de rest in climate_pressures.
   const groundwater = {};
   const climate = {};
@@ -96,8 +96,7 @@ export function bouwProfiel(inp) {
     soil: soil || {},
     groundwater,
     climate_pressures: climate,
-    // v1: nog niet gevuld — als data_gap gerapporteerd
-    surface_water: {},
+    surface_water: water || {},
     land_cover: {},
     species_observations: soorten || {},
     place_context: plek || {}, // sociale/verhalende context (Wikipedia)
@@ -145,8 +144,11 @@ function gewichtBeleidsstatus(statussen) {
  * als agenda en laat de stem afvinken, terwijl principes.md en methodiek.md
  * juist vragen om samenhang ("verkokering is de vijand").
  */
-export function formatSysteemprofiel(p, { blik } = {}) {
+export function formatSysteemprofiel(p, { blik, selectie } = {}) {
   if (!p) return "";
+  // Met een selectie (ids uit profielItems, gekozen in de onboarding) komen
+  // alleen die gegevens in de prompt; wat afviel telt als 'niet bekend'.
+  if (Array.isArray(selectie)) return formatSelectie(p, selectie, { blik });
   const L = [];
   const loc = p.location || {};
   const ac = loc.administrative_context || {};
@@ -250,7 +252,17 @@ export function formatSysteemprofiel(p, { blik } = {}) {
   if (n2k) {
     L.push(n2k.in_gebied
       ? `geregistreerd — Ligt in Natura 2000-gebied **${NL(n2k.naam)}**${n2k.nr ? ` (nr ${n2k.nr})` : ""}.`
-      : `geregistreerd — Niet binnen een Natura 2000-gebied op het punt (nabijheid/effecten apart beoordelen).`);
+      : n2k.nabij
+        ? `geregistreerd — Niet in een Natura 2000-gebied; het dichtstbijzijnde is **${NL(n2k.nabij.naam)}**, binnen circa ${Math.round(n2k.nabij.binnen_m / 1000)} km.`
+        : `geregistreerd — Niet binnen een Natura 2000-gebied op het punt, en geen gebied binnen 10 km.`);
+  }
+  const w = p.surface_water;
+  if (w && w.aantal != null) {
+    const typen = Object.entries(w.per_type || {}).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${n}× ${t}`).join(", ");
+    L.push(`gekarteerd — Oppervlaktewater binnen ${w.radius_m} m (Top10NL): ${w.aantal ? typen : "geen waterdelen"}` +
+      (w.namen?.length ? `; met naam: ${w.namen.join(", ")}` : "") +
+      (w.hoofdafwatering?.length ? `; hoofdafwatering: ${w.hoofdafwatering.join(", ")}` : "") +
+      `. Dit is de kaart, niet de toestand: over peil, kwaliteit of oevers zegt dit niets.`);
   }
 
   const body = L.map((x) => `- ${x}`).join("\n");
@@ -285,17 +297,7 @@ export function formatSysteemprofiel(p, { blik } = {}) {
       `ook niet het domein dat het dichtst bij je eigen aard ligt._`
     : "";
 
-  // Gaten expliciet maken: wat niet is opgehaald of (nog) geen bron heeft, moet
-  // het model als 'niet bekend' zien — anders vult het stil aan (dotterbloem,
-  // waterviolier en kwel uit de Veluweflank in de test van 22 sept 2026).
-  const gaten = [];
-  const gapKeys = (p.data_gaps || []).map((g) => String(g).split(" (")[0].trim());
-  const NAAM = { species_observations: "soorten", soil: "bodem", groundwater: "grondwater",
-    climate_pressures: "klimaatdruk", terrain: "maaiveld", protected_areas: "beschermde gebieden" };
-  for (const k of gapKeys) gaten.push(NAAM[k] || k);
-  if (!sp.hoknummer && !gapKeys.includes("species_observations")) gaten.push("soorten");
-  if (!Object.keys(p.surface_water || {}).length) gaten.push("oppervlaktewater (beken, sloten, waterlichaam)");
-  if (!Object.keys(p.land_cover || {}).length) gaten.push("landgebruik");
+  const gaten = gatenVan(p);
   const gatenRegel = gaten.length
     ? `\n\n**Niet bekend over deze plek:** ${[...new Set(gaten)].join(", ")}. Daarover weet je hier niets; ` +
       `wat je er in het algemeen over weet, klinkt hoorbaar als algemeen ("in dit soort beekdalen", "zou hier kunnen"), ` +
@@ -314,4 +316,76 @@ export function formatSysteemprofiel(p, { blik } = {}) {
     "Spreek volledig in je eigen stem. Concludeer geen harde afwezigheid of juridische zekerheid uit wat je niet weet; " +
     "waar echt iets op het spel staat verwijs je natuurlijk naar veldonderzoek of het bevoegd gezag." +
     blikRegel + "\n\n" + body + gatenRegel + plekBlok + prov;
+}
+
+
+const GAP_NAAM = { species_observations: "soorten", soil: "bodem", groundwater: "grondwater", terrain: "maaiveld",
+  protected_areas: "beschermde gebieden", surface_water: "oppervlaktewater", natura2000_nabij: "nabijheid natuurgebieden",
+  "klimaat:droogtestress": "droogtestress", "klimaat:hittestress": "hittestress", "klimaat:hitteeiland": "hitte-eiland",
+  "klimaat:wateroverlast": "wateroverlast", "klimaat:overstroming": "overstromingsrisico", "klimaat:grondwaterstand_glg": "grondwaterstand" };
+
+/** Wat niet bekend is over deze plek, in gewone woorden. */
+export function gatenVan(p, extra = []) {
+  const gaten = [];
+  const keys = (p.data_gaps || []).map((g) => String(g).split(" (")[0].trim());
+  for (const k of keys) gaten.push(GAP_NAAM[k] || k);
+  if (!p.species_observations?.hoknummer && !keys.includes("species_observations")) gaten.push("soorten");
+  if (!(p.surface_water && p.surface_water.aantal != null) && !keys.includes("surface_water")) gaten.push("oppervlaktewater (beken, sloten, waterlichaam)");
+  if (!Object.keys(p.land_cover || {}).length) gaten.push("landgebruik");
+  gaten.push(...extra);
+  return [...new Set(gaten)];
+}
+
+/**
+ * Het profiel als losse gegevens: elk met id, standaardlaag, korte tekst, bron
+ * en soort (gemeten/gekarteerd/gemodelleerd/waargenomen/geregistreerd). De
+ * onboarding toont ze aan/uit; compose rendert de selectie.
+ */
+export function profielItems(p) {
+  const items = [];
+  const push = (id, laag, label, tekst, bron, soort) => items.push({ id, laag, label, tekst, bron, soort });
+  const t = p.terrain || {};
+  if (t.hoogte_nap_m != null) push("terrain", "ecologisch", "Maaiveldhoogte", `Maaiveld ≈ ${t.hoogte_nap_m} m NAP` + (t.relief ? `; ${t.relief.ligging}` : "") + ".", "AHN (DTM 0,5 m)", "gemeten");
+  if (p.soil?.bodemnaam || p.soil?.bodemcode) push("soil", "ecologisch", "Bodem", `Bodem: ${NL(p.soil.bodemnaam)}${p.soil.bodemcode ? ` (${p.soil.bodemcode})` : ""}.`, "BRO Bodemkaart 1:50.000", "gekarteerd");
+  for (const g of Object.values(p.groundwater || {})) if (g?.label) push("gw:" + g.key, "ecologisch", g.omschrijving, `${g.omschrijving}: ${g.label}.`, "Klimaateffectatlas", "gemodelleerd");
+  for (const k of Object.values(p.climate_pressures || {})) if (k?.label) push("klimaat:" + k.key, "ecologisch", k.omschrijving, `${k.omschrijving}: ${k.label}.`, "Klimaateffectatlas", "gemodelleerd");
+  const n2k = p.protected_areas?.natura2000;
+  if (n2k) push("natura2000", "sociaal_economisch", "Natura 2000",
+    n2k.in_gebied ? `Ligt in Natura 2000-gebied ${NL(n2k.naam)}.` : n2k.nabij ? `Niet in een Natura 2000-gebied; het dichtstbijzijnde is ${NL(n2k.nabij.naam)}, binnen circa ${Math.round(n2k.nabij.binnen_m / 1000)} km.` : "Geen Natura 2000-gebied binnen 10 km.",
+    "Natura 2000 (RVO)", "geregistreerd");
+  const w = p.surface_water;
+  if (w && w.aantal != null) {
+    const typen = Object.entries(w.per_type || {}).sort((a, b) => b[1] - a[1]).map(([ty, n]) => `${n}× ${ty}`).join(", ");
+    push("water", "ecologisch", "Oppervlaktewater", `Binnen ${w.radius_m} m: ${w.aantal ? typen : "geen waterdelen"}` + (w.namen?.length ? `; met naam: ${w.namen.join(", ")}` : "") + (w.hoofdafwatering?.length ? `; hoofdafwatering: ${w.hoofdafwatering.join(", ")}` : "") + ". Kaart, geen toestand.", "BRT Top10NL", "gekarteerd");
+  }
+  const sp = p.species_observations || {};
+  if (sp.hoknummer) {
+    const totaal = (sp.groepen || []).reduce((a, g) => a + (g.soorten_in_hok || 0), 0);
+    push("soorten", "ecologisch", "Soorten (NDFF)", `${totaal} soorten geregistreerd op precies deze plek (${NL(sp.gebied_naam)}).`, "NDFF", "waargenomen");
+    if ((sp.bijzonder || []).length) push("soorten:beleid", "ecologisch", "Beleidsrelevante soorten", `${sp.bijzonder.length} soorten met beleidsstatus, deels vertroebeld tot een groter gebied.`, "NDFF", "waargenomen");
+  }
+  for (const o of p.place_context?.omgeving || []) push("plek:" + o.naam, "historisch_narratief", o.naam, `${o.naam} (${o.afstand_m} m): ${o.tekst}`, "Wikipedia", "achtergrond");
+  const ac = p.location?.administrative_context || {};
+  if (ac.gemeente) push("bestuur", "sociaal_economisch", "Bestuurslagen", `Gemeente ${ac.gemeente}, provincie ${ac.provincie}${ac.waterschap ? `, ${ac.waterschap}` : ""}.`, "PDOK Locatieserver", "geregistreerd");
+  return items;
+}
+
+/** Rendering van een selectie: alleen de gekozen gegevens, plus wat niet bekend is. */
+function formatSelectie(p, selectie, { blik } = {}) {
+  // De items die de gebruiker zag en aanvinkte, niet een herberekening.
+  const alle = Array.isArray(p.items) && p.items.length ? p.items : profielItems(p);
+  const gekozen = alle.filter((i) => selectie.includes(i.id));
+  const afgevallen = alle.filter((i) => !selectie.includes(i.id) && !i.id.startsWith("plek:") && i.id !== "bestuur").map((i) => i.label.toLowerCase());
+  const loc = p.location || {}, ac = loc.administrative_context || {};
+  const kop = `**Locatie:** ${NL(zonderPostcode(loc.weergavenaam))} — gemeente ${NL(ac.gemeente)}, provincie ${NL(ac.provincie)}${ac.waterschap ? `, ${ac.waterschap}` : ""}`;
+  const regels = gekozen.map((i) => `- ${i.soort} — ${i.tekst} (${i.bron})`);
+  const gaten = gatenVan(p, afgevallen);
+  const blikRegel = blik ? `\n\n_Jouw blik: ${blik}. Dat is vanwaar je kijkt, niet waarover je praat._` : "";
+  return "# PLEKGEGEVENS (geselecteerd in de onboarding)\n\n" +
+    "Plek-specifieke data uit open bronnen. Wat hier staat mag je als 'hier' zeggen, in je eigen woorden; wat hier niet " +
+    "staat, weet je van deze plek niet. Het woord vóór elk gegeven zegt hoe het is vastgesteld (gemeten, gekarteerd, " +
+    "gemodelleerd, waargenomen, geregistreerd); een gemodelleerde waarde is geen meting op dit erf. Dit is data-taal: " +
+    "datasetnamen en statuswoorden herhaal je niet hardop. Een getal is achtergrond, geen gespreksstof." + blikRegel +
+    "\n\n" + kop + "\n" + regels.join("\n") +
+    (gaten.length ? `\n\n**Niet bekend over deze plek:** ${gaten.join(", ")}. Daarover weet je hier niets; wat je er in het algemeen over weet, klinkt hoorbaar als algemeen.` : "");
 }

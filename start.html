@@ -186,8 +186,16 @@
       <h1>Waar?</h1>
       <p class="sub">Optioneel. Met een adres haalt ENT open gegevens van de plek op (hoogte, bodem, grondwater, beschermde gebieden).</p>
       <div class="field loc-wrap"><label class="label" for="f-loc">Adres</label><input type="text" id="f-loc" placeholder="Bijv. Barneveldseweg 37, Lunteren" oninput="locInput()" onblur="hideSuggest()" autocomplete="off"><div class="suggest" id="suggest"></div></div>
+      <div class="field"><span class="label">Wat voor plek is dit?</span><div class="toggle"><button id="geb-agrarisch" onclick="zetGebied('agrarisch')">boerenland</button><button id="geb-stedelijk" onclick="zetGebied('stedelijk')">stad of dorp</button><button id="geb-natuur" onclick="zetGebied('natuur')">natuurgebied</button></div><p class="note">Bepaalt de zoekstraal en welke gegevens er standaard aan staan.</p></div>
+      <div class="field"><label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer"><input type="checkbox" id="f-verhaal"> Ook verhalen en geschiedenis uit Wikipedia ophalen (vaak ruis; je vinkt ze daarna aan of uit)</label></div>
       <button class="btn btn-ghost btn-small" onclick="haalPlek()">Gegevens ophalen</button>
       <div class="scan" id="scan"></div>
+      <div id="review" hidden>
+        <p class="hint" style="margin-top:16px">Vink aan wat ENT over deze plek mag weten. Wat uit staat, geldt als "niet bekend" — ENT vult het dan niet zelf in.</p>
+        <ul class="items" id="reviewItems"></ul>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost btn-small" onclick="beoordeel()">Laat ENT beoordelen wat relevant is</button><span class="status" id="reviewStatus" style="margin:0"></span></div>
+        <div id="gaten" hidden><span class="label" style="margin-top:16px">Wat nog ontbreekt volgens ENT</span><ul class="items" id="gatenLijst"></ul></div>
+      </div>
       <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-lagen')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="ga('s-stem')">Verder →</button></div></div>
     </section>
 
@@ -276,7 +284,7 @@
         sessie: { wie: '', publiek: '', doel: '', rol: '', casus: '' }, aanspreek: 'jullie',
         representatie: '', representatie_details: '',
         personage: 'standaard', persoon: 'namens', max_woorden: 120, spraak: true, analist: true,
-        location: '', location_id: null, systeemprofiel: null,
+        location: '', location_id: null, systeemprofiel: null, gebied: 'agrarisch', verhaal: false, plekselectie: null, gaten: [],
         lagen: { ecologisch: [], sociaal_economisch: [], historisch_narratief: [], toekomst: [] },
         tokens: null, bevroren_op: null,
       };
@@ -397,6 +405,7 @@
     /* A4 / B locatie — PDOK-autocomplete, zoals in index.html */
     let debounce = null;
     function zonderPostcode(s) { return String(s || '').replace(/\b\d{4}\s?[A-Z]{2}\b/g, '').replace(/\s{2,}/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim(); }
+    document.getElementById('f-verhaal').addEventListener('change', e => { S.verhaal = e.target.checked; });
     function locInput(prefix) {
       const inp = document.getElementById(prefix === 'b' ? 'b-loc' : 'f-loc');
       S.location = inp.value.trim(); S.location_id = null; S.systeemprofiel = null;
@@ -418,11 +427,78 @@
       if (!S.location) { if (!stil) document.getElementById('scan').textContent = 'Vul eerst een adres in.'; return null; }
       const el = document.getElementById('scan'); if (!stil) el.textContent = 'Gegevens ophalen…';
       try {
-        const qs = S.location_id ? 'id=' + encodeURIComponent(S.location_id) : 'location=' + encodeURIComponent(S.location);
+        let qs = S.location_id ? 'id=' + encodeURIComponent(S.location_id) : 'location=' + encodeURIComponent(S.location);
+        if (S.gebied) qs += '&gebied=' + S.gebied;
+        if (S.verhaal && !stil) qs += '&verhaal=1';
         const r = await fetch('/api/analyse?' + qs, { cache: 'no-store' }); const p = await r.json();
         if (!r.ok || p.error) throw new Error(p.error || r.status);
-        S.systeemprofiel = p; bewaar(); if (!stil) toonScan(p); return p;
+        S.systeemprofiel = p;
+        // Standaardselectie op regels; de beoordeling en de gebruiker verfijnen.
+        S.plekselectie = regels(p).map(i => i.id);
+        bewaar(); if (!stil) { toonScan(p); renderReview(); } return p;
       } catch (e) { if (!stil) el.innerHTML = '<span class="gap">Geen gegevens gevonden voor dit adres; ENT kent de plek dan alleen bij naam.</span>'; return null; }
+    }
+    function zetGebied(v) { S.gebied = v; ['agrarisch', 'stedelijk', 'natuur'].forEach(g => document.getElementById('geb-' + g).classList.toggle('on', g === v)); S.systeemprofiel = null; }
+    // Deterministische regels vóór de beoordeling: wat staat standaard aan.
+    function regels(p) {
+      return (p.items || []).filter(i => {
+        if (i.id === 'klimaat:hitteeiland' && S.gebied !== 'stedelijk') return false;
+        if (i.id.startsWith('plek:')) return false;       // Wikipedia: alleen bewust aanvinken
+        return true;
+      });
+    }
+    const LAAG_KORT = { ecologisch: 'ecologie', sociaal_economisch: 'sociaal-econ.', historisch_narratief: 'verhaal', toekomst: 'toekomst' };
+    function renderReview(oordeel) {
+      const p = S.systeemprofiel; if (!p || !p.items) return;
+      const box = document.getElementById('review'); box.hidden = false;
+      const ul = document.getElementById('reviewItems'); ul.innerHTML = '';
+      const sel = new Set(S.plekselectie || []);
+      for (const it of p.items) {
+        const o = oordeel && oordeel.find(b => b.id === it.id);
+        const li = document.createElement('li');
+        li.innerHTML = `<input type="checkbox" ${sel.has(it.id) ? 'checked' : ''} onchange="toggleItem('${it.id}', this.checked)">
+          <span class="naam" style="white-space:normal"><strong>${it.label}</strong> — ${it.tekst}${o ? ` <em style="color:var(--light)">· ${o.relevant}: ${o.reden}</em>` : ''}</span>
+          <span class="meta">${LAAG_KORT[it.laag] || it.laag} · ${it.soort}</span>`;
+        ul.appendChild(li);
+      }
+    }
+    function toggleItem(id, aan) { const s = new Set(S.plekselectie || []); aan ? s.add(id) : s.delete(id); S.plekselectie = [...s]; bewaar(); }
+    function lagenKoppen() {
+      return Object.entries(S.lagen).map(([laag, items]) => ({ laag, koppen: items.map(i => i.naam + (i.status ? ' (' + i.status + ')' : '')).join('; ') }));
+    }
+    async function beoordeel(stil) {
+      const p = S.systeemprofiel; if (!p || !p.items) return null;
+      const st = document.getElementById('reviewStatus'); if (!stil) { st.className = 'status'; st.textContent = 'ENT kijkt mee…'; }
+      try {
+        const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 20000);
+        const r = await fetch('/api/beoordeel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+          body: JSON.stringify({ password: localStorage.getItem('ent_password') || '', modus: stil ? 'filter' : 'review', items: p.items, casus: S.sessie.casus, representatie: S.representatie, lagen_koppen: lagenKoppen() }) });
+        clearTimeout(to);
+        const d = await r.json(); if (!r.ok || d.error) throw new Error(d.error || r.status);
+        // 'nee' gaat uit, 'ja' en 'mogelijk' aan — binnen de regels van hierboven.
+        const toegestaan = new Set(regels(p).map(i => i.id));
+        S.plekselectie = p.items.filter(i => { const o = d.beoordeling.find(b => b.id === i.id); return o ? o.relevant !== 'nee' && (toegestaan.has(i.id) || o.relevant === 'ja') : toegestaan.has(i.id); }).map(i => i.id);
+        S.gaten = d.gaten || []; bewaar();
+        if (!stil) { renderReview(d.beoordeling); renderGaten(d.gaten); st.textContent = `Beoordeeld in ${(d.duur_ms / 1000).toFixed(1)} s.`; }
+        return d;
+      } catch (e) { if (!stil) { st.className = 'status error'; st.textContent = 'Beoordeling niet gelukt; je kunt zelf aanvinken.'; } return null; }
+    }
+    function renderGaten(gaten) {
+      const box = document.getElementById('gaten'); const ul = document.getElementById('gatenLijst'); ul.innerHTML = '';
+      if (!gaten || !gaten.length) { box.hidden = true; return; }
+      box.hidden = false;
+      gaten.forEach((g, i) => {
+        const li = document.createElement('li'); li.style.flexWrap = 'wrap';
+        li.innerHTML = `<span class="naam" style="white-space:normal;flex-basis:100%"><strong>${g.onderwerp}</strong> — ${g.waarom}</span>
+          <textarea placeholder="Weet je hier iets over? Plak of typ het; het komt in de ecologische laag." style="flex-basis:100%;min-height:50px;margin:6px 0" id="gat-${i}"></textarea>
+          <select id="gat-laag-${i}" style="width:auto">${LAGEN.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select>
+          <button class="btn btn-ghost btn-small" onclick="vulGat(${i}, '${g.onderwerp.replace(/'/g, "\\'")}')">Toevoegen aan laag</button>`;
+        ul.appendChild(li);
+      });
+    }
+    function vulGat(i, onderwerp) {
+      const t = document.getElementById('gat-' + i), laag = document.getElementById('gat-laag-' + i).value;
+      if (!t.value.trim()) return; voegToe(laag, onderwerp, t.value); t.value = ''; document.getElementById('reviewStatus').textContent = `"${onderwerp}" toegevoegd aan ${LAGEN.find(x => x[0] === laag)[1]}.`;
     }
     function toonScan(p) {
       const chips = [], kort = s => String(s || '').split(' (')[0];
@@ -431,8 +507,10 @@
       const gw = Object.values(p.groundwater || {})[0]; if (gw?.label) chips.push('grondwater ' + kort(gw.label));
       for (const k of Object.values(p.climate_pressures || {})) if (k?.label) chips.push(kort(k.omschrijving) + ': ' + kort(k.label));
       const n = p.protected_areas?.natura2000; if (n) chips.push(n.in_gebied ? 'Natura 2000: ' + n.naam : 'buiten Natura 2000');
-      const gaten = (p.data_gaps || []).map(g => String(g).split(' (')[0]);
-      if (!p.species_observations?.hoknummer) gaten.push('soorten'); gaten.push('oppervlaktewater', 'landgebruik');
+      const w = p.surface_water; if (w && w.aantal != null) chips.push(w.aantal ? Object.entries(w.per_type || {}).map(([t, n]) => n + '× ' + t).join(', ') : 'geen waterdelen binnen ' + w.radius_m + ' m');
+      const GAP = { species_observations: 'soorten', surface_water: 'oppervlaktewater', 'klimaat:droogtestress': 'droogtestress', 'klimaat:hittestress': 'hittestress', 'klimaat:wateroverlast': 'wateroverlast', 'klimaat:overstroming': 'overstroming' };
+      const gaten = (p.data_gaps || []).map(g => { const k = String(g).split(' (')[0]; return GAP[k] || k; }).filter(k => k !== 'klimaat:hitteeiland');
+      if (!p.species_observations?.hoknummer && !gaten.includes('soorten')) gaten.push('soorten'); gaten.push('landgebruik');
       document.getElementById('scan').innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join('') + `<div class="gap">Niet bekend voor deze plek: ${[...new Set(gaten)].join(', ')}. Wat je daarover weet, hoort in de lagen.</div>`;
     }
 
@@ -477,7 +555,7 @@
         ['Stem', `${p.label}, ${S.persoon === 'belichaamd' ? 'is het zelf' : 'spreekt ernamens'}, max ${S.max_woorden} woorden, ${S.spraak !== false ? 'voorlezen' : 'alleen tekst'}`],
         ['Sessie', [S.sessie.wie, S.sessie.publiek && 'publiek: ' + S.sessie.publiek, S.sessie.rol && 'rol: ' + S.sessie.rol].filter(Boolean).join(' · ') + ` · ${S.aanspreek === 'jullie' ? 'een zaal' : 'één gesprekspartner'}`],
         ['Wat speelt er', S.sessie.casus.slice(0, 160) + (S.sessie.casus.length > 160 ? '…' : '')],
-        ['Plek', S.location ? S.location + (S.systeemprofiel ? ' — gegevens opgehaald' : ' — gegevens worden bij de start opgehaald') : 'geen'],
+        ['Plek', S.location ? S.location + (S.systeemprofiel ? ` — ${(S.plekselectie || []).length} van ${(S.systeemprofiel.items || []).length} gegevens gebruikt` : ' — gegevens worden bij de start opgehaald') : 'geen'],
         ['Kennisprofiel', lagen],
         ['Omvang', `≈ ${Math.round(tekensLagen() / TEKENS_PER_TOKEN).toLocaleString('nl-NL')} tokens materiaal; exact bij het vastzetten`],
       ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
@@ -508,7 +586,11 @@
       document.getElementById('loadingTxt').textContent = 'ENT luistert…';
       document.getElementById('loading').classList.add('visible');
       try {
-        if (S.location && !S.systeemprofiel) await haalPlek(true);
+        if (S.location && !S.systeemprofiel) {
+          await haalPlek(true);
+          // Zelf gebruiken: regels, dan ENT als sorteerder; faalt dat, dan de regels.
+          if (S.flow === 'B' && S.systeemprofiel) await beoordeel(true);
+        }
         // Exact tellen via de function; de schatting ernaast is voor de meter.
         const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: localStorage.getItem('ent_password') || '', messages: [], config: S, tellen: true }) });
         const d = await r.json();
@@ -537,7 +619,8 @@
       document.getElementById('topSub').textContent = 'Setup aanpassen';
       vulSessie(); document.getElementById('f-rep').value = S.representatie; document.getElementById('f-repdet').value = S.representatie_details;
       document.getElementById('f-loc').value = S.location || ''; document.getElementById('b-loc').value = S.location || ''; document.getElementById('b-casus').value = S.sessie.casus || '';
-      if (S.systeemprofiel) toonScan(S.systeemprofiel);
+      if (S.gebied) zetGebied(S.gebied); document.getElementById('f-verhaal').checked = !!S.verhaal;
+      if (S.systeemprofiel) { toonScan(S.systeemprofiel); renderReview(); }
       renderLagen(); renderStem();
       if (S.flow === 'A') ga('s-sessie'); else ga('s-zelf');
     })();

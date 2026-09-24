@@ -220,7 +220,7 @@ function laagTekst(kop, items) {
 function profielBlok(config, personage) {
   const delen = [];
   if (config.systeemprofiel) {
-    const t = formatSysteemprofiel(config.systeemprofiel, { blik: personage.params.blik });
+    const t = formatSysteemprofiel(config.systeemprofiel, { blik: personage.params.blik, selectie: Array.isArray(config.plekselectie) ? config.plekselectie : undefined });
     if (t) delen.push(t);
   }
   if (config.lagen && typeof config.lagen === "object") {

@@ -138,6 +138,26 @@ van Water als Kompas achter de rug is; `compose.mjs` en `demo.html` kennen beide
 schema's. Doel-templates bestaan niet meer: wat een facilitator van de vorm
 wil, zegt hij in de vraag.
 
+## De plekdata-stap
+
+De scan (`/api/analyse`) levert naast het profiel een lijst `items`: elk gegeven
+met id, standaardlaag, korte tekst, bron en soort (gemeten, gekarteerd,
+gemodelleerd, waargenomen, geregistreerd). In de onboarding vinkt de gebruiker
+die aan of uit; de gekozen ids gaan als `plekselectie` mee en `compose.mjs`
+rendert dan alleen die gegevens, met de rest als "niet bekend". Twee regels
+gaan vóór het model: het hitte-eiland staat alleen aan bij een stedelijke
+plek, en Wikipedia-items (alleen opgehaald met `verhaal=1`) staan standaard
+uit. Daarna kan `/api/beoordeel` (Sonnet 5, gestructureerde uitvoer, geen
+thinking, ~14 s bij dertien items) per gegeven ja/mogelijk/nee zeggen en de
+gaten benoemen; bij "zelf gebruiken" gebeurt dat stil bij de start, en als het
+faalt gelden alleen de regels.
+
+Nieuw in de scan sinds fase 4: oppervlaktewater uit Top10NL (waterdelen binnen
+de directe buffer, als kaart, niet als toestand), de afstand tot het
+dichtstbijzijnde Natura 2000-gebied in ringen tot 10 km, een gat per
+klimaatlaag die niets oplevert, en het gebiedstype als parameter (`gebied=`)
+in plaats van geraden uit de adrestekst.
+
 Startpakketten in `voorbeelden/kennis/` worden door de browser opgehaald en
 als item in een laag gezet, zodat een geëxporteerd profiel op zichzelf staat.
 De tokenmeter schat op 2,2 tekens per token; bij "vastzetten" telt

@@ -70,16 +70,43 @@
           "thema": "grondwater",
           "omschrijving": "Gemiddeld laagste grondwaterstand (huidig)",
           "eenheid": "m onder maaiveld",
-          "geldig": [0, 50],
+          "geldig": [
+            0,
+            50
+          ],
           "klassen": [
-            { "tot": 0.2, "label": "0,2 m of minder onder maaiveld" },
-            { "tot": 0.4, "label": "0,2–0,4 m onder maaiveld" },
-            { "tot": 0.6, "label": "0,4–0,6 m onder maaiveld" },
-            { "tot": 0.8, "label": "0,6–0,8 m onder maaiveld" },
-            { "tot": 1.0, "label": "0,8–1,0 m onder maaiveld" },
-            { "tot": 1.5, "label": "1,0–1,5 m onder maaiveld" },
-            { "tot": 2.0, "label": "1,5–2,0 m onder maaiveld" },
-            { "tot": 100000, "label": "dieper dan 2,0 m onder maaiveld" }
+            {
+              "tot": 0.2,
+              "label": "0,2 m of minder onder maaiveld"
+            },
+            {
+              "tot": 0.4,
+              "label": "0,2–0,4 m onder maaiveld"
+            },
+            {
+              "tot": 0.6,
+              "label": "0,4–0,6 m onder maaiveld"
+            },
+            {
+              "tot": 0.8,
+              "label": "0,6–0,8 m onder maaiveld"
+            },
+            {
+              "tot": 1.0,
+              "label": "0,8–1,0 m onder maaiveld"
+            },
+            {
+              "tot": 1.5,
+              "label": "1,0–1,5 m onder maaiveld"
+            },
+            {
+              "tot": 2.0,
+              "label": "1,5–2,0 m onder maaiveld"
+            },
+            {
+              "tot": 100000,
+              "label": "dieper dan 2,0 m onder maaiveld"
+            }
           ]
         },
         {
@@ -88,11 +115,23 @@
           "thema": "droogte",
           "omschrijving": "Droogtestress (huidig)",
           "eenheid": "klasse",
-          "geldig": [0.88, 37],
+          "geldig": [
+            0.88,
+            37
+          ],
           "klassen": [
-            { "tot": 20, "label": "laag (jaarlijkse opbrengstderving <10% bij gras)" },
-            { "tot": 30, "label": "matig (jaarlijkse opbrengstderving 10–20% bij gras)" },
-            { "tot": 37, "label": "hoog (jaarlijkse opbrengstderving >20% bij gras)" }
+            {
+              "tot": 20,
+              "label": "laag (jaarlijkse opbrengstderving <10% bij gras)"
+            },
+            {
+              "tot": 30,
+              "label": "matig (jaarlijkse opbrengstderving 10–20% bij gras)"
+            },
+            {
+              "tot": 37,
+              "label": "hoog (jaarlijkse opbrengstderving >20% bij gras)"
+            }
           ]
         },
         {
@@ -101,17 +140,47 @@
           "thema": "hitte",
           "omschrijving": "Gevoelstemperatuur (PET) op een hete dag",
           "eenheid": "°C",
-          "geldig": [0, 52],
+          "geldig": [
+            0,
+            52
+          ],
           "klassen": [
-            { "tot": 32, "label": "gematigde hittestress (onder 32 °C)" },
-            { "tot": 35, "label": "gematigde hittestress (32–34 °C)" },
-            { "tot": 38, "label": "sterke hittestress (35–37 °C)" },
-            { "tot": 41, "label": "sterke hittestress (38–40 °C)" },
-            { "tot": 44, "label": "extreme hittestress niveau 1 (41–43 °C)" },
-            { "tot": 46, "label": "extreme hittestress niveau 1 (44–45 °C)" },
-            { "tot": 49, "label": "extreme hittestress niveau 2 (46–48 °C)" },
-            { "tot": 51, "label": "extreme hittestress niveau 2 (49–50 °C)" },
-            { "tot": 52, "label": "extreme hittestress niveau 3 (boven 50 °C)" }
+            {
+              "tot": 32,
+              "label": "gematigde hittestress (onder 32 °C)"
+            },
+            {
+              "tot": 35,
+              "label": "gematigde hittestress (32–34 °C)"
+            },
+            {
+              "tot": 38,
+              "label": "sterke hittestress (35–37 °C)"
+            },
+            {
+              "tot": 41,
+              "label": "sterke hittestress (38–40 °C)"
+            },
+            {
+              "tot": 44,
+              "label": "extreme hittestress niveau 1 (41–43 °C)"
+            },
+            {
+              "tot": 46,
+              "label": "extreme hittestress niveau 1 (44–45 °C)"
+            },
+            {
+              "tot": 49,
+              "label": "extreme hittestress niveau 2 (46–48 °C)"
+            },
+            {
+              "tot": 51,
+              "label": "extreme hittestress niveau 2 (49–50 °C)"
+            },
+            {
+              "tot": 52,
+              "label": "extreme hittestress niveau 3 (boven 50 °C)"
+            }
           ]
         },
         {
@@ -120,19 +189,55 @@
           "thema": "hitte",
           "omschrijving": "Stedelijk hitte-eilandeffect",
           "eenheid": "°C boven het ommeland",
-          "geldig": [0, 20],
+          "geldig": [
+            0,
+            20
+          ],
           "klassen": [
-            { "tot": 0.2, "label": "0–0,2 °C" },
-            { "tot": 0.4, "label": "0,2–0,4 °C" },
-            { "tot": 0.6, "label": "0,4–0,6 °C" },
-            { "tot": 0.8, "label": "0,6–0,8 °C" },
-            { "tot": 1.0, "label": "0,8–1,0 °C" },
-            { "tot": 1.2, "label": "1,0–1,2 °C" },
-            { "tot": 1.4, "label": "1,2–1,4 °C" },
-            { "tot": 1.6, "label": "1,4–1,6 °C" },
-            { "tot": 1.8, "label": "1,6–1,8 °C" },
-            { "tot": 2.0, "label": "1,8–2,0 °C" },
-            { "tot": 9999, "label": "meer dan 2 °C" }
+            {
+              "tot": 0.2,
+              "label": "0–0,2 °C"
+            },
+            {
+              "tot": 0.4,
+              "label": "0,2–0,4 °C"
+            },
+            {
+              "tot": 0.6,
+              "label": "0,4–0,6 °C"
+            },
+            {
+              "tot": 0.8,
+              "label": "0,6–0,8 °C"
+            },
+            {
+              "tot": 1.0,
+              "label": "0,8–1,0 °C"
+            },
+            {
+              "tot": 1.2,
+              "label": "1,0–1,2 °C"
+            },
+            {
+              "tot": 1.4,
+              "label": "1,2–1,4 °C"
+            },
+            {
+              "tot": 1.6,
+              "label": "1,4–1,6 °C"
+            },
+            {
+              "tot": 1.8,
+              "label": "1,6–1,8 °C"
+            },
+            {
+              "tot": 2.0,
+              "label": "1,8–2,0 °C"
+            },
+            {
+              "tot": 9999,
+              "label": "meer dan 2 °C"
+            }
           ]
         },
         {
@@ -141,13 +246,31 @@
           "thema": "wateroverlast",
           "omschrijving": "Waterdiepte op straat bij een bui van 70 mm in 2 uur",
           "eenheid": "klasse",
-          "geldig": [1, 5],
+          "geldig": [
+            1,
+            5
+          ],
           "klassen": [
-            { "tot": 1, "label": "5–10 cm" },
-            { "tot": 2, "label": "10–15 cm" },
-            { "tot": 3, "label": "15–20 cm" },
-            { "tot": 4, "label": "20–30 cm" },
-            { "tot": 5, "label": "meer dan 30 cm" }
+            {
+              "tot": 1,
+              "label": "5–10 cm"
+            },
+            {
+              "tot": 2,
+              "label": "10–15 cm"
+            },
+            {
+              "tot": 3,
+              "label": "15–20 cm"
+            },
+            {
+              "tot": 4,
+              "label": "20–30 cm"
+            },
+            {
+              "tot": 5,
+              "label": "meer dan 30 cm"
+            }
           ]
         },
         {
@@ -156,17 +279,46 @@
           "thema": "overstroming",
           "omschrijving": "Maximale waterdiepte bij overstroming (grote kans)",
           "eenheid": "m",
-          "geldig": [0, 100],
+          "geldig": [
+            0,
+            100
+          ],
           "klassen": [
-            { "tot": 0.5, "label": "minder dan 0,5 m" },
-            { "tot": 1.0, "label": "0,5–1,0 m" },
-            { "tot": 1.5, "label": "1,0–1,5 m" },
-            { "tot": 2.0, "label": "1,5–2,0 m" },
-            { "tot": 5.0, "label": "2,0–5,0 m" },
-            { "tot": 100, "label": "meer dan 5,0 m" }
+            {
+              "tot": 0.5,
+              "label": "minder dan 0,5 m"
+            },
+            {
+              "tot": 1.0,
+              "label": "0,5–1,0 m"
+            },
+            {
+              "tot": 1.5,
+              "label": "1,0–1,5 m"
+            },
+            {
+              "tot": 2.0,
+              "label": "1,5–2,0 m"
+            },
+            {
+              "tot": 5.0,
+              "label": "2,0–5,0 m"
+            },
+            {
+              "tot": 100,
+              "label": "meer dan 5,0 m"
+            }
           ]
         }
       ]
+    },
+    "top10nl": {
+      "owner": "Kadaster / PDOK",
+      "dataset": "BRT Top10NL — waterdelen",
+      "license": "CC BY 4.0",
+      "ogc": "https://api.pdok.nl/brt/top10nl/ogc/v1",
+      "kind": "gekarteerd",
+      "note": "OGC API Features; collections waterdeel_lijn en waterdeel_vlak; bbox in WGS84."
     }
   }
 }

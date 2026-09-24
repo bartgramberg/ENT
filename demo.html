@@ -842,6 +842,18 @@
     function renderSysteemscan(p) {
       const el = document.getElementById('systeemscan');
       if (!el || !p || !p.location) return;
+      // Nieuw schema met selectie: alleen de gekozen gegevens, en wat afviel in de dropdown.
+      if (Array.isArray(intakeConfig.plekselectie) && Array.isArray(p.items)) {
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+        const sel = new Set(intakeConfig.plekselectie);
+        const gekozen = p.items.filter(i => sel.has(i.id) && i.id !== 'bestuur');
+        const weg = p.items.filter(i => !sel.has(i.id) && i.id !== 'bestuur');
+        el.innerHTML = gekozen.map(i => '<span class="feit">' + esc(i.label) + '</span>').join('') +
+          ' &middot; <details class="src-details"><summary>bronnen</summary><ul class="src-list">' +
+          gekozen.map(i => '<li class="src-on">' + esc(i.label + ' — ' + i.bron + ' (' + i.soort + ')') + '</li>').join('') +
+          weg.map(i => '<li class="src-off">' + esc(i.label + ' — niet gebruikt') + '</li>').join('') + '</ul></details>';
+        el.hidden = false; return;
+      }
       const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
       // Kort houden: dit is een feitenstrip, geen rapport. De bronlabels dragen
       // uitleg mee tussen haakjes ("laag (jaarlijkse opbrengstderving <10% bij

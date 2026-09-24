@@ -127,3 +127,47 @@ export async function wfsIntersect({ wfs, typeName }, rd, { timeoutMs = 3000, ha
   const data = await getJson(`${wfs}?${params}`, { timeoutMs });
   return data?.features?.[0]?.properties || null;
 }
+
+/**
+ * Top10NL-waterdelen (OGC API Features) rond een punt. Bbox in WGS84; straal
+ * in meters. Levert een compacte samenvatting: aantallen per type, de
+ * waterlopen met naam en de hoofdafwatering.
+ */
+export async function top10Water({ ogc }, ll, { radiusM = 250, timeoutMs = 4000 } = {}) {
+  const dLat = radiusM / 111320, dLon = radiusM / (111320 * Math.cos((ll.lat * Math.PI) / 180));
+  const bbox = [ll.lon - dLon, ll.lat - dLat, ll.lon + dLon, ll.lat + dLat].map((n) => n.toFixed(6)).join(",");
+  const haal = async (col) => {
+    const res = await fetchWithTimeout(`${ogc}/collections/${col}/items?bbox=${bbox}&f=json&limit=100`, { timeoutMs });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${col}`);
+    return (await res.json()).features || [];
+  };
+  const [lijnen, vlakken] = await Promise.all([haal("waterdeel_lijn"), haal("waterdeel_vlak")]);
+  const tel = {};
+  const namen = new Set(), hoofd = new Set();
+  for (const f of [...lijnen, ...vlakken]) {
+    const p = f.properties || {};
+    const type = p.typewater || "onbekend";
+    tel[type] = (tel[type] || 0) + 1;
+    if (p.naamofficieel) namen.add(p.naamofficieel);
+    else if (p.naam) namen.add(p.naam);
+    if (p.hoofdafwatering === "ja") hoofd.add(p.naamofficieel || p.naam || type);
+  }
+  return { radius_m: radiusM, aantal: lijnen.length + vlakken.length, per_type: tel, namen: [...namen], hoofdafwatering: [...hoofd] };
+}
+
+/**
+ * Natura 2000-gebieden in ringen rond een punt (bbox-queries; de WFS kent geen
+ * afstandsfilter). Levert het dichtstbijzijnde gebied met de ring waarin het
+ * voor het eerst verschijnt: "binnen circa 3 km".
+ */
+export async function wfsNabij({ wfs, typeName, naamProperty = "naamN2K" }, rd, { ringen = [1000, 3000, 6000, 10000], timeoutMs = 3000 } = {}) {
+  for (const r of ringen) {
+    const bbox = `${rd.x - r},${rd.y - r},${rd.x + r},${rd.y + r},EPSG:28992`;
+    const u = `${wfs}?service=WFS&version=2.0.0&request=GetFeature&typeNames=${encodeURIComponent(typeName)}&outputFormat=json&count=5&bbox=${bbox}&propertyName=${naamProperty}`;
+    const res = await fetchWithTimeout(u, { timeoutMs });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const fs = (await res.json()).features || [];
+    if (fs.length) return { naam: fs[0].properties?.[naamProperty] || null, binnen_m: r, alle: [...new Set(fs.map((f) => f.properties?.[naamProperty]).filter(Boolean))] };
+  }
+  return null;
+}

@@ -1,0 +1,242 @@
+{
+ "schema": 2,
+ "id": "fixt0003",
+ "flow": "A",
+ "lang": "nl",
+ "sessie": {
+  "wie": "Ik ben de gespreksleider en typ de vragen in; de deelnemers praten met elkaar.",
+  "publiek": "Vier boeren en drie ambtenaren van waterschap en provincie; vaktaal is prima, geen ecologiecollege.",
+  "doel": "Perspectieven naast elkaar zetten, van persoonlijk via collectief naar systemisch; ruimte maken voor een gezamenlijk transitieproject.",
+  "rol": "Assistent van de facilitator: geeft informatie en vragen om het gesprek te leiden, en spreekt namens het water in.",
+  "casus": "Projectomschrijving\nWater als Kompas is een ontwerptraject in de Gelderse Vallei, uitgevoerd door Protopia Studio in opdracht van de Publieke Ontwerp Coalitie Landelijk Gebied (PONT, KWR en Waterschap Vallei en Veluwe). Het traject onderzoekt hoe de wateropgaven (droogte, wateroverlast, waterkwaliteit, peilbeheer, biodiversiteit en groen-blauwe dooradering) juist toekomstperspectief kunnen bieden aan agrarisch ondernemers, en wat overheden daarvoor moeten veranderen. De casus is de beekrand op het bedrijf van een boer in de Gelderse Vallei. Daar komen landbouw, waterkwaliteit, natuur en beleid van waterschap, provincie en gemeente samen, en daar lopen ze nu vaak op elkaar vast. In twee brave spaces van elk zo'n vier uur zitten boeren en ambtenaren van deze overheden aan tafel. Sessie 1 zet de perspectieven naast elkaar, van persoonlijk via collectief naar systemisch. Sessie 2 is een ontwerpsessie en moet uitmonden in een transitieproject dat de boer en iedere overheidspartij haalbaar achten binnen hun eigen organisatie.\n\nDoel en rol van de ENT\nDe ENT brengt in deze sessies het perspectief van het water en de natuur in, als deelnemer zonder eigen stoel en zonder organisatiebelang. De gespreksbegeleiders van Protopia stellen de ENT af en toe een vraag of vragen om een reactie op wat er gezegd is. De ENT moet dan kort en concreet het perspectief van de beek en het omliggende watersysteem geven: wat het water nodig heeft, wat het ervaart van huidig gebruik en beheer, en waar het kansen ziet die boer, natuur en overheid tegelijk dienen. Het doel is niet om de discussie te beslechten of partijen te beoordelen. Het doel is een perspectiefverschuiving: deelnemers laten kijken voorbij hun eigen belang en organisatiegrenzen, en zo ruimte openen voor gezamenlijke oplossingen."
+ },
+ "aanspreek": "jullie",
+ "representatie": "het watersysteem van de Gelderse Vallei rond de beekrand op dit bedrijf",
+ "representatie_details": "",
+ "personage": "water",
+ "persoon": "belichaamd",
+ "max_woorden": 110,
+ "spraak": true,
+ "analist": true,
+ "location": "Barneveldseweg 37, Lunteren",
+ "location_id": "adr-4dd601d1eec8520e83ad8d602a4eb598",
+ "systeemprofiel": {
+  "location": {
+   "input_type": "address",
+   "input": "Barneveldseweg 37, 6741LJ Lunteren",
+   "weergavenaam": "Barneveldseweg 37, 6741LJ Lunteren",
+   "rd": {
+    "x": 169535,
+    "y": 458047
+   },
+   "ll": {
+    "lon": 5.59938487,
+    "lat": 52.11046367
+   },
+   "administrative_context": {
+    "gemeente": "Ede",
+    "provincie": "Gelderland",
+    "waterschap": "Waterschap Vallei en Veluwe"
+   }
+  },
+  "analysis_areas": {
+   "primary_type": "onbekend",
+   "direct_buffer_m": 200,
+   "context_buffer_m": 1000
+  },
+  "terrain": {
+   "hoogte_nap_m": 11.09,
+   "relief": {
+    "buurrange_m": 0.25,
+    "ligging": "vlak terrein"
+   }
+  },
+  "protected_areas": {
+   "natura2000": {
+    "in_gebied": false
+   }
+  },
+  "soil": {
+   "bodemcode": "pZg23",
+   "bodemnaam": "Beekeerdgronden; lemig fijn zand"
+  },
+  "groundwater": {
+   "grondwaterstand_glg": {
+    "key": "grondwaterstand_glg",
+    "thema": "grondwater",
+    "omschrijving": "Gemiddeld laagste grondwaterstand (huidig)",
+    "eenheid": "m onder maaiveld",
+    "waarde": 1.213,
+    "label": "1,0–1,5 m onder maaiveld"
+   }
+  },
+  "climate_pressures": {
+   "hitteeiland": {
+    "key": "hitteeiland",
+    "thema": "hitte",
+    "omschrijving": "Stedelijk hitte-eilandeffect",
+    "eenheid": "°C boven het ommeland",
+    "waarde": 0.155,
+    "label": "0–0,2 °C"
+   }
+  },
+  "surface_water": {},
+  "land_cover": {},
+  "species_observations": {},
+  "place_context": {
+   "omgeving": [
+    {
+     "naam": "Huize De Biezen",
+     "afstand_m": 981,
+     "tekst": "Huize de Biezen was een landhuis met landgoed in Barneveld. Voor de oorlog was het een werkverschaffingskamp."
+    },
+    {
+     "naam": "Monument voor de Benzinepomp",
+     "afstand_m": 1545,
+     "tekst": "Monument voor de Benzinepomp (1993) is een figuratieve sculptuur van kunstenaar Henk Visch langs de Nederlandse snelweg A30 tussen Barneveld en Ede, ter hoogte van Nederwoud bij Lunteren. De sculptuur is uitgevoerd in brons en bestaat uit een kantoor, een…"
+    },
+    {
+     "naam": "Adullamkerk",
+     "afstand_m": 1773,
+     "tekst": "De Adullamkerk is een kerkgebouw van de Gereformeerde Gemeenten aan de Ds. Fransenlaan 6 in Barneveld."
+    },
+    {
+     "naam": "De Hoeksteen (Barneveld)",
+     "afstand_m": 2017,
+     "tekst": "De Hoeksteen is een kerkgebouw van de Gereformeerde Gemeenten in Nederland aan de Vellerselaan 1 te Barneveld."
+    },
+    {
+     "naam": "Station Barneveld Zuid",
+     "afstand_m": 2051,
+     "tekst": "Station Barneveld Zuid is een spoorwegstation aan de spoorlijn Nijkerk - Ede-Wageningen in het Gelderse dorp Barneveld bij de nieuwbouwwijk Veller, ter hoogte van de spoorwegovergang Oud Vellerseweg. Het station ligt tussen de stations Barneveld Centrum en…"
+    },
+    {
+     "naam": "Nederwoud",
+     "afstand_m": 2065,
+     "tekst": "Nederwoud is een buurtschap in de Nederlandse gemeente Ede, gelegen in de provincie Gelderland. Het ligt 2,5 kilometer ten noordwesten van Lunteren."
+    }
+   ]
+  },
+  "system_relations": [],
+  "uncertainties": [],
+  "data_gaps": [
+   "species_observations (niet opgehaald: fout)"
+  ],
+  "provenance": [
+   {
+    "dataset": "BZK Locatieserver v3_1",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Natura 2000",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "AHN — maaiveldmodel (DTM 0,5 m)",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "BRO Bodemkaart 1:50.000",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Wikipedia",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Klimaateffectatlas (landelijke lagen)",
+    "retrieved": "2026-09-22"
+   }
+  ],
+  "meta": {
+   "ms": 1998,
+   "per_bron_ms": {
+    "geocoding": 249,
+    "ndff": 130,
+    "natura2000": 150,
+    "terrain": 184,
+    "bodem": 538,
+    "plek": 1298,
+    "klimaat": 1739
+   },
+   "bronversie": "2026-07-16"
+  },
+  "items": [
+   {
+    "id": "terrain",
+    "laag": "ecologisch",
+    "label": "Maaiveldhoogte",
+    "tekst": "Maaiveld ≈ 11.09 m NAP; vlak terrein.",
+    "bron": "AHN (DTM 0,5 m)",
+    "soort": "gemeten"
+   },
+   {
+    "id": "soil",
+    "laag": "ecologisch",
+    "label": "Bodem",
+    "tekst": "Bodem: Beekeerdgronden; lemig fijn zand (pZg23).",
+    "bron": "BRO Bodemkaart 1:50.000",
+    "soort": "gekarteerd"
+   },
+   {
+    "id": "gw:grondwaterstand_glg",
+    "laag": "ecologisch",
+    "label": "Gemiddeld laagste grondwaterstand (huidig)",
+    "tekst": "Gemiddeld laagste grondwaterstand (huidig): 1,0–1,5 m onder maaiveld.",
+    "bron": "Klimaateffectatlas",
+    "soort": "gemodelleerd"
+   },
+   {
+    "id": "klimaat:hitteeiland",
+    "laag": "ecologisch",
+    "label": "Stedelijk hitte-eilandeffect",
+    "tekst": "Stedelijk hitte-eilandeffect: 0–0,2 °C.",
+    "bron": "Klimaateffectatlas",
+    "soort": "gemodelleerd"
+   },
+   {
+    "id": "natura2000",
+    "laag": "sociaal_economisch",
+    "label": "Natura 2000",
+    "tekst": "Niet in een Natura 2000-gebied; het dichtstbijzijnde is Veluwe, binnen circa 3 km.",
+    "bron": "Natura 2000 (RVO)",
+    "soort": "geregistreerd"
+   },
+   {
+    "id": "bestuur",
+    "laag": "sociaal_economisch",
+    "label": "Bestuurslagen",
+    "tekst": "Gemeente Ede, provincie Gelderland, Waterschap Vallei en Veluwe.",
+    "bron": "PDOK Locatieserver",
+    "soort": "geregistreerd"
+   }
+  ]
+ },
+ "lagen": {
+  "ecologisch": [
+   {
+    "naam": "A-14-KWR 2025.093 Het watersysteem op en rondom de Veluwe Altijd op weg naar een balans.pdf",
+    "tekst": "“Er liggen grote opgaven op tafel” “De BOVI is ons moreel kompas” “Waar nodig nemen we  de tijd voor de transitie.  Maar we moeten wel vooruit!”  B O V I   2 0 5 0  W A T E R S C H A P   V A L L E I   &   V E L U W E  P A N O R A M A   W A T E R L A N D  V I T E N S  S A M E N W E R K I N G S S Y N E R G I E H E T   W A T E R S Y S T E E M   O P   E N   R O N D O M   D E   V E L U W E  ‘ A LT I J D   O P   W E G   N A A R   E E N   B A L A N S ’  1 oktober 2025 Introductie  Te droog. Te nat. Voldoende water voor drinkwater, natuur en landbouw, maar ook weer niet zo veel dat kelders of velden onderlopen. Hoe gaan we om met het water op de Veluwe? En met de soms  contrasterende belangen die voor onbegrip en conflict kunnen zorgen?  We zijn allemaal afhankelijk van hetzelfde watersysteem: bodem, grondwater, sprengen en beken. Hoe dat systeem werkt is een complex samenspel van klimaat en weer, landschap en ondergrond, en van hoe wij als mensen het systeem inrichten en gebruiken.   Klimaatverandering en bevolkingsgroei zetten het watersysteem verder onder druk. Hoe gaan we hiermee om? Een gezamenlijk beeld van de werking van het watersysteem, de belangen en de uitdagingen is daarvoor essentieel. In dit document wordt de lezer stap voor stap meegenomen door de werking van watersysteem op en rond de Veluwe. Het biedt zo een   basis voor een gezamenlijk begrip, als startpunt voor het goede gesprek .\nHet dilemma  •   In principe willen we allemaal hetzelfde:   voldoende schoon water in een gezonde en mooie leefomgeving, en om te kunnen drinken of te gebruiken voor andere doeleinden.  •   Toch zijn er veel uiteenlopende belangen en meningen   (op elk schaalniveau) omtrent de problematiek en hoe we om ‘moeten’ gaan met water.  •   Vaak heeft dit te maken met   contrasterende belangen en beleefwerelden , wat voor onbegrip en conflicten kan zorgen. Maar  ook omdat het functioneren van het bodem- en watersysteem zeer  complexe materie   is waardoor misverstanden kunnen ontstaan.  •   Dit vereist een bepaald niveau van   inzicht in en begrip van elkaars belangen en kennis over het systeem   waar we over praten.  •   Daarnaast kunnen belangen en meningen,   afhankelijk van ruimte en tijd , nogal sterk wisselen. Daarom is het van belang om samen te komen en elkaars beleefwereld met elkaar te delen.  •   We zijn   met velen afhankelijk van hetzelfde watersysteem . Hierdoor kan een verandering in het systeem al snel gevolgen hebben voor  een ander. Specifiek voor de Veluwe kunnen we niet altijd goed  voorspellen hoe veranderingen in het watersysteem doorwerken. Dit komt door de complexe ondergrond met opgestuwde kleilagen  (‘schotten’). Daardoor is het lastig te voorspellen waar effecten  exact optreden.  Hebben wij hier hetzelfde beeld bij? Het dilemma verwoord vanuit verschillende perspectieven: waterbalans systeemwerking hoofdboodschap interactief ondergrond  dilemma’s 2 3 4 5 6 7 8 9 10 11 12 13 14 15\nTe droog of te nat  Tijdens droge situaties zien we de volgende gevolgen van de mismatch tussen wateraanbod en vraag op verschillende functies en belangen:  •   Droogte in hooggelegen gebied geeft   risico op natuurbranden.  •   Lagere grondwaterstanden of vermindering van kwelstromen  bedreigt natuur en beken.  •   (Extra effect van)   grondwaterstandsverlaging nabij onttrekkingen , met invloed op natuur of landbouw.  •   Extra vraag naar beregening en drinkwater.  Tijdens extreem natte situaties, zoals piekbuien of langere perioden met veel regen, zien we de volgende gevolgen:  •   Wateroverlast in stedelijk gebied   met water op straat of in kelders  (met name onderaan de flanken of de lager gelegen gebieden).  •   Te natte omstandigheden voor landbouw   waardoor tractors het land niet op kunnen of gewassen schade ondervinden.  •   Overlast of schade aan wegen en infrastructuur.  •   Er wordt hard gewerkt om wateroverlast te voorkomen.  Het dilemma verwoord in een droge situatie: Het dilemma verwoord in een natte situatie: waterbalans systee",
+    "status": "rapport",
+    "datum": "2025-10"
+   }
+  ],
+  "sociaal_economisch": [
+   {
+    "naam": "B-54-Basissysteem-VV-2e-druk95.pdf",
+    "tekst": "Regionaal delen. Lokaal doen!  VALLEI & VELUWE  Klimaatbestendig  Vallei en Veluwe:  natuurlijk een gevarieerde regio  V   E   L   U W E  U  T R E C   H   T   S E H E U V E L R U G  G   E   L   D E R S E V A L L E I  R   A N D M E E R Z O N E  I J S S E L V A L L E I  BODEM, ONDERGROND EN WATERSYSTEEM IN KAART  voorjaar 2023 voorjaar 2023\n-   3   -  Een hoofdrol   voor het natuurlijk systeem   4  Regio Vallei en Veluwe:   5 gebieden   6  Kaart:   Natuurlijk basissysteem Vallei en Veluwe   10  Gebied 1   Veluwe   12  Gebied 2   Utrechtse Heuvelrug   16  Gebied 3   Gelderse Vallei   18  Gebied 4   Randmeerzone   22  Gebied 5   IJsselvallei   24  Tot slot:   van kennis naar praktijk   26  Inhoud\n-   4   -   -   5   -  Een hoofdrol  voor het natuurlijk systeem  Beste lezer,  De manier waarop we vandaag omgaan met waterbeheer en ruimtelijke  ordening, loopt tegen grenzen aan. De gevolgen van klimaatverandering  worden zichtbaarder: nu al krijgen we vaker te maken met zowel  wateroverlast als droogte. Daarnaast is de vraag hoe we Nederland in de  toekomst van voldoende drinkwater blijven voorzien. Dat terwijl het klimaat  komende jaren nog verder gaat veranderen.  Ons watersysteem kan de gevolgen van klimaatverandering niet goed  opvangen. Er is dus maar één oplossing: we zullen anders om moeten  gaan met ons water en land. Klimaatverandering vraagt om een ruimtelijke  inrichting die is afgestemd op water, bodem en ondergrond. Alleen dat geeft  ons de ruimte en flexibiliteit die we nodig hebben om extremen op te vangen.  Gelukkig is deze beweging al deels in gang gezet. Onlangs bepaalde het  kabinet dat bodem en water voortaan 'sturend' moeten zijn bij ruimtelijke  keuzes. Dat wil zeggen dat de natuur en natuurlijke processen een hoofdrol  gaan spelen bij ruimtelijke keuzes. Ofwel: de draagkracht en kenmerken van  het natuurlijk systeem staan aan de basis van beleidsplannen en beslissingen.  Maar hoe geef je daar als beleidsmaker handen en voeten aan?  Om het natuurlijk systeem als uitgangspunt te  gebruiken, moeten we eerst begrijpen hoe dat  systeem in elkaar zit.  De regio in kaart  Om het natuurlijk systeem als uitgangspunt te kunnen gebruiken, moeten  we logischerwijs eerst begrijpen hoe dat systeem in elkaar zit. Een goede  eerste stap is dus om het natuurlijk basissysteem voor jouw regio in kaart te  brengen. Op welke plekken is de bodem van zand, en waar van klei? Waar is  het van nature nat en waar droog? Zulke eigenschappen zijn bepalend voor  de keuzes die je vervolgens kunt maken bij de inrichting van de ruimte. Het  liefst gebruik je de meest vruchtbare gronden voor landbouw. En als je in wilt  zetten op natuur die afhankelijk is van een bepaalde waterkwaliteit, dan kan  dat alleen op plekken waar dat water aanwezig is.  Deze brochure gaat over de regio Vallei en Veluwe. We nemen je mee langs  de diversiteit in het natuurlijk systeem van deze regio. Op pagina 10 vind je een  kaart waarop te zien is hoe het   natuurlijk basissysteem eruitziet (figuur 2) .  Op deze kaart hebben we de regio onderverdeeld in 18 deelgebieden, die als  basis kunnen dienen voor een verder uitgewerkte visie op regionale schaal. Zo  brengen we alle gedetailleerde kennis van bodem, water en ondergrond terug  tot een werkbaar geheel.  Op pagina 6 bespreken we vervolgens op hoofdlijnen de bodem, ondergrond  en het watersysteem van het gebied. Vanaf pagina 12 zoomen we verder in op  de deelgebieden. We beschrijven de kwaliteiten, kansen en knelpunten van  het natuurlijk systeem. Waar is de bodem bijvoorbeeld vruchtbaar en waar  is het water van nature van hoge kwaliteit? Als we water willen vasthouden,  kan dat dan overal even goed? Zo maken we concreet hoe inzicht in bodem,  water en ondergrond een stevige basis kunnen vormen voor ruimtelijke  ontwikkelingen in de regio.  Veel leesplezier!  Regionaal delen. Lokaal doen!  VALLEI & VELUWE  Klimaatbestendig\n-   6   -   -   7   -  Regio Vallei en Veluwe:  5 gebieden  Kijken we naar de topografie en ont",
+    "status": "beleid",
+    "datum": "2024"
+   }
+  ],
+  "historisch_narratief": [],
+  "toekomst": []
+ },
+ "plekselectie": [
+  "terrain",
+  "soil",
+  "gw:grondwaterstand_glg",
+  "natura2000",
+  "bestuur"
+ ]
+}
