@@ -117,3 +117,26 @@ Wat opviel:
 - Het Water houdt de zinsgrens (4 zinnen) maar niet de woordgrens (177 woorden
   in één antwoord): de oude voice ("lange, meanderende zinnen … niet
   beknoptheid") praat tegen de instelling in. Meten na de herschrijving.
+
+## Personages in het stramien — 24 september 2026 (promptversie boom 1c73a114, water 3f19266c)
+
+Boom en Water herschreven volgens `personages/README.md` (limiet Boom 100,
+Water 120); stopsequentie op de marker in de stem-aanroep.
+
+| | Boom fase 2 | Boom personages | Water fase 2 | Water personages |
+|---|---|---|---|---|
+| gem. woorden | 80 | 81 | 107 | 102 |
+| langste antwoord | 112 | 106 | 177 | 139 |
+| > eigen limiet | 1/10 | 3/10 (101–106 bij limiet 100) | 3/10 | 2/10 |
+| overwegingen gehaald | 10/10 | 10/10 | 10/10 | 10/10 |
+| herkomst per overweging | 27/30 | 25/27 | 27/28 | 28/28 |
+| soortnaam uit signaallijst | 1 | 1 | 3 | 3 |
+| eindigt met vraag | 10/10 | 9/10 | 10/10 | 9/10 |
+| stem in beeld na | 6,7 s | 5,1 s | 7,7 s | 6,5 s |
+| afgekapt op max_tokens | 4 | 0 | 3 | 0 |
+| kosten 10 beurten | $0,14 | $0,13 | $0,15 | $0,14 |
+
+De stopsequentie haalt de stem-aanroep van 6,7 naar 5,1 s (Boom) en maakt de
+afkapping nul. Het Water blijft nu meestal binnen de grens; de uitschieters
+zijn 126 en 139 woorden, geen 177 meer. Een model zonder thinking telt woorden
+op zo'n 5–10% nauwkeurig: wie precies 100 wil, zet 90.
