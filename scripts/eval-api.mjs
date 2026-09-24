@@ -69,7 +69,9 @@ function meet(stem) {
   return { woorden, zinnen, blokhaken, getallen, soorten, ik, derde, eindigtMetVraag };
 }
 
-const config = JSON.parse(await readFile(path.join(ROOT, "eval", "fixtures", `${fixtureNaam}.json`), "utf8"));
+// --fixture accepteert ook een pad naar een geëxporteerd profiel (bv. eval/sessies/…json).
+const fixturePad = fixtureNaam.endsWith(".json") ? path.resolve(ROOT, fixtureNaam) : path.join(ROOT, "eval", "fixtures", `${fixtureNaam}.json`);
+const config = JSON.parse(await readFile(fixturePad, "utf8"));
 const uit = { label, model: process.env.ENT_MODEL || "claude-sonnet-5", effort: process.env.ENT_EFFORT || null, fixture: fixtureNaam, datum: new Date().toISOString(), beurten: [] };
 
 for (const stem of stemmen) {

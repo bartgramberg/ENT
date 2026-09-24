@@ -830,6 +830,8 @@
       welcomeLoc:   (loc) => EN ? `What's on the table around ${loc}?` : `Wat ligt er op tafel rond ${loc}?`,
     };
     const cfg = PERSONA[currentPersona] || PERSONA.boom;
+    // Het personage-label vóór de naam wordt overschreven, voor het verslag.
+    const personageLabel = cfg.personaName;
     // De getoonde naam is wat ENT representeert (nieuw schema), anders het personage.
     if (intakeConfig.representatie) {
       const r = intakeConfig.representatie.trim();
@@ -1476,7 +1478,7 @@
       const lijn  = '─'.repeat(37);
       const loc   = document.getElementById('personaLocation').textContent;
 
-      const kop = [`ENT — Gespreksverslag`, `${datum} — ${tijd}`, `Representeert: ${intakeConfig.representatie || cfg.personaName}`, `Personage: ${(PERSONA[currentPersona] || cfg).personaName || currentPersona}`];
+      const kop = [`ENT — Gespreksverslag`, `${datum} — ${tijd}`, `Representeert: ${intakeConfig.representatie || cfg.personaName}`, `Personage: ${personageLabel}${intakeConfig.persoon ? ' (' + (intakeConfig.persoon === 'namens' ? 'spreekt namens' : 'is het zelf') + ')' : ''}`];
       if (loc) kop.push(`Locatie: ${loc}`);
       if (intakeConfig.sessie) {
         const se = intakeConfig.sessie;
