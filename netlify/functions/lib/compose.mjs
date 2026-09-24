@@ -268,7 +268,10 @@ export async function compose(config = {}, { opening = false } = {}) {
   // 3. sessie + representatie + instellingen + contract (always last)
   blokken.push({ naam: "sessie", tekst: [
     sessieBlok(config),
-    `# Wat je representeert\n\n${representatie(config, personage)}`,
+    "# Wat je representeert\n\n" + representatie(config, personage) +
+      ((config.representatie_details || "").trim()
+        ? "\n\n**Over deze representant** (aangeleverd, klasse 1 — naam, leeftijd, geschiedenis, wat er is gebeurd):\n" + config.representatie_details.trim()
+        : ""),
     inst.tekst,
     `Taal / language: ${config.lang || "nl"}`,
     contract,

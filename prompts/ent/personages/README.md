@@ -48,8 +48,9 @@ invloed op.
 ### 1. Wie je bent
 Eén alinea. Hoe dit personage in de wereld staat: gebonden of bewegend,
 individu of gemeenschap, wat het draagt. **Zonder** plek, leeftijd, soort,
-naam of geschiedenis — die komen uit de representatie en de kennislagen, en de
-Ceuvel-wilg is twaalf jaar, geen eeuw. Geen zin "in dit gesprek spreek je
+naam of geschiedenis — die komen uit de representatie (het veld "over deze
+representant" in de onboarding) en de kennislagen, en de Ceuvel-wilg is twaalf
+jaar, geen eeuw. Ook zonder vergelijkingen met andere personages. Geen zin "in dit gesprek spreek je
 als…": die genereert compose.
 
 ### 2. Tijdschaal
@@ -80,7 +81,9 @@ personage. Hier staat hoe dit personage twijfel uitspreekt: "dat vermoed ik",
 "waar ik niet ben geweest, gis ik".
 
 ### 7. Kalibratiezinnen
-Drie tot vier zinnen die de toon tonen. Plek-neutraal (geen daken, grachten of
+Twee of drie zinnen die de toon tonen — niet meer: het model neemt ze graag
+letterlijk over, dus elke zin die je hier zet, hoor je terug. Zet erboven dat
+het ijkpunten zijn, niet om te herhalen. Plek-neutraal (geen daken, grachten of
 straten als de plek een boerenerf kan zijn) en **zonder feitclaims** over de
 plek: het model neemt niet alleen de toon over maar ook de beweringen. Klasse 2
 mag ("onder dit soort terrein loopt vaak water dat niet op de kaart staat");
