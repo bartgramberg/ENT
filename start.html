@@ -520,19 +520,25 @@
       for (const [k, p] of Object.entries(PERSONAGES)) {
         const d = document.createElement('div'); d.className = 'tile' + (S.personage === k ? ' selected' : '');
         d.innerHTML = `<img src="${p.img}" alt=""><div class="t-title">${p.label}</div><div class="t-sub">${p.sub}</div>`;
-        d.onclick = () => { S.personage = k; S.max_woorden = p.max_woorden; if (p.persoon !== 'vrij') S.persoon = p.persoon; renderStem(); };
+        d.onclick = () => { S.personage = k; S.max_woorden = p.max_woorden; renderStem(); };
         box.appendChild(d);
       }
       const p = PERSONAGES[S.personage], vrij = p.persoon === 'vrij';
       document.getElementById('pers-belichaamd').disabled = !vrij; document.getElementById('pers-namens').disabled = !vrij;
-      zetPersoon(vrij ? (S.persoon || 'namens') : p.persoon, true);
+      // De eigen keuze (persoon_keuze) blijft bewaard als je tussen personages
+      // wisselt; een belichaamd personage overschrijft hem niet, het legt hem
+      // alleen tijdelijk opzij. Anders bleef 'belichaamd' van het Water hangen
+      // als je daarna ENT koos en dacht dat je 'namens' had.
+      S.persoon = vrij ? (S.persoon_keuze || 'namens') : p.persoon;
+      toonPersoon(S.persoon);
       document.getElementById('persNote').textContent = vrij ? 'Bij de standaardstem kies je zelf.' : `${p.label} spreekt altijd als zichzelf.`;
       document.getElementById('f-woorden').value = S.max_woorden; zetWoorden(S.max_woorden);
       zetSpraak(S.spraak !== false);
       document.getElementById('stemProgress').textContent = S.flow === 'A' ? 'Stap 5 van 5 · De stem' : 'ENT zelf gebruiken · De stem';
       document.getElementById('stemVerder').textContent = S.flow === 'A' ? 'Verder →' : 'Start het gesprek →';
     }
-    function zetPersoon(v, stil) { S.persoon = v; document.getElementById('pers-belichaamd').classList.toggle('on', v === 'belichaamd'); document.getElementById('pers-namens').classList.toggle('on', v === 'namens'); }
+    function toonPersoon(v) { document.getElementById('pers-belichaamd').classList.toggle('on', v === 'belichaamd'); document.getElementById('pers-namens').classList.toggle('on', v === 'namens'); }
+    function zetPersoon(v) { S.persoon_keuze = v; S.persoon = v; toonPersoon(v); }
     function zetWoorden(v) { S.max_woorden = Number(v); document.getElementById('woordenOut').textContent = v + ' woorden'; }
     function zetSpraak(v) { S.spraak = v; document.getElementById('spraak-aan').classList.toggle('on', v); document.getElementById('spraak-uit').classList.toggle('on', !v); }
     function stemTerug() { ga(S.flow === 'A' ? 's-locatie' : 's-zelf'); }

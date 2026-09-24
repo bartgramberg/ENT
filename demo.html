@@ -847,11 +847,16 @@
         const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
         const sel = new Set(intakeConfig.plekselectie);
         const gekozen = p.items.filter(i => sel.has(i.id) && i.id !== 'bestuur');
-        const weg = p.items.filter(i => !sel.has(i.id) && i.id !== 'bestuur');
-        el.innerHTML = gekozen.map(i => '<span class="feit">' + esc(i.label) + '</span>').join('') +
+        // De waarde als chip (niet de naam van het gegeven), kort gehouden; wat
+        // niet gekozen is, komt nergens in beeld — dat is per definitie niet bekend.
+        const kort = (i) => {
+          let t = i.tekst.replace(/^[^:]{0,40}:\s*/, '').replace(/\s*\([^)]*\)\s*$/, '').replace(/\.\s*(Kaart, geen toestand\.)?$/, '').trim();
+          if (i.id === 'natura2000') t = t.replace(/^Niet in een Natura 2000-gebied; het dichtstbijzijnde is /, 'Natura 2000: ').replace(/, binnen circa /, ' op ~');
+          return t.length > 60 ? t.slice(0, 57) + '…' : t;
+        };
+        el.innerHTML = gekozen.map(i => '<span class="feit">' + esc(kort(i)) + '</span>').join('') +
           ' &middot; <details class="src-details"><summary>bronnen</summary><ul class="src-list">' +
-          gekozen.map(i => '<li class="src-on">' + esc(i.label + ' — ' + i.bron + ' (' + i.soort + ')') + '</li>').join('') +
-          weg.map(i => '<li class="src-off">' + esc(i.label + ' — niet gebruikt') + '</li>').join('') + '</ul></details>';
+          gekozen.map(i => '<li class="src-on">' + esc(i.label + ' — ' + i.bron + ' (' + i.soort + ')') + '</li>').join('') + '</ul></details>';
         el.hidden = false; return;
       }
       const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));

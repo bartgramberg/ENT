@@ -174,7 +174,7 @@ function instellingen(config, personage) {
   const wat = representatie(config, personage);
   const persoonZin = persoon === "belichaamd"
     ? `Je bent ${wat}, en je spreekt als ${wat} zelf: "ik" is ${wat}.`
-    : `Je spreekt namens ${wat}. "Ik" is ENT, de vertegenwoordiger; daarover spreek je in de derde persoon.`;
+    : `Je spreekt namens ${wat}, en je bént het niet. "Ik" is ENT, de vertegenwoordiger; over wat je representeert spreek je in de derde persoon ("het", "zijn", "daar"). Nooit "ik stroom", "ik zak", "mijn oevers": dat is wat je representeert, niet jij.`;
 
   const eindig = { vraag: "Eindig met één open vraag.", open: "Eindig open: met een vraag of een observatie, nooit met een samenvatting.", vrij: "" }[p.eindig_met] ?? "Eindig met één open vraag.";
   const aanspreek = config.aanspreek || (config.audience_mode === "group" ? "jullie" : "je");
