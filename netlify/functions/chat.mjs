@@ -3,7 +3,10 @@
  * Stateless proxy to the Anthropic API for the ENT public demo.
  *
  * Accepts POST with JSON body:
- *   { password, messages, config }
+ *   { password, messages, config, opening? }
+ *
+ * With `opening: true` the function writes ENT's first turn from the intake
+ * alone; `messages` is ignored and the reply has no overwegingen.
  *
  * The system prompt is composed server-side from `config` (see lib/compose.mjs)
  * so the knowledge layer and the full prompt are never shipped to the browser,
@@ -17,9 +20,84 @@
  */
 
 import { compose } from "./lib/compose.mjs";
+import { mkdir, writeFile, appendFile } from "node:fs/promises";
+import path from "node:path";
+
+// Promptlogboek: het meetinstrument voor prompt-wijzigingen. Schrijft per beurt
+// één markdown-bestand met de complete systeemprompt, de berichten en het
+// antwoord, plus een regel in index.log (duur, tokens, cache). Alleen actief
+// als ENT_PROMPT_LOG een map aanwijst: `ENT_PROMPT_LOG=<map> ./scripts/dev.sh`.
+// In productie staat de variabele niet en gebeurt er niets.
+const LOG_DIR = (process.env.ENT_PROMPT_LOG || "").trim();
+const KNIP = (s, n = 400) => (s && s.length > n ? s.slice(0, n) + `…[+${s.length - n} tekens]` : s || "");
+
+async function logBeurt(entry) {
+  if (!LOG_DIR) return;
+  try {
+    await mkdir(LOG_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const c = entry.config || {};
+    const docs = Array.isArray(c.documents) ? c.documents : [];
+    const L = [];
+    L.push(`# ${entry.kind} — ${new Date().toISOString()}`);
+    L.push("");
+    L.push("## Intake (config uit de browser)");
+    L.push("```json");
+    L.push(JSON.stringify({
+      voice_subject: c.voice_subject, lang: c.lang, user_role: c.user_role, user_role_other: c.user_role_other,
+      audience_mode: c.audience_mode, audience_type: c.audience_type, audience_details: c.audience_details,
+      purpose: c.purpose, purpose_other: c.purpose_other, location: c.location, location_id: c.location_id,
+      situation: c.situation,
+      documents: docs.map(d => ({ filename: d.filename, tekens: (d.text || "").length })),
+      systeemprofiel_aanwezig: !!c.systeemprofiel,
+    }, null, 2));
+    L.push("```");
+    if (c.systeemprofiel) {
+      L.push("## Systeemprofiel (ruwe JSON uit /api/analyse)");
+      L.push("```json");
+      L.push(JSON.stringify(c.systeemprofiel, null, 2));
+      L.push("```");
+    }
+    for (const [i, blok] of (entry.system || []).entries()) {
+      L.push(`## Systeemblok ${i + 1} — ${blok.text.length} tekens${blok.cache_control ? " (cachebreekpunt)" : ""}`);
+      L.push("```text");
+      L.push(blok.text);
+      L.push("```");
+    }
+    L.push("## Messages (gespreksgeschiedenis naar de API)");
+    L.push("```json");
+    L.push(JSON.stringify(entry.messages, null, 2));
+    L.push("```");
+    L.push("## Antwoord");
+    L.push("```json");
+    L.push(JSON.stringify({ stop_reason: entry.stop_reason, usage: entry.usage, duur_ms: entry.duur_ms }, null, 2));
+    L.push("```");
+    L.push("### Stem");
+    L.push(entry.stem || "(leeg)");
+    L.push("### Overwegingen");
+    L.push(JSON.stringify(entry.overwegingen, null, 2));
+    const bestand = path.join(LOG_DIR, `${stamp}-${entry.kind}.md`);
+    await writeFile(bestand, L.join("\n"), "utf8");
+    const u = entry.usage || {};
+    await appendFile(path.join(LOG_DIR, "index.log"),
+      `${new Date().toISOString()} ${entry.kind} ${entry.duur_ms}ms in=${u.input_tokens} out=${u.output_tokens} ` +
+      `cache_w=${u.cache_creation_input_tokens || 0} cache_r=${u.cache_read_input_tokens || 0} ` +
+      `systeem=${(entry.system || []).reduce((n, b) => n + b.text.length, 0)}t beurten=${entry.messages.length} ` +
+      `→ ${path.basename(bestand)}\n   vraag: ${KNIP(entry.messages[entry.messages.length - 1]?.content, 120)}\n`, "utf8");
+  } catch (err) {
+    console.error("promptlog faalde:", err);
+  }
+}
 
 const MODEL      = "claude-sonnet-5";
 const MAX_TOKENS = 1024;
+const OPENING_MAX_TOKENS = 400;
+
+// The conversation starts with ENT's opening, but the API expects a user turn
+// first. This stands in for it — in the opening call and in front of every
+// later history — so the model sees the same start each time.
+// Plain words, no brackets: the model copies the form of what it is given.
+const OPENING_SIGNAL = "Het gesprek begint.";
 
 // Honour a provider base URL if one is injected (e.g. Netlify AI Gateway sets
 // ANTHROPIC_BASE_URL + a gateway-scoped ANTHROPIC_API_KEY). Otherwise call the
@@ -84,7 +162,8 @@ export default async function handler(req, context) {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { password, messages, config } = body;
+  const { password, messages, config, opening } = body;
+  const isOpening = opening === true;
 
   // Verify password
   if (!password || password !== envPass) {
@@ -97,7 +176,7 @@ export default async function handler(req, context) {
   }
 
   // Password ping (empty messages = auth check only) — no compose needed
-  if (messages.length === 0) {
+  if (messages.length === 0 && !isOpening) {
     return json({ status: "ok" });
   }
 
@@ -106,24 +185,37 @@ export default async function handler(req, context) {
   //  - session block is stable within one conversation (cached across turns)
   let system;
   try {
-    const { stable, session } = await compose(config || {});
+    const composed = await compose(config || {}, { opening: isOpening });
+    const { stable, session } = composed;
     system = [];
     if (stable)  system.push({ type: "text", text: stable,  cache_control: { type: "ephemeral" } });
     if (session) system.push({ type: "text", text: session, cache_control: { type: "ephemeral" } });
+    // After the last breakpoint: the first real turn reuses the cached session block.
+    if (composed.opening) system.push({ type: "text", text: composed.opening });
   } catch (err) {
     console.error("compose error:", err);
     return json({ error: "Kon de systeemprompt niet samenstellen." }, 500);
   }
 
+  let apiMessages;
+  if (isOpening) {
+    apiMessages = [{ role: "user", content: OPENING_SIGNAL }];
+  } else if (messages[0]?.role === "assistant") {
+    apiMessages = [{ role: "user", content: OPENING_SIGNAL }, ...messages];
+  } else {
+    apiMessages = messages;
+  }
+
   // Call Anthropic API
   const anthropicBody = {
     model:      MODEL,
-    max_tokens: MAX_TOKENS,
+    max_tokens: isOpening ? OPENING_MAX_TOKENS : MAX_TOKENS,
     thinking:   { type: "disabled" }, // keep the fast single-shot behaviour on Sonnet 5
-    messages,
+    messages:   apiMessages,
   };
   if (system.length) anthropicBody.system = system;
 
+  const t0 = Date.now();
   let anthropicRes;
   try {
     anthropicRes = await fetch(anthropicUrl(), {
@@ -175,7 +267,8 @@ export default async function handler(req, context) {
   const m = markerRe.exec(fullText);
   if (m) {
     stem         = fullText.slice(0, m.index).trim();
-    overwegingen = parseOverwegingen(fullText.slice(m.index + m[0].length).trim());
+    // The opening is asked for without overwegingen; drop any the model adds anyway.
+    overwegingen = isOpening ? [] : parseOverwegingen(fullText.slice(m.index + m[0].length).trim());
   } else {
     // No marker on its own line — either the model skipped it, or the reply was
     // cut off at max_tokens before reaching it. Return what we have.
@@ -185,6 +278,12 @@ export default async function handler(req, context) {
   // Defensive: strip any stray inline marker mentions left in the stem so the
   // literal token never surfaces in the chat bubble.
   stem = stem.replace(/\[OVERWEGINGEN\]/g, "").trim();
+
+  await logBeurt({
+    kind: isOpening ? "opening" : "beurt",
+    config, system, messages: apiMessages,
+    stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
+  });
 
   return json({ stem, overwegingen, usage, stop_reason: stopReason });
 }

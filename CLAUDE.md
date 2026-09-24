@@ -65,6 +65,30 @@ request van schijf gelezen — een wijziging werkt direct, zonder herstart.
 Elk antwoord heeft twee delen, gescheiden door `[OVERWEGINGEN]`: de stem en de
 analist. `chat.mjs` splitst daarop en geeft ze apart terug.
 
+## De opening
+
+ENT opent het gesprek zelf, geschreven vanuit de intake. Er is geen vaste
+welkomstzin meer, behalve als terugval wanneer de API faalt.
+
+De volgorde ligt vast in `openingRoute()` in `compose.mjs`, niet in de prompt:
+eerst wat de gebruiker bij "wat speelt er" invulde, anders de plek (met of zonder
+systeemprofiel), anders publiek en doel. Zo kan het model niet terugvallen op
+iets generieks. De instructies staan in `prompts/ent/opening/`.
+
+De opening heeft bewust geen overwegingen: snelheid gaat voor. Het
+openingsblok komt als los systeemblok ná het cachebreekpunt, zodat het
+sessieblok gelijk blijft aan dat van latere beurten en de cache doorloopt.
+
+De opening wordt opgeslagen als eerste beurt van het gesprek, zodat het model
+weet wat het vroeg. De API wil een gebruikersbeurt vooraan; `chat.mjs` zet daar
+`OPENING_SIGNAL` voor. Gebruik daar geen haakjes of blokhaken: met
+"(Het gesprek begint.)" opende het model een keer met een regieaanwijzing
+tussen haakjes — dezelfde vormovername als bij de blokhaken hierboven.
+
+`demo.html` houdt een wachtscherm op tot de opening er is, zodat de chat nooit
+leeg in beeld komt. Het wachtscherm staat al vóór de eerste paint, via een
+script in `<head>`.
+
 De functions zijn staatloos. Alle sessiestatus staat in localStorage van de
 browser. Het wachtwoord wordt bij élke request server-side gecontroleerd; de
 gate in `index.html` is maar een overlay.

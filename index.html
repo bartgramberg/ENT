@@ -1544,6 +1544,14 @@
         if (!isAdjustMode) {
           localStorage.setItem('ent_conversation', JSON.stringify([]));
           localStorage.setItem('ent_usage', JSON.stringify({ input_tokens: 0, output_tokens: 0, requests: 0 }));
+        } else {
+          // Nothing said yet besides ENT's opening: that opening was written for
+          // the old intake, so let /demo write a new one.
+          let conv = [];
+          try { conv = JSON.parse(localStorage.getItem('ent_conversation') || '[]'); } catch (e) {}
+          if (!conv.some(m => m.role === 'user')) {
+            localStorage.setItem('ent_conversation', JSON.stringify([]));
+          }
         }
 
         window.location.href = '/demo';

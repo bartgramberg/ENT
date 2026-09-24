@@ -21,7 +21,9 @@
  *   prompts/ent/core/{principes,grenzen,methodiek}.md — gedeeld "ENT-brein", geldt voor elke identiteit
  *   prompts/ent/audiences/{type}.md        — register tuning per audience type
  *   prompts/ent/purposes/{purpose}.md      — shape/format tuning per purpose
- *   prompts/ent/format/overwegingen.md     — technical parse contract (always last)
+ *   prompts/ent/format/overwegingen.md     — technical parse contract (last in session)
+ *   prompts/ent/opening/*.md               — only for the opening turn: basis + one route
+ *                                            + one shape, returned as a separate block
  *   knowledge/{domein}.md                  — fixed knowledge layer, injected per
  *                                            identiteit-domein (stable prefix)
  *   knowledge/wetgeving-nl.md              — national legal reference (stable prefix)
@@ -74,6 +76,9 @@ const PURPOSE_TO_FILE = {
   explore:  "explore",
   other:    "explore",
 };
+
+// Purposes whose opening has its own shape; everything else gets the short form.
+const OPENING_SHAPES = { open: "vorm-open", story: "vorm-story", closing: "vorm-closing" };
 
 const MAX_DOC_CHARS = 8000; // combined project-document budget (raised in Fase 2a)
 
@@ -185,11 +190,42 @@ async function loadIdentity(name) {
 }
 
 /**
+ * Pick what the opening starts from, in order of what the user most wants to
+ * talk about: what they wrote under "wat speelt er", then the place, then who
+ * they are and why they came. Decided here, not by the model, so it cannot
+ * drift back to a generic welcome.
+ */
+function openingRoute(config) {
+  if ((config.situation || "").trim()) return "situatie";
+  if ((config.location || "").trim()) return config.systeemprofiel ? "plek" : "plek-zonder-data";
+  return "doel";
+}
+
+/** Instruction block for the opening turn: basis + route + shape. */
+async function composeOpening(config) {
+  const shape = OPENING_SHAPES[PURPOSE_TO_FILE[config.purpose] || "explore"] || "vorm-kort";
+  const blocks = await Promise.all([
+    readPrompt("opening/basis.md"),
+    readPrompt(`opening/${openingRoute(config)}.md`),
+    readPrompt(`opening/${shape}.md`),
+  ]);
+  // Nothing else in the prompt says whether one person or a room is listening.
+  blocks.push(config.audience_mode === "group"
+    ? "## Aanspreekvorm\n\nEr luistert een publiek. Spreek het aan met \"jullie\"."
+    : "## Aanspreekvorm\n\nEr praat één persoon met je, die voor zichzelf verkent. Spreek die aan met \"je\".");
+  return blocks.filter(Boolean).join("\n\n");
+}
+
+/**
  * Assemble the ENT system prompt.
  * @param {Object} config — intake config from the client (same shape as before).
- * @returns {Promise<{ stable: string, session: string }>}
+ * @param {Object} [opts]
+ * @param {boolean} [opts.opening] — also return the opening instruction. It is a
+ *   separate block so the session block stays byte-identical to later turns and
+ *   its cache entry carries over.
+ * @returns {Promise<{ stable: string, session: string, opening?: string }>}
  */
-export async function compose(config = {}) {
+export async function compose(config = {}, { opening = false } = {}) {
   // ── Stable prefix (cacheable, identical across sessions for a given identiteit):
   //    identity + voice [+ own knowledge] + shared core.
   const id = await loadIdentity(config.voice_subject || DEFAULT_IDENTITY);
@@ -327,8 +363,10 @@ export async function compose(config = {}) {
   const fmt = await readPrompt("format/overwegingen.md");
   if (fmt) parts.push(fmt);
 
-  return {
+  const result = {
     stable: stableParts.join("\n\n---\n\n"),
     session: parts.join("\n\n---\n\n"),
   };
+  if (opening) result.opening = await composeOpening(config);
+  return result;
 }

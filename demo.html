@@ -530,9 +530,49 @@
       .label-full  { display: none; }
       .label-short { display: inline; }
     }
+
+    /* ── OPENING OVERLAY ──
+       Covers the page while ENT writes its opening, so the chat never shows up
+       empty. Same look as the loading overlay in index.html, which hands over
+       to this one. */
+    .opening-overlay {
+      position: fixed; inset: 0;
+      background: var(--color-creme);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .opening-pending .opening-overlay { opacity: 1; pointer-events: all; }
+    .opening-img {
+      width: 180px; aspect-ratio: 540 / 304;
+      border-radius: 12px; object-fit: cover; object-position: center;
+      border: 1px solid var(--border-light);
+      margin-bottom: 20px;
+      animation: breathe 2s ease-in-out infinite;
+    }
+    .opening-img:not([src]) { visibility: hidden; }
+    .opening-img.is-water { aspect-ratio: 500 / 269; }
+    @keyframes breathe { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(1.03);opacity:1} }
+    .opening-text { font-size: 16px; font-weight: 300; font-style: italic; color: var(--color-green); }
   </style>
+  <script>
+    // Before first paint: an empty conversation means the opening still has to
+    // be written, so the overlay must be up before the chat can flash into view.
+    try {
+      if (!JSON.parse(localStorage.getItem('ent_conversation') || '[]').length) {
+        document.documentElement.classList.add('opening-pending');
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
+
+  <div class="opening-overlay" id="openingOverlay" aria-live="polite">
+    <img class="opening-img" id="openingImg" alt="">
+    <div class="opening-text" id="openingText"></div>
+  </div>
 
   <div class="bg-layer"></div>
   <div class="bg-vignette"></div>
@@ -568,9 +608,7 @@
     <div class="chat-col">
 
       <!-- Normal chat view -->
-      <div class="chat-messages" id="chatMessages">
-        <div class="bubble ent" id="welcomeBubble">Ik ben hier. Stel mij voor aan het project, of stel je eerste vraag.</div>
-      </div>
+      <div class="chat-messages" id="chatMessages"></div>
 
       <!-- Error screen (shown on 503) -->
       <div class="chat-error" id="chatError">
@@ -889,14 +927,14 @@
       // Hyperlokale systeemscan-samenvatting (Fase 2c), indien beschikbaar
       renderSysteemscan(intakeConfig.systeemprofiel);
 
-      // Welcome message — identiteit-specifiek, locatie-bewust
-      const _loc = loc.trim();
-      document.getElementById('welcomeBubble').textContent =
-        _loc ? cfg.welcomeLoc(_loc) : cfg.welcomeNoLoc;
-
-      // Restore conversation from localStorage
-      if (conversation.length > 0) {
-        document.getElementById('welcomeBubble').remove();
+      // Empty conversation: ENT opens it. The overlay stays up until it has.
+      if (conversation.length === 0) {
+        const openingImg = document.getElementById('openingImg');
+        openingImg.src = cfg.img;
+        openingImg.classList.toggle('is-water', currentPersona === 'water');
+        document.getElementById('openingText').textContent = cfg.thinking + '…';
+        generateOpening(loc);
+      } else {
         for (const msg of conversation) {
           if (msg.role === 'user') {
             _addUserBubbleStatic(msg.content);
@@ -910,6 +948,58 @@
       // Render current usage
       updateKlimaatimpact(usage);
     })();
+
+    /* ══════════════════════════════════════
+       OPENING
+       ENT's first turn, written from the intake (see prompts/ent/opening/).
+       It is stored as the first turn of the conversation, so the model knows
+       what it asked when the user answers.
+    ══════════════════════════════════════ */
+    function generateOpening(loc) {
+      setThinking(true);
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 25000);
+
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, messages: [], config: intakeConfig, opening: true }),
+        signal: ctrl.signal,
+      })
+      .then(async res => {
+        if (res.status === 401) {
+          localStorage.removeItem('ent_password_verified');
+          window.location.replace('/');
+          return null;
+        }
+        const data = await res.json();
+        if (!res.ok || data.error || !(data.stem || '').trim()) throw new Error('opening');
+        const u = data.usage || {};
+        usage.input_tokens  += u.input_tokens  || 0;
+        usage.output_tokens += u.output_tokens || 0;
+        usage.requests      += 1;
+        return data.stem.trim();
+      })
+      // No opening from the model: fall back to the fixed line rather than an
+      // empty chat. It is stored too, so the history still starts with ENT.
+      .catch(() => (loc ? cfg.welcomeLoc(loc) : cfg.welcomeNoLoc))
+      .then(stem => {
+        clearTimeout(timer);
+        if (stem == null) return;
+        setThinking(false);
+
+        conversation = [{ role: 'assistant', content: stem }];
+        localStorage.setItem('ent_conversation', JSON.stringify(conversation));
+        localStorage.setItem('ent_usage',        JSON.stringify(usage));
+        updateKlimaatimpact(usage);
+
+        const speechPromise = fetchSpeech(stem);
+        document.documentElement.classList.remove('opening-pending');
+        startMouth();
+        const bubbleEl = typeEntBubble(stem, () => stopMouth());
+        attachSpeech(bubbleEl, speechPromise);
+      });
+    }
 
     /* Parse full text (with optional [OVERWEGINGEN]) for display */
     function parseFullText(fullText) {
