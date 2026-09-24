@@ -140,3 +140,28 @@ De stopsequentie haalt de stem-aanroep van 6,7 naar 5,1 s (Boom) en maakt de
 afkapping nul. Het Water blijft nu meestal binnen de grens; de uitschieters
 zijn 126 en 139 woorden, geen 177 meer. Een model zonder thinking telt woorden
 op zo'n 5–10% nauwkeurig: wie precies 100 wil, zet 90.
+
+## Schema 2 (nieuwe onboarding) — 24 september 2026
+
+Fixtures `lunteren-v2-standaard` (standaardstem, namens, 120) en `lunteren-v2-
+water` (Water, belichaamd, 110): dezelfde casus als vrije sessiebeschrijving,
+representatie "het watersysteem van de Gelderse Vallei rond de beekrand op dit
+bedrijf", de twee documentfragmenten als laag 1 en laag 2.
+
+| | Standaard (namens, 120) | Water (belichaamd, 110) |
+|---|---|---|
+| gem. woorden | 98 | 102 |
+| langste | 147 | 134 |
+| > limiet | 2/10 | 5/10 |
+| overwegingen / herkomst | 10/10 · 25/26 | 10/10 · 28/29 |
+| eindigt met vraag | 9/10 | 9/10 |
+| stem in beeld na | 6,9 s | 6,5 s |
+| "ik" / derde persoon over het water | 11 / 12 | 59 / 2 |
+
+De namens-modus werkt: de standaardstem zegt "het water zakt door lemig zand",
+"het heeft geen stoel aan deze tafel gekregen", en "wat wil je van me weten?"
+als ENT. Het Water blijft in de ik-vorm (59 tegen 2).
+
+De woordgrens wordt op zo'n 10–20% overschreden bij een lage limiet (110 →
+tot 134). Wie een harde bovengrens wil, zet de instelling 15% lager dan de
+grens die hij bedoelt; de zinsgrens wordt wél gehaald.
