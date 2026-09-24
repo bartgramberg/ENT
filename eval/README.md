@@ -165,3 +165,25 @@ als ENT. Het Water blijft in de ik-vorm (59 tegen 2).
 De woordgrens wordt op zo'n 10–20% overschreden bij een lage limiet (110 →
 tot 134). Wie een harde bovengrens wil, zet de instelling 15% lager dan de
 grens die hij bedoelt; de zinsgrens wordt wél gehaald.
+
+## Met plekselectie (fase 4) — 24 september 2026
+
+Fixture `lunteren-v2-selectie`: dezelfde sessie, maar de plekgegevens als
+aangevinkte items (maaiveld, bodem, grondwaterstand, Natura 2000, bestuur;
+hitte-eiland uit) en de rest als "niet bekend".
+
+| | Water (belichaamd, 110) | Standaard (namens, 120) |
+|---|---|---|
+| gem. woorden | 82 | 79 |
+| langste | 113 | 105 |
+| overwegingen / herkomst | 10/10 · 25/25 | 10/10 · 30/30 |
+| soortnaam uit signaallijst | 1 | 1 |
+| eindigt met vraag | 10/10 | 9/10 |
+| stem in beeld na | 5,7 s | 5,8 s |
+
+De beste meting tot nu toe: beide stemmen binnen hun grens, herkomst op elke
+overweging, en op "welke beschermde soorten leven hier?" zegt het Water dat het
+dat niet weet en noemt het geen soort — de analist doet het wel, als
+"potentieel leefgebied" met herkomst "algemene kennis", plus een overweging
+met herkomst "niet bekend over deze plek". Dat is precies de verdeling uit de
+basis.
