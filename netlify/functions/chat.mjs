@@ -89,7 +89,12 @@ async function logBeurt(entry) {
   }
 }
 
-const MODEL      = "claude-sonnet-5";
+// ENT_MODEL/ENT_EFFORT alleen voor metingen (scripts/eval.sh); productie
+// draait op de standaard. Op Opus 5.5 kan thinking niet uit; daar regelt
+// effort de denkdiepte.
+const MODEL      = (process.env.ENT_MODEL || "claude-sonnet-5").trim();
+const EFFORT     = (process.env.ENT_EFFORT || "").trim();
+const THINKING_UIT = !/^claude-(opus-5-5|fable|mythos)/.test(MODEL);
 const MAX_TOKENS = 1024;
 const OPENING_MAX_TOKENS = 400;
 
@@ -210,9 +215,12 @@ export default async function handler(req, context) {
   const anthropicBody = {
     model:      MODEL,
     max_tokens: isOpening ? OPENING_MAX_TOKENS : MAX_TOKENS,
-    thinking:   { type: "disabled" }, // keep the fast single-shot behaviour on Sonnet 5
     messages:   apiMessages,
   };
+  // Sonnet 5: thinking uit voor de snelle single-shot. Modellen die thinking
+  // niet kunnen uitzetten krijgen alleen een effort-niveau.
+  if (THINKING_UIT) anthropicBody.thinking = { type: "disabled" };
+  if (EFFORT) anthropicBody.output_config = { effort: EFFORT };
   if (system.length) anthropicBody.system = system;
 
   const t0 = Date.now();

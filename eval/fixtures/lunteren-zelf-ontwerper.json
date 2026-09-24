@@ -1,0 +1,157 @@
+{
+ "voice_subject": "water",
+ "lang": "nl",
+ "user_role": "designer",
+ "user_role_other": "",
+ "audience_mode": "self",
+ "audience_type": null,
+ "audience_details": "",
+ "purpose": "codesign",
+ "purpose_other": "",
+ "location": "Barneveldseweg 37, Lunteren",
+ "location_id": "adr-4dd601d1eec8520e83ad8d602a4eb598",
+ "situation": "Projectomschrijving\nWater als Kompas is een ontwerptraject in de Gelderse Vallei, uitgevoerd door Protopia Studio in opdracht van de Publieke Ontwerp Coalitie Landelijk Gebied (PONT, KWR en Waterschap Vallei en Veluwe). Het traject onderzoekt hoe de wateropgaven (droogte, wateroverlast, waterkwaliteit, peilbeheer, biodiversiteit en groen-blauwe dooradering) juist toekomstperspectief kunnen bieden aan agrarisch ondernemers, en wat overheden daarvoor moeten veranderen. De casus is de beekrand op het bedrijf van een boer in de Gelderse Vallei. Daar komen landbouw, waterkwaliteit, natuur en beleid van waterschap, provincie en gemeente samen, en daar lopen ze nu vaak op elkaar vast. In twee brave spaces van elk zo'n vier uur zitten boeren en ambtenaren van deze overheden aan tafel. Sessie 1 zet de perspectieven naast elkaar, van persoonlijk via collectief naar systemisch. Sessie 2 is een ontwerpsessie en moet uitmonden in een transitieproject dat de boer en iedere overheidspartij haalbaar achten binnen hun eigen organisatie.\n\nDoel en rol van de ENT\nDe ENT brengt in deze sessies het perspectief van het water en de natuur in, als deelnemer zonder eigen stoel en zonder organisatiebelang. De gespreksbegeleiders van Protopia stellen de ENT af en toe een vraag of vragen om een reactie op wat er gezegd is. De ENT moet dan kort en concreet het perspectief van de beek en het omliggende watersysteem geven: wat het water nodig heeft, wat het ervaart van huidig gebruik en beheer, en waar het kansen ziet die boer, natuur en overheid tegelijk dienen. Het doel is niet om de discussie te beslechten of partijen te beoordelen. Het doel is een perspectiefverschuiving: deelnemers laten kijken voorbij hun eigen belang en organisatiegrenzen, en zo ruimte openen voor gezamenlijke oplossingen.",
+ "systeemprofiel": {
+  "location": {
+   "input_type": "address",
+   "input": "Barneveldseweg 37, 6741LJ Lunteren",
+   "weergavenaam": "Barneveldseweg 37, 6741LJ Lunteren",
+   "rd": {
+    "x": 169535,
+    "y": 458047
+   },
+   "ll": {
+    "lon": 5.59938487,
+    "lat": 52.11046367
+   },
+   "administrative_context": {
+    "gemeente": "Ede",
+    "provincie": "Gelderland",
+    "waterschap": "Waterschap Vallei en Veluwe"
+   }
+  },
+  "analysis_areas": {
+   "primary_type": "onbekend",
+   "direct_buffer_m": 200,
+   "context_buffer_m": 1000
+  },
+  "terrain": {
+   "hoogte_nap_m": 11.09,
+   "relief": {
+    "buurrange_m": 0.25,
+    "ligging": "vlak terrein"
+   }
+  },
+  "protected_areas": {
+   "natura2000": {
+    "in_gebied": false
+   }
+  },
+  "soil": {
+   "bodemcode": "pZg23",
+   "bodemnaam": "Beekeerdgronden; lemig fijn zand"
+  },
+  "groundwater": {
+   "grondwaterstand_glg": {
+    "key": "grondwaterstand_glg",
+    "thema": "grondwater",
+    "omschrijving": "Gemiddeld laagste grondwaterstand (huidig)",
+    "eenheid": "m onder maaiveld",
+    "waarde": 1.213,
+    "label": "1,0–1,5 m onder maaiveld"
+   }
+  },
+  "climate_pressures": {
+   "hitteeiland": {
+    "key": "hitteeiland",
+    "thema": "hitte",
+    "omschrijving": "Stedelijk hitte-eilandeffect",
+    "eenheid": "°C boven het ommeland",
+    "waarde": 0.155,
+    "label": "0–0,2 °C"
+   }
+  },
+  "surface_water": {},
+  "land_cover": {},
+  "species_observations": {},
+  "place_context": {
+   "omgeving": [
+    {
+     "naam": "Huize De Biezen",
+     "afstand_m": 981,
+     "tekst": "Huize de Biezen was een landhuis met landgoed in Barneveld. Voor de oorlog was het een werkverschaffingskamp."
+    },
+    {
+     "naam": "Monument voor de Benzinepomp",
+     "afstand_m": 1545,
+     "tekst": "Monument voor de Benzinepomp (1993) is een figuratieve sculptuur van kunstenaar Henk Visch langs de Nederlandse snelweg A30 tussen Barneveld en Ede, ter hoogte van Nederwoud bij Lunteren. De sculptuur is uitgevoerd in brons en bestaat uit een kantoor, een…"
+    },
+    {
+     "naam": "Adullamkerk",
+     "afstand_m": 1773,
+     "tekst": "De Adullamkerk is een kerkgebouw van de Gereformeerde Gemeenten aan de Ds. Fransenlaan 6 in Barneveld."
+    },
+    {
+     "naam": "De Hoeksteen (Barneveld)",
+     "afstand_m": 2017,
+     "tekst": "De Hoeksteen is een kerkgebouw van de Gereformeerde Gemeenten in Nederland aan de Vellerselaan 1 te Barneveld."
+    },
+    {
+     "naam": "Station Barneveld Zuid",
+     "afstand_m": 2051,
+     "tekst": "Station Barneveld Zuid is een spoorwegstation aan de spoorlijn Nijkerk - Ede-Wageningen in het Gelderse dorp Barneveld bij de nieuwbouwwijk Veller, ter hoogte van de spoorwegovergang Oud Vellerseweg. Het station ligt tussen de stations Barneveld Centrum en…"
+    },
+    {
+     "naam": "Nederwoud",
+     "afstand_m": 2065,
+     "tekst": "Nederwoud is een buurtschap in de Nederlandse gemeente Ede, gelegen in de provincie Gelderland. Het ligt 2,5 kilometer ten noordwesten van Lunteren."
+    }
+   ]
+  },
+  "system_relations": [],
+  "uncertainties": [],
+  "data_gaps": [
+   "species_observations (niet opgehaald: fout)"
+  ],
+  "provenance": [
+   {
+    "dataset": "BZK Locatieserver v3_1",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Natura 2000",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "AHN — maaiveldmodel (DTM 0,5 m)",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "BRO Bodemkaart 1:50.000",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Wikipedia",
+    "retrieved": "2026-09-22"
+   },
+   {
+    "dataset": "Klimaateffectatlas (landelijke lagen)",
+    "retrieved": "2026-09-22"
+   }
+  ],
+  "meta": {
+   "ms": 1998,
+   "per_bron_ms": {
+    "geocoding": 249,
+    "ndff": 130,
+    "natura2000": 150,
+    "terrain": 184,
+    "bodem": 538,
+    "plek": 1298,
+    "klimaat": 1739
+   },
+   "bronversie": "2026-07-16"
+  }
+ },
+ "documents": []
+}
