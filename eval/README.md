@@ -187,3 +187,13 @@ dat niet weet en noemt het geen soort — de analist doet het wel, als
 "potentieel leefgebied" met herkomst "algemene kennis", plus een overweging
 met herkomst "niet bekend over deze plek". Dat is precies de verdeling uit de
 basis.
+
+## Namens-modus na de reparatie — 24 september 2026
+
+Standaardstem, `persoon: namens`, plekselectie (fixture `lunteren-v2-selectie`),
+na de scherpere instellingenzin ("je bént het niet … nooit 'ik stroom'"):
+opening zonder één "ik", en op "vertel eens over jezelf": *"Ik ben geen boer en
+geen ambtenaar; ik spreek namens het watersysteem hier, de beek en de bodem
+eronder, zonder daar zelf uit te bestaan."* In 8 van 10 antwoorden geen enkele
+ik-vorm voor het water; twee keer een halve uitglijder ("ik voel"). Gemiddeld
+82 woorden, langste 115.
