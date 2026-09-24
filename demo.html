@@ -562,7 +562,10 @@
     // Before first paint: an empty conversation means the opening still has to
     // be written, so the overlay must be up before the chat can flash into view.
     try {
-      if (!JSON.parse(localStorage.getItem('ent_conversation') || '[]').length) {
+      // Zelfde sleutelkeuze als verderop: sessie uit /start (?s= of actief) of de oude intake.
+      const sid = new URLSearchParams(location.search).get('s') || localStorage.getItem('ent_sessie_actief');
+      const key = sid && localStorage.getItem('ent_sessie_' + sid) ? 'ent_gesprek_' + sid : 'ent_conversation';
+      if (!JSON.parse(localStorage.getItem(key) || '[]').length) {
         document.documentElement.classList.add('opening-pending');
       }
     } catch (e) {}
@@ -689,13 +692,21 @@
     /* ══════════════════════════════════════
        GUARD — redirect if not authenticated or no intake
     ══════════════════════════════════════ */
+    // Twee schema's: een sessie uit /start (ent_sessie_<id>, gekozen via ?s=
+    // of ent_sessie_actief) of de oude intake uit / (ent_intake_config).
+    const sessieId = new URLSearchParams(location.search).get('s') || localStorage.getItem('ent_sessie_actief');
+    const sessieRaw = sessieId && localStorage.getItem('ent_sessie_' + sessieId);
+    const nieuwSchema = !!sessieRaw;
+    const KEY_CONFIG = nieuwSchema ? 'ent_sessie_' + sessieId : 'ent_intake_config';
+    const KEY_GESPREK = nieuwSchema ? 'ent_gesprek_' + sessieId : 'ent_conversation';
+    const KEY_VERBRUIK = nieuwSchema ? 'ent_verbruik_' + sessieId : 'ent_usage';
     (function guard() {
       if (localStorage.getItem('ent_password_verified') !== 'true') {
-        window.location.replace('/');
+        window.location.replace(nieuwSchema ? '/start' : '/');
         throw new Error('guard');
       }
-      if (!localStorage.getItem('ent_intake_config')) {
-        window.location.replace('/');
+      if (!localStorage.getItem(KEY_CONFIG)) {
+        window.location.replace('/start');
         throw new Error('guard');
       }
     })();
@@ -703,10 +714,10 @@
     /* ══════════════════════════════════════
        STATE — loaded from localStorage
     ══════════════════════════════════════ */
-    const intakeConfig  = JSON.parse(localStorage.getItem('ent_intake_config') || '{}');
+    const intakeConfig  = JSON.parse(localStorage.getItem(KEY_CONFIG) || '{}');
     const password      = localStorage.getItem('ent_password') || '';
-    let   conversation  = JSON.parse(localStorage.getItem('ent_conversation') || '[]');
-    let   usage         = JSON.parse(localStorage.getItem('ent_usage') || '{"input_tokens":0,"output_tokens":0,"requests":0}');
+    let   conversation  = JSON.parse(localStorage.getItem(KEY_GESPREK) || '[]');
+    let   usage         = JSON.parse(localStorage.getItem(KEY_VERBRUIK) || '{"input_tokens":0,"output_tokens":0,"requests":0}');
 
     let isThinking    = false;
     let lastUserMessage = '';   // for retry
@@ -725,7 +736,7 @@
     let thinkingCounter  = 0;
     let overwColorIndex  = 0;
 
-    const currentPersona = intakeConfig.voice_subject || 'boom';
+    const currentPersona = intakeConfig.personage || intakeConfig.voice_subject || 'boom';
     const currentLang    = intakeConfig.lang || 'nl';
 
     /* ══════════════════════════════════════
@@ -807,7 +818,25 @@
                                   : `Ik stroom door ${loc} en ver daarbuiten. Wat speelt er, en waar gaat het heen?`,
       },
     };
+    PERSONA.standaard = {
+      title:        'ENT',
+      personaName:  'ENT',
+      img:          '/assets/images/ENT_neutraal.svg',
+      thinking:     EN ? 'ENT is considering' : 'ENT overweegt',
+      errorTitle:   EN ? 'ENT is out of reach.' : 'ENT is even niet bereikbaar.',
+      overwEmpty:   EN ? 'Facts and considerations appear here once ENT has responded.'
+                       : 'Feiten en afwegingen verschijnen hier zodra ENT heeft gereageerd.',
+      welcomeNoLoc: EN ? "What's on the table?" : 'Wat ligt er op tafel?',
+      welcomeLoc:   (loc) => EN ? `What's on the table around ${loc}?` : `Wat ligt er op tafel rond ${loc}?`,
+    };
     const cfg = PERSONA[currentPersona] || PERSONA.boom;
+    // De getoonde naam is wat ENT representeert (nieuw schema), anders het personage.
+    if (intakeConfig.representatie) {
+      const r = intakeConfig.representatie.trim();
+      cfg.personaName = r.charAt(0).toUpperCase() + r.slice(1);
+      cfg.title = 'ENT — ' + cfg.personaName;
+    }
+    const spraakAan = intakeConfig.spraak !== false;
 
     /* Compacte samenvatting van de hyperlokale systeemscan (Fase 2c). */
     function renderSysteemscan(p) {
@@ -987,15 +1016,15 @@
         setThinking(false);
 
         conversation = [{ role: 'assistant', content: stem }];
-        localStorage.setItem('ent_conversation', JSON.stringify(conversation));
-        localStorage.setItem('ent_usage',        JSON.stringify(usage));
+        localStorage.setItem(KEY_GESPREK, JSON.stringify(conversation));
+        localStorage.setItem(KEY_VERBRUIK, JSON.stringify(usage));
         updateKlimaatimpact(usage);
 
-        const speechPromise = fetchSpeech(stem);
+        const speechPromise = spraakAan ? fetchSpeech(stem) : null;
         document.documentElement.classList.remove('opening-pending');
         startMouth();
         const bubbleEl = typeEntBubble(stem, () => stopMouth());
-        attachSpeech(bubbleEl, speechPromise);
+        if (speechPromise) attachSpeech(bubbleEl, speechPromise);
       });
     }
 
@@ -1019,8 +1048,8 @@
        ADJUST SETUP
     ══════════════════════════════════════ */
     function adjustSetup() {
-      // Onboarding prefills from localStorage['ent_intake_config'] via ?adjust=true.
-      window.location.href = '/?adjust=true';
+      // Nieuw schema: /start laadt de sessie via ?s=; oud: index.html via ?adjust=true.
+      window.location.href = nieuwSchema ? '/start?s=' + sessieId : '/?adjust=true';
     }
 
     /* ══════════════════════════════════════
@@ -1029,8 +1058,8 @@
     function resetConversation() {
       conversation = [];
       usage        = { input_tokens: 0, output_tokens: 0, requests: 0 };
-      localStorage.setItem('ent_conversation', JSON.stringify(conversation));
-      localStorage.setItem('ent_usage',        JSON.stringify(usage));
+      localStorage.setItem(KEY_GESPREK, JSON.stringify(conversation));
+      localStorage.setItem(KEY_VERBRUIK, JSON.stringify(usage));
       window.location.reload();
     }
 
@@ -1339,8 +1368,8 @@
         usage.requests      += 1;
 
         // Persist
-        localStorage.setItem('ent_conversation', JSON.stringify(conversation));
-        localStorage.setItem('ent_usage',        JSON.stringify(usage));
+        localStorage.setItem(KEY_GESPREK, JSON.stringify(conversation));
+        localStorage.setItem(KEY_VERBRUIK, JSON.stringify(usage));
 
         // Update CO2 indicator
         updateKlimaatimpact(usage);
@@ -1348,7 +1377,7 @@
         // Render response. Speech generation starts now, in parallel with the
         // typing animation, so the audio is usually ready when the text lands.
         const stem = data.stem || '';
-        const speechPromise = stem ? fetchSpeech(stem) : null;
+        const speechPromise = stem && spraakAan ? fetchSpeech(stem) : null;
 
         startMouth();
         const bubbleEl = typeEntBubble(stem, () => stopMouth());
@@ -1370,7 +1399,7 @@
           usage.output_tokens += u2.output_tokens || 0;
           usage.cache_read_tokens  = (usage.cache_read_tokens  || 0) + (u2.cache_read_input_tokens     || 0);
           usage.cache_write_tokens = (usage.cache_write_tokens || 0) + (u2.cache_creation_input_tokens || 0);
-          localStorage.setItem('ent_usage', JSON.stringify(usage));
+          localStorage.setItem(KEY_VERBRUIK, JSON.stringify(usage));
           updateKlimaatimpact(usage);
           if (Array.isArray(d2.overwegingen) && d2.overwegingen.length) typeOverwegingen(d2.overwegingen);
         })
@@ -1412,8 +1441,10 @@
         ? nlDec(drivingMeters / 1000) + ' km autorijden'
         : drivingMeters + ' m autorijden';
 
+      // Kosten op Sonnet-5-tarief: invoer $2, cache-schrijven $4 (1h), cache-lezen $0,20, uitvoer $10 per miljoen.
+      const dollar = ((u.input_tokens || 0) * 2 + (u.cache_write_tokens || 0) * 4 + (u.cache_read_tokens || 0) * 0.2 + outputTokens * 10) / 1e6;
       document.getElementById('klimaatCounters').textContent =
-        nlDec(co2Avg) + ' g CO₂e · ' + drivingStr;
+        nlDec(co2Avg) + ' g CO₂e · ' + drivingStr + ' · $' + nlDec(dollar, 2);
 
       document.getElementById('klimaatOverMsg').classList.toggle('visible', isOver);
     }
@@ -1428,7 +1459,18 @@
       const lijn  = '─'.repeat(37);
       const loc   = document.getElementById('personaLocation').textContent;
 
-      let txt = `ENT — Gespreksverslag\n${datum} — ${tijd}\nPersona: ${cfg.personaName}\nLocatie: ${loc}\n${'─'.repeat(60)}\n\nGESPREK\n\n`;
+      const kop = [`ENT — Gespreksverslag`, `${datum} — ${tijd}`, `Representeert: ${intakeConfig.representatie || cfg.personaName}`, `Personage: ${(PERSONA[currentPersona] || cfg).personaName || currentPersona}`];
+      if (loc) kop.push(`Locatie: ${loc}`);
+      if (intakeConfig.sessie) {
+        const se = intakeConfig.sessie;
+        if (se.rol) kop.push(`Rol van ENT: ${se.rol}`);
+        if (se.publiek) kop.push(`Publiek: ${se.publiek}`);
+        const lagen = Object.entries(intakeConfig.lagen || {}).filter(([, v]) => v.length).map(([k, v]) => `${k} (${v.length})`).join(', ');
+        if (lagen) kop.push(`Kennisprofiel: ${lagen}`);
+        if (intakeConfig.tokens) kop.push(`Omvang profiel: ${intakeConfig.tokens.toLocaleString('nl-NL')} tokens`);
+        if (intakeConfig.promptversie) kop.push(`Promptversie: ${intakeConfig.promptversie}`);
+      }
+      let txt = kop.join('\n') + `\n${'─'.repeat(60)}\n\nGESPREK\n\n`;
 
       if (!conversation.length) {
         txt += '(geen berichten)\n';

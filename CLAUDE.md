@@ -120,7 +120,29 @@ script in `<head>`.
 
 De functions zijn staatloos. Alle sessiestatus staat in localStorage van de
 browser. Het wachtwoord wordt bij élke request server-side gecontroleerd; de
-gate in `index.html` is maar een overlay.
+gate in `index.html` en `start.html` is maar een overlay.
+
+## Twee onboardings
+
+`/start` (`start.html`) is de nieuwe onboarding: faciliteren (sessiebeschrijving
+in vijf vrije velden, representatie plus bijzonderheden, kennisprofiel in vier
+lagen van .md/.txt of geplakte tekst, plek, stem met is/namens-schakelaar en
+lengte) of zelf gebruiken (casus, plek, stem). Het resultaat is één
+sessie-object (`schema: 2`) in `ent_sessie_<id>`, met gesprek en verbruik in
+`ent_gesprek_<id>` en `ent_verbruik_<id>`; de chat opent via `/demo?s=<id>`,
+zodat twee sessies naast elkaar in twee tabs kunnen. Exporteren/importeren als
+JSON is de manier om een profiel naar een ander apparaat te brengen.
+
+`/` (`index.html`) is de oude onboarding en blijft staan tot de eerste sessie
+van Water als Kompas achter de rug is; `compose.mjs` en `demo.html` kennen beide
+schema's. Doel-templates bestaan niet meer: wat een facilitator van de vorm
+wil, zegt hij in de vraag.
+
+Startpakketten in `voorbeelden/kennis/` worden door de browser opgehaald en
+als item in een laag gezet, zodat een geëxporteerd profiel op zichzelf staat.
+De tokenmeter schat op 2,2 tekens per token; bij "vastzetten" telt
+`chat.mjs` (`tellen: true`) exact via `count_tokens`. Boven 300.000 tokens
+start de sessie niet.
 
 ## Meten
 

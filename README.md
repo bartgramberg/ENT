@@ -1,6 +1,6 @@
 # ENT — Engage Nature Tool
 
-ENT is an AI conversation tool by Protopia Studio. A user converses with the Tree — a natural avatar speaking from an ecological perspective — to bring nature's voice into area development and participation processes.
+ENT is an AI conversation tool by Protopia Studio. A user converses with a representative of what has no voice at the table — an ecosystem, the water, a tree, future residents — to bring that perspective into area development and participation processes.
 
 ---
 
@@ -48,13 +48,17 @@ Set environment variables via the **Netlify dashboard → Site settings → Envi
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Password gate + four-step onboarding |
-| `demo.html` | Chat interface with the Tree |
-| `compose.js` | Client-side prompt assembly from modular markdown files |
-| `netlify/functions/chat.mjs` | Stateless Anthropic API proxy |
+| `start.html` | New onboarding (`/start`): facilitate a session or use ENT yourself |
+| `index.html` | Old onboarding (kept until the first Water als Kompas session) |
+| `demo.html` | Chat interface (`/demo?s=<session id>`) |
+| `netlify/functions/chat.mjs` | Stateless Anthropic API proxy: stem, overwegingen, opening, token count |
+| `netlify/functions/lib/compose.mjs` | Server-side prompt assembly in cache blocks |
+| `netlify/functions/analyse.mjs` | Hyperlocal place scan from open data |
 | `netlify/functions/speak.mjs` | Stateless ElevenLabs text-to-speech proxy |
 | `netlify.toml` | Netlify build config + redirects |
-| `prompts/ent/` | Modular voice, audience, purpose and format prompt files |
+| `prompts/ent/` | `basis.md`, `contract.md`, `personages/`, `opening/` |
+| `voorbeelden/kennis/` | Starter texts for a knowledge profile (not loaded by compose) |
+| `eval/`, `scripts/eval*.mjs` | Measurement: fixtures, offline structure check, API regression set |
 | `assets/images/` | Avatar and background images |
 
 The password is verified server-side by `chat.mjs` against `ENT_ACCESS_PASSWORD` on every `/api/chat` request. The onboarding gate is a client-side overlay; the real access control is in the function.
@@ -64,16 +68,11 @@ The password is verified server-side by `chat.mjs` against `ENT_ACCESS_PASSWORD`
 ## Repository structure
 
 ```
-/index.html
-/demo.html
-/compose.js
-/netlify/functions/chat.mjs
-/netlify.toml
-/.env.example
-/prompts/ent/voices/
-/prompts/ent/audiences/
-/prompts/ent/purposes/
-/prompts/ent/format/
+/start.html  /index.html  /demo.html
+/netlify/functions/{chat,analyse,speak}.mjs  /netlify/functions/lib/
+/netlify.toml  /.env.example
+/prompts/ent/{basis.md,contract.md,personages/,opening/}
+/voorbeelden/kennis/  /eval/  /scripts/
 /assets/images/
 ```
 

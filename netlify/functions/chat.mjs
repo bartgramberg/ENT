@@ -185,7 +185,7 @@ export default async function handler(req, context) {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
-  const { password, messages, config, opening, deel, stem: vorigeStem } = body;
+  const { password, messages, config, opening, deel, stem: vorigeStem, tellen } = body;
   const isOpening = opening === true;
   const alleenStem = deel === "stem";
   const alleenOverwegingen = deel === "overwegingen";
@@ -201,6 +201,24 @@ export default async function handler(req, context) {
   // Validate messages
   if (!Array.isArray(messages)) {
     return json({ error: "messages must be an array" }, 400);
+  }
+
+  // Tokens tellen van de samengestelde prompt (voor de meter in de onboarding).
+  if (tellen === true) {
+    try {
+      const c = await compose(config || {});
+      const res = await fetch(anthropicUrl().replace(/\/messages$/, "/messages/count_tokens"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({ model: MODEL, system: c.blokken.map((b) => ({ type: "text", text: b.tekst })), messages: [{ role: "user", content: OPENING_SIGNAL }] }),
+      });
+      const d = await res.json();
+      if (!res.ok) return json({ error: d?.error?.message || "tellen mislukt" }, 503);
+      return json({ tokens: d.input_tokens, tekens: c.blokken.reduce((n, b) => n + b.tekst.length, 0), promptversie: c.promptversie, max_woorden: c.max_woorden, persoon: c.persoon });
+    } catch (err) {
+      console.error("tellen:", err);
+      return json({ error: "Kon de prompt niet tellen." }, 500);
+    }
   }
 
   // Password ping (empty messages = auth check only) — no compose needed

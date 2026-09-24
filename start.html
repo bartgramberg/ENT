@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ENT — Start</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #48735B; --green-dark: #3a5e49; --green-faint: rgba(72,115,91,0.07); --green-ring: rgba(72,115,91,0.18);
+      --creme: #F2EFE9; --magenta: #D90D7D; --text: #1A1A1A; --mid: #4A4A4A; --light: #7A7A7A; --white: #fff;
+      --border: #DEDAD4; --shadow: 0 2px 8px rgba(72,115,91,0.10); --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    html, body { min-height: 100%; background: var(--creme); font-family: 'Poppins', sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; }
+    body { display: flex; flex-direction: column; }
+
+    /* gate */
+    .gate-overlay { position: fixed; inset: 0; z-index: 500; background: var(--creme); display: flex; align-items: center; justify-content: center; padding: 24px; transition: opacity .3s; }
+    .gate-overlay.hidden { opacity: 0; pointer-events: none; }
+    .gate-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-md); padding: 40px 44px; width: 100%; max-width: 440px; text-align: center; }
+    .gate-logo { font-weight: 700; font-size: 28px; color: var(--green); letter-spacing: -0.02em; margin-bottom: 8px; }
+    .gate-subtitle { font-size: 13px; color: var(--light); margin-bottom: 32px; line-height: 1.5; }
+    .gate-error { font-size: 13px; color: var(--magenta); margin-top: 12px; min-height: 18px; font-style: italic; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 52px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.95); position: sticky; top: 0; z-index: 100; }
+    .logo { font-weight: 700; font-size: 18px; color: var(--green); letter-spacing: -0.02em; }
+    .topbar .sub { font-size: 12px; color: var(--light); }
+
+    .page { flex: 1; display: flex; justify-content: center; padding: 32px 16px 64px; }
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); width: 100%; max-width: 760px; padding: 36px 40px; }
+    @media (max-width: 600px) { .card { padding: 24px 18px; } }
+    .screen { display: none; } .screen.active { display: block; }
+
+    .progress { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--green); margin-bottom: 14px; }
+    h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: var(--light); line-height: 1.5; margin-bottom: 22px; }
+    .field { margin-bottom: 20px; }
+    .label { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+    .label .req::after { content: " *"; color: var(--magenta); }
+    .hint { font-size: 12px; color: var(--light); line-height: 1.5; margin-bottom: 8px; }
+    input[type=text], input[type=password], textarea, select {
+      width: 100%; background: var(--creme); border: 1.5px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--text); padding: 11px 14px; outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+    input:focus, textarea:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-ring); }
+    input.error, textarea.error { border-color: var(--magenta); }
+
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; border: none; font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: background .2s; }
+    .btn-primary { background: var(--green); color: var(--white); } .btn-primary:hover { background: var(--green-dark); } .btn-primary:disabled { background: var(--border); cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--mid); border: 1.5px solid var(--border); } .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+    .btn-small { padding: 8px 14px; font-size: 11px; }
+    .actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+    .actions .right { display: flex; gap: 10px; margin-left: auto; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .tile { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; cursor: pointer; background: var(--white); transition: border-color .2s, background .2s; }
+    .tile:hover { border-color: var(--green); }
+    .tile.selected { border-color: var(--green); background: var(--green-faint); box-shadow: 0 0 0 3px var(--green-ring); }
+    .tile .t-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .tile .t-sub { font-size: 12px; color: var(--light); line-height: 1.4; }
+    .tile img { width: 100%; aspect-ratio: 540/304; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+
+    .toggle { display: inline-flex; border: 1.5px solid var(--border); border-radius: 999px; overflow: hidden; }
+    .toggle button { border: none; background: transparent; padding: 8px 16px; font-family: inherit; font-size: 13px; cursor: pointer; color: var(--mid); }
+    .toggle button.on { background: var(--green); color: var(--white); }
+    .toggle button:disabled { color: var(--border); cursor: not-allowed; }
+    .note { font-size: 12px; color: var(--light); font-style: italic; margin-top: 6px; }
+
+    .laag { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+    .laag h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .laag .hint { margin-bottom: 10px; }
+    .drop { border: 1.5px dashed var(--border); border-radius: 8px; padding: 14px; text-align: center; font-size: 13px; color: var(--light); cursor: pointer; transition: border-color .2s; }
+    .drop:hover, .drop.over { border-color: var(--green); color: var(--green); }
+    .items { list-style: none; margin-top: 8px; }
+    .items li { display: flex; align-items: center; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .items li:last-child { border-bottom: none; }
+    .items .naam { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .items .meta { color: var(--light); font-size: 11px; }
+    .items select { width: auto; padding: 4px 8px; font-size: 12px; }
+    .items button { background: none; border: none; color: var(--light); cursor: pointer; font-size: 16px; }
+    .items button:hover { color: var(--magenta); }
+    .plak { display: flex; gap: 8px; margin-top: 8px; align-items: flex-start; }
+    .plak textarea { min-height: 60px; }
+    .plak .kolom { flex: 1; }
+    .pakketten label { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; cursor: pointer; }
+    .meter { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 13px; }
+    .meter .bar { flex: 1; height: 8px; background: var(--creme); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+    .meter .fill { height: 100%; background: var(--green); width: 0; transition: width .3s; }
+    .meter .fill.warn { background: #c98a1b; } .meter .fill.over { background: var(--magenta); }
+
+    .loc-wrap { position: relative; }
+    .suggest { position: absolute; left: 0; right: 0; top: 100%; background: var(--white); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 20; display: none; }
+    .suggest.visible { display: block; }
+    .suggest div { padding: 10px 14px; font-size: 13px; cursor: pointer; } .suggest div:hover { background: var(--green-faint); }
+    .scan { font-size: 13px; color: var(--mid); line-height: 1.6; margin-top: 10px; }
+    .scan .chip { display: inline-block; background: var(--green-faint); border-radius: 999px; padding: 2px 10px; margin: 2px 4px 2px 0; font-size: 12px; }
+    .scan .gap { color: var(--light); font-style: italic; }
+
+    .kaart { border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; font-size: 14px; line-height: 1.7; }
+    .kaart dt { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--green); margin-top: 10px; }
+    .kaart dd { color: var(--mid); }
+    .status { font-size: 13px; color: var(--light); font-style: italic; min-height: 18px; margin-top: 10px; }
+    .status.error { color: var(--magenta); }
+
+    .loading { position: fixed; inset: 0; background: var(--creme); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .4s; }
+    .loading.visible { opacity: 1; pointer-events: all; }
+    .loading img { width: 180px; aspect-ratio: 540/304; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; animation: breathe 2s ease-in-out infinite; }
+    .loading .txt { font-size: 16px; font-weight: 300; font-style: italic; color: var(--green); }
+    @keyframes breathe { 0%,100%{transform:scale(1);opacity:.9} 50%{transform:scale(1.03);opacity:1} }
+    .range { display: flex; align-items: center; gap: 12px; }
+    .range input[type=range] { flex: 1; accent-color: var(--green); }
+    .range output { min-width: 90px; font-size: 13px; color: var(--mid); }
+  </style>
+</head>
+<body>
+
+  <div class="gate-overlay" id="gateOverlay">
+    <div class="gate-card">
+      <div class="gate-logo">ENT</div>
+      <p class="gate-subtitle">Engage Nature Tool — Protopia Studio</p>
+      <label class="label" for="gateInput">Toegangscode</label>
+      <input type="password" id="gateInput" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') verifyPassword()" style="margin-bottom:14px">
+      <button class="btn btn-primary" id="gateBtn" onclick="verifyPassword()" style="width:100%;justify-content:center">Toegang</button>
+      <div class="gate-error" id="gateError"></div>
+    </div>
+  </div>
+
+  <header class="topbar"><div class="logo">ENT</div><div class="sub" id="topSub">Nieuwe sessie</div></header>
+
+  <div class="loading" id="loading"><img id="loadingImg" src="/assets/images/ENT_neutraal.svg" alt=""><div class="txt" id="loadingTxt">ENT luistert…</div></div>
+
+  <div class="page"><div class="card">
+
+    <!-- 0 · keuze -->
+    <section class="screen active" id="s-keuze">
+      <h1>Wat ga je doen?</h1>
+      <p class="sub">Een sessie met ENT begeleiden vraagt meer voorbereiding; zelf verkennen kan in één scherm.</p>
+      <div class="tiles">
+        <div class="tile" onclick="kiesFlow('A')"><div class="t-title">Een sessie faciliteren</div><div class="t-sub">Je beschrijft de sessie, wat ENT representeert, bouwt een kennisprofiel op en kiest een stem.</div></div>
+        <div class="tile" onclick="kiesFlow('B')"><div class="t-title">ENT zelf gebruiken</div><div class="t-sub">Wat speelt er, waar, welke stem — en praten.</div></div>
+      </div>
+      <div class="actions"><label class="btn btn-ghost btn-small" style="cursor:pointer">Profiel importeren<input type="file" accept=".json" hidden onchange="importeer(event)"></label></div>
+    </section>
+
+    <!-- A1 · sessie -->
+    <section class="screen" id="s-sessie">
+      <div class="progress">Stap 1 van 5 · De sessie</div>
+      <h1>Beschrijf de sessie</h1>
+      <p class="sub">Wat ENT doet en voor wie. Hoe ENT klinkt, kies je in stap 5.</p>
+      <div class="field"><label class="label" for="f-wie">Wie bedient ENT, en hoe?</label><p class="hint">Bijvoorbeeld: "Ik ben de gespreksleider en typ de vragen in; de deelnemers praten met elkaar."</p><textarea id="f-wie" rows="2"></textarea></div>
+      <div class="field"><label class="label" for="f-publiek">Wat is je publiek?</label><p class="hint">Rollen, functies, wat ze verdragen. Bijvoorbeeld: "Vier boeren en drie ambtenaren van waterschap en provincie; vaktaal is prima, geen ecologiecollege."</p><textarea id="f-publiek" rows="2"></textarea></div>
+      <div class="field"><label class="label" for="f-doel">Wat is het doel van de setting?</label><p class="hint">Wat wil je bereiken bij dit publiek?</p><textarea id="f-doel" rows="2"></textarea></div>
+      <div class="field"><label class="label" for="f-rol">Welke rol heeft ENT in dit gesprek?</label><p class="hint">Over rol, niet over stijl. Bijvoorbeeld: "Assistent van de facilitator: geeft informatie en vragen om het gesprek te leiden, en spreekt namens het water in." Hoe ENT klinkt, hoort bij het personage.</p><textarea id="f-rol" rows="2"></textarea></div>
+      <div class="field"><label class="label" for="f-casus"><span class="req">Wat speelt er?</span></label><p class="hint">De casus: het plan, het project of de vraag die op tafel ligt. Hier begint ENT het gesprek mee.</p><textarea id="f-casus" rows="4"></textarea></div>
+      <div class="field"><span class="label">Wie luistert er?</span><div class="toggle"><button id="asp-je" onclick="zetAanspreek('je')">één gesprekspartner</button><button id="asp-jullie" onclick="zetAanspreek('jullie')">een zaal</button></div></div>
+      <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-keuze')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="valideerSessie()">Verder →</button></div></div>
+    </section>
+
+    <!-- A2 · representatie -->
+    <section class="screen" id="s-representatie">
+      <div class="progress">Stap 2 van 5 · Representatie</div>
+      <h1>Wat representeert ENT?</h1>
+      <p class="sub">Wát, niet hóe. Kort in het eerste vak; bijzonderheden van dit exemplaar in het tweede.</p>
+      <div class="field"><label class="label" for="f-rep"><span class="req">Wat representeert ENT</span></label><p class="hint">Bijvoorbeeld: "het watersysteem van de Gelderse Vallei", "een boom op de Ceuvel", "de boer van dit bedrijf in 2050".</p><input type="text" id="f-rep"></div>
+      <div class="field"><label class="label" for="f-repdet">Over deze representant</label><p class="hint">Feiten over dit exemplaar: soort, naam, leeftijd, geschiedenis, wat er is gebeurd. Geen spreekstijl — dat is het personage.</p><textarea id="f-repdet" rows="4"></textarea></div>
+      <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-sessie')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="valideerRep()">Verder →</button></div></div>
+    </section>
+
+    <!-- A3 · kennisprofiel -->
+    <section class="screen" id="s-lagen">
+      <div class="progress">Stap 3 van 5 · Kennisprofiel</div>
+      <h1>Wat weet ENT over deze plek?</h1>
+      <p class="sub">Vier lagen, elk optioneel. Wat hier staat is de primaire bron; wat er niet staat, weet ENT van deze plek niet. Alleen tekst (.md, .txt) of plakken.</p>
+      <div id="lagen"></div>
+      <div class="field"><span class="label">Startpakketten (beleid en domeinkennis van Protopia)</span><p class="hint">Bestaande teksten die je aan een laag toevoegt. Lees ze na op datum en status; ze zijn geschreven in juli 2026.</p><div class="pakketten" id="pakketten"></div></div>
+      <div class="meter"><span>Omvang</span><div class="bar"><div class="fill" id="meterFill"></div></div><span id="meterTxt">0 tokens</span></div>
+      <p class="note">Richtwaarde 100.000 tokens (≈ 70 pagina's); boven 300.000 start de sessie niet.</p>
+      <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-representatie')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="ga('s-locatie')">Verder →</button></div></div>
+    </section>
+
+    <!-- A4 · locatie -->
+    <section class="screen" id="s-locatie">
+      <div class="progress">Stap 4 van 5 · Plek</div>
+      <h1>Waar?</h1>
+      <p class="sub">Optioneel. Met een adres haalt ENT open gegevens van de plek op (hoogte, bodem, grondwater, beschermde gebieden).</p>
+      <div class="field loc-wrap"><label class="label" for="f-loc">Adres</label><input type="text" id="f-loc" placeholder="Bijv. Barneveldseweg 37, Lunteren" oninput="locInput()" onblur="hideSuggest()" autocomplete="off"><div class="suggest" id="suggest"></div></div>
+      <button class="btn btn-ghost btn-small" onclick="haalPlek()">Gegevens ophalen</button>
+      <div class="scan" id="scan"></div>
+      <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-lagen')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="ga('s-stem')">Verder →</button></div></div>
+    </section>
+
+    <!-- A5 / B · stem -->
+    <section class="screen" id="s-stem">
+      <div class="progress" id="stemProgress">Stap 5 van 5 · De stem</div>
+      <h1>Hoe klinkt ENT?</h1>
+      <p class="sub">Het personage bepaalt klank, ritme en woordkeuze. Alles wat ENT weet en doet, staat al vast.</p>
+      <div class="tiles" id="personages"></div>
+      <div class="field" style="margin-top:20px"><span class="label">Is ENT wat het representeert, of spreekt het ernamens?</span><div class="toggle"><button id="pers-belichaamd" onclick="zetPersoon('belichaamd')">is het zelf ("ik stroom")</button><button id="pers-namens" onclick="zetPersoon('namens')">spreekt ernamens ("het water stroomt")</button></div><p class="note" id="persNote"></p></div>
+      <div class="field"><span class="label">Lengte van een antwoord</span><div class="range"><input type="range" id="f-woorden" min="40" max="250" step="10" oninput="zetWoorden(this.value)"><output id="woordenOut"></output></div><p class="note">Een aanwijzing in de vraag ("in twee zinnen") werkt binnen deze grens.</p></div>
+      <div class="field"><span class="label">Spraak</span><div class="toggle"><button id="spraak-aan" onclick="zetSpraak(true)">voorlezen</button><button id="spraak-uit" onclick="zetSpraak(false)">alleen tekst</button></div></div>
+      <div class="actions"><button class="btn btn-ghost btn-small" id="stemTerug" onclick="stemTerug()">← Terug</button><div class="right"><button class="btn btn-primary" id="stemVerder" onclick="stemVerder()">Verder →</button></div></div>
+    </section>
+
+    <!-- B1 · zelf -->
+    <section class="screen" id="s-zelf">
+      <div class="progress">ENT zelf gebruiken</div>
+      <h1>Waar gaat het over?</h1>
+      <div class="field"><label class="label" for="b-casus"><span class="req">Wat speelt er?</span></label><p class="hint">Het plan, project of de vraag. Minstens een paar zinnen; hier begint ENT mee.</p><textarea id="b-casus" rows="4"></textarea></div>
+      <div class="field loc-wrap"><label class="label" for="b-loc">Waar? (optioneel)</label><input type="text" id="b-loc" placeholder="Adres, bijv. Dodeweg 1, Leusden" oninput="locInput('b')" onblur="hideSuggest()" autocomplete="off"><div class="suggest" id="suggest-b"></div></div>
+      <div class="actions"><button class="btn btn-ghost btn-small" onclick="ga('s-keuze')">← Terug</button><div class="right"><button class="btn btn-primary" onclick="valideerZelf()">Kies een stem →</button></div></div>
+    </section>
+
+    <!-- A6 · profielkaart -->
+    <section class="screen" id="s-kaart">
+      <div class="progress">Klaar om te starten</div>
+      <h1>Dit gaat ENT zo weten</h1>
+      <dl class="kaart" id="kaart"></dl>
+      <div class="status" id="kaartStatus"></div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-small" onclick="ga('s-stem')">← Terug</button>
+        <div class="right"><button class="btn btn-ghost btn-small" onclick="exporteer()">Exporteren</button><button class="btn btn-primary" id="startBtn" onclick="start()">Profiel vastzetten en starten</button></div>
+      </div>
+    </section>
+
+  </div></div>
+
+  <script>
+    /* ══════════════════════════════════════════════════════════════
+       STATE — één sessie-object, opgeslagen als ent_sessie_<id>.
+       Schema 2: compose.mjs leest sessie.*, representatie(_details),
+       personage, persoon, max_woorden, aanspreek, lang, location(_id),
+       systeemprofiel, lagen.
+    ══════════════════════════════════════════════════════════════ */
+    const PERSONAGES = {
+      standaard: { label: 'ENT',       sub: 'Neutraal, systemisch, in gesprek',  img: '/assets/images/ENT_neutraal.svg', persoon: 'vrij',       max_woorden: 120 },
+      boom:      { label: 'De Boom',   sub: 'Geworteld, systemisch, geduldig',   img: '/assets/images/Boom.gif',         persoon: 'belichaamd', max_woorden: 100 },
+      water:     { label: 'Het Water', sub: 'Stromend, verbindend, systemisch',  img: '/assets/images/Water.gif',        persoon: 'belichaamd', max_woorden: 120 },
+    };
+    const LAGEN = [
+      ['ecologisch',           'Ecologisch',                     'Het ecosysteem: bodem, water, soorten, habitats. Rapporten, quickscans, eigen waarnemingen.'],
+      ['sociaal_economisch',   'Sociaal-maatschappelijk & economisch', 'Beleid, regels, wie er woont en werkt, wat er op het spel staat. Verordeningen, visies, projectstukken.'],
+      ['historisch_narratief', 'Historisch & narratief',         'De geschiedenis, verhalen en betekenis van de plek. Wat bewoners vertellen.'],
+      ['toekomst',             'Toekomst & scenario\'s (optioneel)', 'Klimaatscenario\'s, prognoses, toekomstbeelden — nodig voor een boer in 2050 of bewoners van later.'],
+    ];
+    const PAKKETTEN = [
+      ['sociaal_economisch', 'beleid/waterschappen/vallei-en-veluwe.md', 'Waterschap Vallei en Veluwe'],
+      ['sociaal_economisch', 'beleid/natuurgebieden/veluwe.md',          'Natuurgebied Veluwe'],
+      ['sociaal_economisch', 'beleid/provincies/gelderland.md',          'Provincie Gelderland'],
+      ['sociaal_economisch', 'beleid/provincies/utrecht.md',             'Provincie Utrecht'],
+      ['sociaal_economisch', 'beleid/provincies/noord-holland.md',       'Provincie Noord-Holland'],
+      ['sociaal_economisch', 'beleid/waterschappen/amstel-gooi-en-vecht.md', 'Waterschap Amstel, Gooi en Vecht'],
+      ['sociaal_economisch', 'beleid/gemeenten/amsterdam.md',            'Gemeente Amsterdam'],
+      ['sociaal_economisch', 'wetgeving-nl.md',                          'Juridisch kader Nederland (Omgevingswet)'],
+      ['ecologisch',         'water.md',                                 'Domein: water'],
+      ['ecologisch',         'bodem.md',                                 'Domein: bodem'],
+      ['ecologisch',         'biodiversiteit.md',                        'Domein: biodiversiteit'],
+      ['ecologisch',         'groenstructuur.md',                        'Domein: groenstructuur'],
+      ['ecologisch',         'fauna.md',                                 'Domein: fauna'],
+      ['ecologisch',         'klimaatadaptatie.md',                      'Domein: klimaatadaptatie'],
+    ];
+    const RICHT = 100000, HARD = 300000, TEKENS_PER_TOKEN = 2.2;
+
+    const params = new URLSearchParams(location.search);
+    const bestaandId = params.get('s');
+    let S = bestaandId && JSON.parse(localStorage.getItem('ent_sessie_' + bestaandId) || 'null');
+    const isAdjust = !!S;
+    const origineel = isAdjust ? JSON.stringify(zwaar(S)) : null;
+    if (!S) S = nieuweSessie();
+
+    function nieuweSessie() {
+      return {
+        schema: 2, id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())).slice(0, 8),
+        aangemaakt: new Date().toISOString(), flow: 'A', lang: 'nl',
+        sessie: { wie: '', publiek: '', doel: '', rol: '', casus: '' }, aanspreek: 'jullie',
+        representatie: '', representatie_details: '',
+        personage: 'standaard', persoon: 'namens', max_woorden: 120, spraak: true, analist: true,
+        location: '', location_id: null, systeemprofiel: null,
+        lagen: { ecologisch: [], sociaal_economisch: [], historisch_narratief: [], toekomst: [] },
+        tokens: null, bevroren_op: null,
+      };
+    }
+    // De delen waarvan een wijziging een nieuw gesprek rechtvaardigt.
+    function zwaar(s) { return { personage: s.personage, persoon: s.persoon, representatie: s.representatie, representatie_details: s.representatie_details, location: s.location, lagen: s.lagen }; }
+    function bewaar() { localStorage.setItem('ent_sessie_' + S.id, JSON.stringify(S)); localStorage.setItem('ent_sessie_actief', S.id); }
+
+    /* gate */
+    (function () {
+      if (localStorage.getItem('ent_password_verified') === 'true') document.getElementById('gateOverlay').classList.add('hidden');
+      else setTimeout(() => document.getElementById('gateInput').focus(), 100);
+    })();
+    async function verifyPassword() {
+      const btn = document.getElementById('gateBtn'), input = document.getElementById('gateInput'), err = document.getElementById('gateError');
+      const pw = input.value.trim(); if (!pw) { input.classList.add('error'); return; }
+      btn.disabled = true; err.textContent = ''; input.classList.remove('error');
+      try {
+        const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw, messages: [] }) });
+        if (res.ok) { localStorage.setItem('ent_password_verified', 'true'); localStorage.setItem('ent_password', pw); document.getElementById('gateOverlay').classList.add('hidden'); }
+        else if (res.status === 401) { err.textContent = 'Onjuiste toegangscode.'; input.classList.add('error'); input.select(); }
+        else { const d = await res.json().catch(() => ({})); err.textContent = d.error || 'Server niet bereikbaar.'; }
+      } catch { err.textContent = 'Geen verbinding.'; } finally { btn.disabled = false; }
+    }
+
+    /* navigatie */
+    function ga(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0, 0); if (id === 'lagen') renderLagen(); }
+    function kiesFlow(f) { S.flow = f; if (f === 'A') { vulSessie(); ga('s-sessie'); } else { S.aanspreek = 'je'; ga('s-zelf'); } }
+
+    /* A1 sessie */
+    function vulSessie() {
+      for (const k of ['wie', 'publiek', 'doel', 'rol', 'casus']) document.getElementById('f-' + k).value = S.sessie[k] || '';
+      zetAanspreek(S.aanspreek || 'jullie');
+    }
+    function leesSessie() { for (const k of ['wie', 'publiek', 'doel', 'rol', 'casus']) S.sessie[k] = document.getElementById('f-' + k).value.trim(); }
+    function zetAanspreek(v) { S.aanspreek = v; document.getElementById('asp-je').classList.toggle('on', v === 'je'); document.getElementById('asp-jullie').classList.toggle('on', v === 'jullie'); }
+    function valideerSessie() {
+      leesSessie();
+      const c = document.getElementById('f-casus');
+      if (S.sessie.casus.length < 20) { c.classList.add('error'); c.focus(); return; }
+      c.classList.remove('error'); bewaar();
+      document.getElementById('f-rep').value = S.representatie; document.getElementById('f-repdet').value = S.representatie_details;
+      ga('s-representatie');
+    }
+
+    /* A2 representatie */
+    function valideerRep() {
+      S.representatie = document.getElementById('f-rep').value.trim();
+      S.representatie_details = document.getElementById('f-repdet').value.trim();
+      const r = document.getElementById('f-rep');
+      if (!S.representatie) { r.classList.add('error'); r.focus(); return; }
+      r.classList.remove('error'); bewaar(); renderLagen(); ga('s-lagen');
+    }
+
+    /* A3 lagen */
+    function renderLagen() {
+      const box = document.getElementById('lagen'); box.innerHTML = '';
+      for (const [key, titel, hint] of LAGEN) {
+        const div = document.createElement('div'); div.className = 'laag';
+        div.innerHTML = `<h3>${titel}</h3><p class="hint">${hint}</p>
+          <div class="drop" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropLaag(event,'${key}')" onclick="this.querySelector('input').click()">Sleep .md- of .txt-bestanden hierheen of klik<input type="file" accept=".md,.txt,text/markdown,text/plain" multiple hidden onchange="kiesLaag(event,'${key}')"></div>
+          <div class="plak"><div class="kolom"><input type="text" placeholder="Naam van dit stuk" id="pl-naam-${key}"><textarea placeholder="…of plak hier tekst" id="pl-tekst-${key}"></textarea></div><button class="btn btn-ghost btn-small" onclick="plakLaag('${key}')">Toevoegen</button></div>
+          <ul class="items" id="items-${key}"></ul>`;
+        box.appendChild(div);
+        renderItems(key);
+      }
+      const pk = document.getElementById('pakketten'); pk.innerHTML = '';
+      for (const [laag, pad, label] of PAKKETTEN) {
+        const aan = S.lagen[laag].some(i => i.bron === pad);
+        const l = document.createElement('label');
+        l.innerHTML = `<input type="checkbox" ${aan ? 'checked' : ''} onchange="pakket(this,'${laag}','${pad}','${label.replace(/'/g, "\\'")}')"> ${label} <span class="meta">→ ${LAGEN.find(x => x[0] === laag)[1]}</span>`;
+        pk.appendChild(l);
+      }
+      meter();
+    }
+    function renderItems(key) {
+      const ul = document.getElementById('items-' + key); if (!ul) return; ul.innerHTML = '';
+      S.lagen[key].forEach((it, i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="naam" title="${it.naam}">${it.naam}</span><span class="meta">${Math.round(it.tekst.length / TEKENS_PER_TOKEN).toLocaleString('nl-NL')} tokens</span>
+          <select onchange="S.lagen['${key}'][${i}].status=this.value;bewaar()"><option value="">status</option>${['rapport', 'beleid', 'wetgeving', 'verhaal', 'meting', 'scenario'].map(s => `<option ${it.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
+          <input type="text" placeholder="datum" value="${it.datum || ''}" style="width:90px;padding:4px 8px;font-size:12px" onchange="S.lagen['${key}'][${i}].datum=this.value;bewaar()">
+          <button title="Verwijderen" onclick="S.lagen['${key}'].splice(${i},1);bewaar();renderLagen()">×</button>`;
+        ul.appendChild(li);
+      });
+    }
+    function voegToe(key, naam, tekst, bron) {
+      tekst = String(tekst || '').trim(); if (!tekst) return;
+      if (/\[OVERWEGINGEN\]/.test(tekst)) { alert(naam + ' bevat de marker [OVERWEGINGEN] en kan niet worden toegevoegd.'); return; }
+      S.lagen[key].push({ naam, tekst, status: '', datum: '', bron: bron || null });
+      bewaar(); renderItems(key); meter();
+    }
+    function leesBestand(f) { return new Promise((ok, nee) => { const r = new FileReader(); r.onload = e => ok(e.target.result); r.onerror = () => nee(); r.readAsText(f, 'UTF-8'); }); }
+    async function kiesLaag(ev, key) { for (const f of ev.target.files) voegToe(key, f.name, await leesBestand(f)); ev.target.value = ''; }
+    async function dropLaag(ev, key) { ev.preventDefault(); ev.currentTarget.classList.remove('over'); for (const f of ev.dataTransfer.files) if (/\.(md|txt)$/i.test(f.name)) voegToe(key, f.name, await leesBestand(f)); }
+    function plakLaag(key) {
+      const n = document.getElementById('pl-naam-' + key), t = document.getElementById('pl-tekst-' + key);
+      if (!t.value.trim()) return;
+      voegToe(key, n.value.trim() || ('tekst ' + (S.lagen[key].length + 1)), t.value); n.value = ''; t.value = '';
+    }
+    async function pakket(cb, laag, pad, label) {
+      if (!cb.checked) { S.lagen[laag] = S.lagen[laag].filter(i => i.bron !== pad); bewaar(); renderLagen(); return; }
+      try {
+        const r = await fetch('/voorbeelden/kennis/' + pad); if (!r.ok) throw new Error();
+        voegToe(laag, label, await r.text(), pad);
+        const it = S.lagen[laag][S.lagen[laag].length - 1]; it.status = laag === 'ecologisch' ? 'rapport' : 'beleid'; it.datum = '2026-07'; bewaar(); renderItems(laag);
+      } catch { cb.checked = false; alert('Pakket niet gevonden.'); }
+    }
+    function tekensLagen() { return Object.values(S.lagen).flat().reduce((n, i) => n + (i.tekst || '').length, 0) + (S.representatie_details || '').length; }
+    function meter() {
+      const tok = Math.round(tekensLagen() / TEKENS_PER_TOKEN);
+      const fill = document.getElementById('meterFill'); if (!fill) return;
+      fill.style.width = Math.min(100, tok / HARD * 100) + '%';
+      fill.className = 'fill' + (tok > HARD ? ' over' : tok > RICHT ? ' warn' : '');
+      document.getElementById('meterTxt').textContent = tok.toLocaleString('nl-NL') + ' tokens (schatting)';
+    }
+
+    /* A4 / B locatie — PDOK-autocomplete, zoals in index.html */
+    let debounce = null;
+    function zonderPostcode(s) { return String(s || '').replace(/\b\d{4}\s?[A-Z]{2}\b/g, '').replace(/\s{2,}/g, ' ').replace(/,\s*,/g, ',').replace(/\s+,/g, ',').trim(); }
+    function locInput(prefix) {
+      const inp = document.getElementById(prefix === 'b' ? 'b-loc' : 'f-loc');
+      S.location = inp.value.trim(); S.location_id = null; S.systeemprofiel = null;
+      clearTimeout(debounce);
+      const q = inp.value.trim(); if (q.length < 3) { hideSuggest(true); return; }
+      debounce = setTimeout(async () => {
+        try {
+          const r = await fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/suggest?q=${encodeURIComponent(q)}&rows=6`); if (!r.ok) return;
+          const docs = ((await r.json()).response || {}).docs || [];
+          const box = document.getElementById(prefix === 'b' ? 'suggest-b' : 'suggest'); box.innerHTML = '';
+          docs.forEach(d => { const naam = zonderPostcode(d.weergavenaam); const div = document.createElement('div'); div.textContent = naam;
+            div.onmousedown = () => { inp.value = naam; S.location = naam; S.location_id = d.id || null; S.systeemprofiel = null; hideSuggest(true); }; box.appendChild(div); });
+          box.classList.toggle('visible', docs.length > 0);
+        } catch { hideSuggest(true); }
+      }, 350);
+    }
+    function hideSuggest(nu) { document.querySelectorAll('.suggest').forEach(b => nu ? b.classList.remove('visible') : setTimeout(() => b.classList.remove('visible'), 180)); }
+    async function haalPlek(stil) {
+      if (!S.location) { if (!stil) document.getElementById('scan').textContent = 'Vul eerst een adres in.'; return null; }
+      const el = document.getElementById('scan'); if (!stil) el.textContent = 'Gegevens ophalen…';
+      try {
+        const qs = S.location_id ? 'id=' + encodeURIComponent(S.location_id) : 'location=' + encodeURIComponent(S.location);
+        const r = await fetch('/api/analyse?' + qs, { cache: 'no-store' }); const p = await r.json();
+        if (!r.ok || p.error) throw new Error(p.error || r.status);
+        S.systeemprofiel = p; bewaar(); if (!stil) toonScan(p); return p;
+      } catch (e) { if (!stil) el.innerHTML = '<span class="gap">Geen gegevens gevonden voor dit adres; ENT kent de plek dan alleen bij naam.</span>'; return null; }
+    }
+    function toonScan(p) {
+      const chips = [], kort = s => String(s || '').split(' (')[0];
+      if (p.terrain?.hoogte_nap_m != null) chips.push(p.terrain.hoogte_nap_m + ' m NAP');
+      if (p.soil?.bodemnaam) chips.push(p.soil.bodemnaam.split(';')[0]);
+      const gw = Object.values(p.groundwater || {})[0]; if (gw?.label) chips.push('grondwater ' + kort(gw.label));
+      for (const k of Object.values(p.climate_pressures || {})) if (k?.label) chips.push(kort(k.omschrijving) + ': ' + kort(k.label));
+      const n = p.protected_areas?.natura2000; if (n) chips.push(n.in_gebied ? 'Natura 2000: ' + n.naam : 'buiten Natura 2000');
+      const gaten = (p.data_gaps || []).map(g => String(g).split(' (')[0]);
+      if (!p.species_observations?.hoknummer) gaten.push('soorten'); gaten.push('oppervlaktewater', 'landgebruik');
+      document.getElementById('scan').innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join('') + `<div class="gap">Niet bekend voor deze plek: ${[...new Set(gaten)].join(', ')}. Wat je daarover weet, hoort in de lagen.</div>`;
+    }
+
+    /* A5 / B stem */
+    function renderStem() {
+      const box = document.getElementById('personages'); box.innerHTML = '';
+      for (const [k, p] of Object.entries(PERSONAGES)) {
+        const d = document.createElement('div'); d.className = 'tile' + (S.personage === k ? ' selected' : '');
+        d.innerHTML = `<img src="${p.img}" alt=""><div class="t-title">${p.label}</div><div class="t-sub">${p.sub}</div>`;
+        d.onclick = () => { S.personage = k; S.max_woorden = p.max_woorden; if (p.persoon !== 'vrij') S.persoon = p.persoon; renderStem(); };
+        box.appendChild(d);
+      }
+      const p = PERSONAGES[S.personage], vrij = p.persoon === 'vrij';
+      document.getElementById('pers-belichaamd').disabled = !vrij; document.getElementById('pers-namens').disabled = !vrij;
+      zetPersoon(vrij ? (S.persoon || 'namens') : p.persoon, true);
+      document.getElementById('persNote').textContent = vrij ? 'Bij de standaardstem kies je zelf.' : `${p.label} spreekt altijd als zichzelf.`;
+      document.getElementById('f-woorden').value = S.max_woorden; zetWoorden(S.max_woorden);
+      zetSpraak(S.spraak !== false);
+      document.getElementById('stemProgress').textContent = S.flow === 'A' ? 'Stap 5 van 5 · De stem' : 'ENT zelf gebruiken · De stem';
+      document.getElementById('stemVerder').textContent = S.flow === 'A' ? 'Verder →' : 'Start het gesprek →';
+    }
+    function zetPersoon(v, stil) { S.persoon = v; document.getElementById('pers-belichaamd').classList.toggle('on', v === 'belichaamd'); document.getElementById('pers-namens').classList.toggle('on', v === 'namens'); }
+    function zetWoorden(v) { S.max_woorden = Number(v); document.getElementById('woordenOut').textContent = v + ' woorden'; }
+    function zetSpraak(v) { S.spraak = v; document.getElementById('spraak-aan').classList.toggle('on', v); document.getElementById('spraak-uit').classList.toggle('on', !v); }
+    function stemTerug() { ga(S.flow === 'A' ? 's-locatie' : 's-zelf'); }
+    function stemVerder() { bewaar(); if (S.flow === 'A') { renderKaart(); ga('s-kaart'); } else start(); }
+
+    /* B zelf */
+    function valideerZelf() {
+      S.sessie.casus = document.getElementById('b-casus').value.trim();
+      const c = document.getElementById('b-casus'); if (S.sessie.casus.length < 20) { c.classList.add('error'); c.focus(); return; }
+      c.classList.remove('error'); S.location = document.getElementById('b-loc').value.trim() || S.location;
+      S.representatie = S.representatie || 'het natuurlijke systeem van deze plek'; bewaar(); renderStem(); ga('s-stem');
+    }
+
+    /* A6 profielkaart */
+    function renderKaart() {
+      const p = PERSONAGES[S.personage];
+      const lagen = LAGEN.map(([k, t]) => S.lagen[k].length ? `${t}: ${S.lagen[k].length} stuk${S.lagen[k].length === 1 ? '' : 'ken'}` : null).filter(Boolean).join(' · ') || 'geen materiaal aangeleverd';
+      document.getElementById('kaart').innerHTML = [
+        ['Representatie', S.representatie + (S.representatie_details ? ' — met bijzonderheden' : '')],
+        ['Stem', `${p.label}, ${S.persoon === 'belichaamd' ? 'is het zelf' : 'spreekt ernamens'}, max ${S.max_woorden} woorden, ${S.spraak !== false ? 'voorlezen' : 'alleen tekst'}`],
+        ['Sessie', [S.sessie.wie, S.sessie.publiek && 'publiek: ' + S.sessie.publiek, S.sessie.rol && 'rol: ' + S.sessie.rol].filter(Boolean).join(' · ') + ` · ${S.aanspreek === 'jullie' ? 'een zaal' : 'één gesprekspartner'}`],
+        ['Wat speelt er', S.sessie.casus.slice(0, 160) + (S.sessie.casus.length > 160 ? '…' : '')],
+        ['Plek', S.location ? S.location + (S.systeemprofiel ? ' — gegevens opgehaald' : ' — gegevens worden bij de start opgehaald') : 'geen'],
+        ['Kennisprofiel', lagen],
+        ['Omvang', `≈ ${Math.round(tekensLagen() / TEKENS_PER_TOKEN).toLocaleString('nl-NL')} tokens materiaal; exact bij het vastzetten`],
+      ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+      document.getElementById('kaartStatus').textContent = '';
+    }
+
+    /* export / import */
+    function exporteer() {
+      bewaar();
+      const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `ENT-profiel-${(S.representatie || 'sessie').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${S.id}.json`; a.click(); URL.revokeObjectURL(a.href);
+    }
+    async function importeer(ev) {
+      const f = ev.target.files[0]; if (!f) return;
+      try {
+        const d = JSON.parse(await leesBestand(f)); if (d.schema !== 2 || !d.lagen) throw new Error();
+        d.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())).slice(0, 8); d.tokens = null; d.bevroren_op = null;
+        S = d; bewaar(); renderStem(); renderKaart(); ga('s-kaart');
+      } catch { alert('Dit is geen ENT-profiel.'); }
+    }
+
+    /* start */
+    async function start() {
+      const btn = document.getElementById('startBtn'), st = document.getElementById('kaartStatus');
+      btn.disabled = true; st.className = 'status'; st.textContent = '';
+      document.getElementById('loadingImg').src = PERSONAGES[S.personage].img;
+      document.getElementById('loadingTxt').textContent = 'ENT luistert…';
+      document.getElementById('loading').classList.add('visible');
+      try {
+        if (S.location && !S.systeemprofiel) await haalPlek(true);
+        // Exact tellen via de function; de schatting ernaast is voor de meter.
+        const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: localStorage.getItem('ent_password') || '', messages: [], config: S, tellen: true }) });
+        const d = await r.json();
+        if (r.status === 401) { localStorage.removeItem('ent_password_verified'); location.replace('/start'); return; }
+        if (r.ok && d.tokens) { S.tokens = d.tokens; S.promptversie = d.promptversie; }
+        if (S.tokens > HARD) throw new Error(`Het profiel is ${S.tokens.toLocaleString('nl-NL')} tokens; boven ${HARD.toLocaleString('nl-NL')} start de sessie niet. Dik de lagen in.`);
+        S.bevroren_op = new Date().toISOString(); bewaar();
+        // Gesprek: nieuw bij een nieuwe sessie of een zware wijziging; anders blijft het staan.
+        const gespKey = 'ent_gesprek_' + S.id;
+        const zwaarGewijzigd = isAdjust && origineel !== JSON.stringify(zwaar(S));
+        if (!isAdjust || zwaarGewijzigd || !localStorage.getItem(gespKey)) {
+          if (zwaarGewijzigd && localStorage.getItem(gespKey) && !confirm('Je hebt het personage, de representatie, de plek of het materiaal gewijzigd. Het gesprek begint dan opnieuw. Doorgaan?')) { btn.disabled = false; document.getElementById('loading').classList.remove('visible'); return; }
+          localStorage.setItem(gespKey, '[]');
+          localStorage.setItem('ent_verbruik_' + S.id, JSON.stringify({ input_tokens: 0, output_tokens: 0, requests: 0 }));
+        }
+        location.href = '/demo?s=' + S.id;
+      } catch (e) {
+        document.getElementById('loading').classList.remove('visible'); btn.disabled = false;
+        st.className = 'status error'; st.textContent = e.message || 'Kon de sessie niet starten.';
+      }
+    }
+
+    /* adjust-mode: bestaande sessie inladen */
+    (function init() {
+      if (!isAdjust) return;
+      document.getElementById('topSub').textContent = 'Setup aanpassen';
+      vulSessie(); document.getElementById('f-rep').value = S.representatie; document.getElementById('f-repdet').value = S.representatie_details;
+      document.getElementById('f-loc').value = S.location || ''; document.getElementById('b-loc').value = S.location || ''; document.getElementById('b-casus').value = S.sessie.casus || '';
+      if (S.systeemprofiel) toonScan(S.systeemprofiel);
+      renderLagen(); renderStem();
+      if (S.flow === 'A') ga('s-sessie'); else ga('s-zelf');
+    })();
+  </script>
+</body>
+</html>
