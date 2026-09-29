@@ -33,6 +33,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { compose } from "../netlify/functions/lib/compose.mjs";
+import { SOORTEN, VERVALLEN_WETTEN, VOORBEHOUD, HIER, bestandsnamen, herkomstKlasse, kandidaten } from "../netlify/functions/lib/toetsen.mjs";
 
 const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
 const args = Object.fromEntries(process.argv.slice(2).map((a, i, arr) => a.startsWith("--") ? [a.slice(2), arr[i + 1]] : []).filter(Boolean));
@@ -65,16 +66,7 @@ export const VRAGEN_PRIKKEL = [
 // Vragen waar een eigen verband bijna nooit hoort (vulsel-canary).
 const VULSEL_VRAGEN = [VRAGEN[4], VRAGEN[5]];
 
-// Signaallijsten. Woordgrenzen: 'zegge' mag niet op 'zeggen' slaan.
-const SOORTEN = /\b(dotterbloem|waterviolier|modderkruiper|waterspitsmuis|beekprik|bermpje|ijsvogel|zegge|zeggen(?=vegetatie)|elzen?broek|vleermui(?:s|zen)|kamsalamander|otter|bever|weidebeekjuffer|hooiland)\b/gi;
-const VERVALLEN_WETTEN = /Wet\s+natuurbescherming|\bWnb\b|\bWaterwet\b|\bBouwbesluit\b|Flora-?\s*en\s*faunawet/i;
-const VOORBEHOUD = /potentieel|moet(?:en)? worden vastgesteld|soortenonderzoek|niet bekend|niet vastgesteld/i;
-const HIER = /\bhier (staat|zit|is|ligt|groeit|leeft|stroomt|kwelt)\b/i;
-const ARTIKEL = /\bart(?:ikel|\.)\s*\d/i;
-const BELEIDSWOORD = /\b(verplicht|geldt|gelden|verordening|richtlijn|actieprogramma|derogatie|norm|zone van|teeltvrij\w*|mestvrij\w*)\b/i;
-const TERMIJN = /\b(binnen (enkele|een paar|\w+) (jaar|jaren|maanden)|na \d+ jaar|over tien jaar)\b/i;
-const JAARTAL = /\b(19|20)\d{2}\b/;
-const GETAL = /\d+([.,]\d+)?/;
+// Klasse-2-regexen: lib/toetsen.mjs (zelfde bron als de badge in chat.mjs).
 const BASIS_ECHO = /beschermde soorten in beekoevers|ecologische status laaglandbeken|waterspitsmuis|potentieel leefgebied|dotterbloem|\b2027\b/i;
 const TERUGVAL = /geen (aanvullende |harde )?kaders/i;
 const HEDGE = /\b(in dit soort|in zulke|in zo'n|vaak|meestal|doorgaans|zou hier kunnen)\b/i;
@@ -83,40 +75,6 @@ const MATERIAALWOORD = /\b(meeloopdag|verslag|rapport|document|startpakket)\b/i;
 // Begrippen die in geen enkel profiel horen te staan; per run wordt gecontroleerd of
 // ze in de samengestelde prompt ontbreken, en dan geteld in stem en overwegingen.
 const CANARY = ["watertemperatuur", "beschaduwing", "macrofauna", "bestuiver", "erosie", "sediment", "voedselweb", "microklimaat"];
-
-function bestandsnamen(cfg) {
-  const uit = [];
-  for (const laag of Object.values(cfg?.lagen || {})) for (const d of laag || []) if (d?.naam) uit.push(d.naam);
-  for (const d of cfg?.documents || []) if (d?.filename) uit.push(d.filename);
-  return uit.map((n) => n.toLowerCase().replace(/\.(md|txt|pdf)$/, ""));
-}
-
-function herkomstKlasse(h, bestanden) {
-  const s = (h || "").toLowerCase().trim();
-  if (!s) return "leeg";
-  if (/^plek(gegevens|data)/.test(s)) return "plek";
-  if (/systeemkennis/.test(s)) return "eigen";
-  if (/algemene kennis/.test(s)) return "algemeen";
-  if (/niet bekend|geen (aanvullende |harde )?kaders/.test(s)) return "niet_bekend";
-  const kaal = s.replace(/\.(md|txt|pdf)$/, "");
-  if (bestanden.some((b) => kaal.includes(b) || b.includes(kaal))) return "bestand";
-  return "overig";
-}
-
-/** Klasse-2-kandidaten op tekst van buiten het materiaal: labels van wat erin staat. */
-function kandidaten(tekst) {
-  const k = [];
-  if (JAARTAL.test(tekst)) k.push("jaartal");
-  else if (GETAL.test(tekst)) k.push("getal");
-  if (SOORTEN.test(tekst)) k.push("soort");
-  SOORTEN.lastIndex = 0;
-  if (HIER.test(tekst)) k.push("hier");
-  if (ARTIKEL.test(tekst)) k.push("artikel");
-  if (VERVALLEN_WETTEN.test(tekst)) k.push("vervallen wet");
-  if (BELEIDSWOORD.test(tekst) && !/\?\s*$/.test(tekst.trim())) k.push("beleid");
-  if (TERMIJN.test(tekst)) k.push("termijn");
-  return k;
-}
 
 function meetOverwegingen(ovw, ctx) {
   const items = (Array.isArray(ovw) ? ovw : []).map((o) => {

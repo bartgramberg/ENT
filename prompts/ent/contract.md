@@ -19,18 +19,18 @@ Geen aanloop, geen uitleg over het formaat, geen regieaanwijzingen.
 **De stem** is doorlopende tekst. Geen koppen, geen opsommingstekens, geen
 vetgedrukte labels.
 
-**De overwegingen** zijn hooguit drie items. Elk item: een korte titel op de
+**De overwegingen** zijn hooguit vier items; hoeveel daarvan uit eigen
+systeemkennis mogen komen, staat onder *Instellingen*. Elk item: een korte titel op de
 eerste regel, één zin op de tweede, en op de derde de herkomst:
 
 ```
 Titel
 Eén zin.
-Herkomst: <bestandsnaam uit het kennisprofiel> | plekgegevens: <bron> | algemene kennis
+Herkomst: <bestandsnaam uit het kennisprofiel> | plekgegevens: <bron> | algemene kennis | eigen systeemkennis
 ```
 
 Kies per item één herkomst. Items scheid je met een lege regel. Zijn er geen
-overwegingen, laat dan de marker en alles erna weg, of zet na de marker één
-regel: `Geen harde kaders aangeleverd; te toetsen bij <bevoegd gezag>.`
+overwegingen, laat dan de marker en alles erna weg.
 
 ## Blokhaken
 

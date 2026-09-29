@@ -230,3 +230,53 @@ Vallei-en-Veluwe-pakket (5 m onderhoudszone), en de plekdata (beekeerdgrond,
 GLG 1,0–1,5 m). Eén lege overweging ("Geen aanvullende harde kaders", titel =
 tekst) bij "vertel eens over jezelf".
 
+## Stap 1 van de aanvulling "systemische kennis" — 29 september 2026
+
+Promptversie 6615fc84 (WaK) na de ingrepen uit het plan van 25/29 september:
+"profiel is bron over plek én systeem, eigen kennis ernaast", analist met het
+label "eigen systeemkennis", voorbeeldoverwegingen weg, kompas-verbod op regels
+en termijnen uit geheugen, staffel op profielomvang (WaK 69k → hooguit twee van
+vier), overwegingen-instructie "bij deze beurt". Nulmeting = de WaK-run van 24
+september, opnieuw doorgemeten met `--heranalyse` (zelfde antwoorden, nieuwe
+maten). Eén run per fixture, geen herhaling (afspraak 29 september).
+
+| WaK-profiel, standaard namens, 10 beurten | nulmeting 24/9 | stap 1 |
+|---|---|---|
+| overwegingen totaal | 26 | 30 |
+| herkomst bestand / plek / algemeen / eigen | 14 / 4 / 7 / 0 | 15 / 2 / 3 / 10 |
+| beurten met ≥1 eigen systeemkennis | 0/10 | 8/10 |
+| eigen op vulsel-vragen (jezelf, twee zinnen) | – | 2/2 |
+| items > 4 / eigen boven staffel | 0 / – | 0 / 0 |
+| klasse-2-kandidaten in eigen/algemene items | 1 | 0 |
+| mislabel (regex) | 1 | 0 |
+| basis-echo (beekoevers, waterspitsmuis, dotterbloem, 2027) | 4 | 0 |
+| terugvalregel als item | 0 | 0 |
+| hedge-stemmen | 4/10 | 2/10 |
+| principe-woorden in stem | 2/10 | 1/10 |
+| "hier staat/zit/is" / soortnamen in stem | 0 / 1 | 0 / 0 |
+| gem. woorden / boven 120 | 94,6 / 1 (137) | 96,7 / 2 (132, 131) |
+| eindigt met vraag / slotzinnen verschillend | 8/10 / 10/10 | 9/10 / 10/10 |
+| duur stem / overwegingen | 6,2 s / 6,3 s | 6,8 s / 6,2 s |
+| kosten | $0,347 | $0,350 |
+
+Wat opviel. De eigen items zijn patronen zonder getal, soort of naam, en ze
+brengen iets dat het materiaal niet zegt: *"Wat een sloot doorgeeft, niet of hij
+stroomt — een systeem dat afvoert draagt evengoed door wat erin komt; het
+ontbreken van kwel zegt niets over de kwaliteit van wat er wél doorheen gaat"*
+(vraag 10); *"Waar het bufferbeleid grijpt — de zone langs de beek beschermt
+vooral de laatste meters vóór het water, niet wat stroomopwaarts al is
+uitgespoeld"* (vraag 1). De echo's van de oude voorbeelden zijn weg. Zoals
+voorspeld vult het model het plafond ook op "vertel eens over jezelf" en "twee
+zinnen, geen regen" (2 van 2); die items zijn niet fout, alleen niet nodig.
+Eén inhoudelijke mislabel die de regex niet ziet: "uitspoeling bij regen kort na
+bemesting" komt uit het meeloopdagverslag en kreeg "eigen systeemkennis". De
+stem hedget minder (2/10 tegen 4/10) maar maakt geen hier-claims en noemt geen
+soorten; twee stemmen boven de 120 woorden (132, 131), tegen één (137) in de
+nulmeting. Drie herkomsten met de slug van een startpakket ("ent-water",
+"ent-beleid-waterschap-vallei-en-veluwe") telde het script als "overig"; de
+matcher kent nu ook de bronbestandsnaam.
+
+Niet getest: de badge "te toetsen" en de bewaarde overwegingen in `demo.html`
+zijn alleen op syntaxis gecontroleerd, niet in de browser; de staffel is alleen
+op WaK (twee) en Lunteren (drie) gemeten, niet op een profiel boven 100k.
+

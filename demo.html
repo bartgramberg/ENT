@@ -396,6 +396,11 @@
       margin-bottom: 5px;
     }
     .overw-block-herkomst { font-size: 10px; color: var(--color-text-light); margin-top: 6px; font-style: italic; }
+    /* Van buiten het materiaal: in één blik te vinden voor de facilitator. */
+    .overw-block-herkomst--eigen { font-style: normal; font-weight: 600; color: var(--color-text-mid); }
+    .overw-block-herkomst--eigen::before { content: "◆ "; }
+    .overw-badge { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 9px; font-size: 10px; background: rgba(190, 120, 20, 0.15); color: #8a5a10; }
+    .input-hint { font-size: 11px; color: var(--color-text-light); margin: 4px 0 0 4px; font-style: italic; }
     .overw-block-body {
       font-size: 12px; line-height: 1.65;
       color: var(--color-text-mid);
@@ -629,6 +634,7 @@
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
           <button class="send-btn" id="sendBtn" onclick="sendMessage()">→</button>
         </div>
+        <p class="input-hint" id="inputHint"></p>
       </div>
     </div>
 
@@ -755,6 +761,7 @@
         error_body:    'Er is een tijdelijke fout opgetreden. Probeer het opnieuw.',
         error_retry:   'Opnieuw proberen',
         input_placeholder: 'Stel een vraag of deel iets',
+        input_hint: 'Sturen kan in de vraag zelf: "Wat zien wij over het hoofd?" · "Blijf bij de stukken" · "In twee zinnen"',
       },
       en: {
         tab_gesprek:   'Conversation',
@@ -768,6 +775,7 @@
         error_body:    'A temporary error occurred. Please try again.',
         error_retry:   'Retry',
         input_placeholder: 'Ask a question or share something',
+        input_hint: 'You can steer in the question itself: "What are we overlooking?" · "Stay with the documents" · "In two sentences"',
       }
     };
 
@@ -949,6 +957,7 @@
       document.getElementById('btnReset').setAttribute('aria-label',  t('reset'));
       document.getElementById('btnExport').setAttribute('aria-label', t('export'));
       document.getElementById('messageInput').placeholder = t('input_placeholder');
+      document.getElementById('inputHint').textContent = t('input_hint');
       document.getElementById('chatErrorTitle').textContent = cfg.errorTitle;
       document.getElementById('chatErrorBody').textContent  = t('error_body');
       document.getElementById('chatErrorRetry').textContent = t('error_retry');
@@ -1203,9 +1212,16 @@
           b.appendChild(titleEl); b.appendChild(bodyEl);
           if (block.herkomst) {
             const h = document.createElement('div');
-            h.className = 'overw-block-herkomst';
-            h.textContent = block.herkomst;
+            const eigen = /systeemkennis|algemene kennis/i.test(block.herkomst);
+            h.className = 'overw-block-herkomst' + (eigen ? ' overw-block-herkomst--eigen' : '');
+            h.textContent = block.herkomst + (eigen ? ' · niet gemeten hier, te toetsen aan tafel' : '');
             b.appendChild(h);
+          }
+          if (block.toetsen) {
+            const t = document.createElement('div');
+            t.className = 'overw-badge';
+            t.textContent = 'uit geheugen · te toetsen';
+            b.appendChild(t);
           }
           container.appendChild(b);
           container.scrollTop = container.scrollHeight;
@@ -1501,6 +1517,7 @@
         if (lagen) kop.push(`Kennisprofiel: ${lagen}`);
         if (intakeConfig.tokens) kop.push(`Omvang profiel: ${intakeConfig.tokens.toLocaleString('nl-NL')} tokens`);
         if (intakeConfig.promptversie) kop.push(`Promptversie: ${intakeConfig.promptversie}`);
+        if (intakeConfig.eigen_max) kop.push(`Eigen inbreng: hooguit ${intakeConfig.eigen_max} van 4 overwegingen uit eigen systeemkennis`);
       }
       const versies = [...new Set(conversation.map(m => m.promptversie).filter(Boolean))];
       if (versies.length) kop.push(`Promptversie per beurt: ${versies.join(', ')}`);
@@ -1518,7 +1535,7 @@
           // De overwegingen horen bij deze beurt: dit is de analist-lens met de
           // feiten en actiepunten, en juist dat deel wil je terugzien in een verslag.
           const ovw = Array.isArray(msg.overwegingen) && msg.overwegingen.length
-            ? msg.overwegingen.map(o => `${o.title}\n${o.body}${o.herkomst ? '\nHerkomst: ' + o.herkomst : ''}`).join('\n\n')
+            ? msg.overwegingen.map(o => `${o.title}\n${o.body}${o.herkomst ? '\nHerkomst: ' + o.herkomst : ''}${o.toetsen ? ' (uit geheugen · te toetsen)' : ''}`).join('\n\n')
             : parseOverwegingenText(msg.content);
           if (ovw) txt += `  Overwegingen\n${ovw.split('\n').map(r => r ? '  ' + r : '').join('\n')}\n\n`;
         }

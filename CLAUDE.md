@@ -96,7 +96,36 @@ dus een andere promptversie; dat is de bedoeling.
 Een beurt is twee aanroepen: eerst alleen de stem (`deel: "stem"`, zodat die
 na ~7 s in beeld en voorgelezen is), daarna de overwegingen met die stem als
 context (`deel: "overwegingen"`, uit de cache). Geen overwegingen is een geldig
-antwoord: de parser vult niets op. De geschiedenis bewaart alleen de stem.
+antwoord: de parser vult niets op. Naar de API gaat van de geschiedenis alleen
+de stem; lokaal bewaart `demo.html` per beurt ook de overwegingen en de
+promptversie, voor het paneel na herladen en voor het verslag.
+
+## Eigen systeemkennis (29 september 2026)
+
+Het profiel is de bron over de plek én het systeem; wat het model zelf van
+zulke systemen weet, komt ernaast, voor het verband dat het materiaal niet
+legt. Zulke overwegingen dragen de herkomst "eigen systeemkennis" en mogen
+geen getal, soort, naam, plaats, regel of jaartal bevatten. Regels, normen,
+zones, bedragen en termijnen komen alleen uit het materiaal of uit het
+juridisch kompas: het model weet tot januari 2026 en het materiaal is
+recenter. Hoeveel eigen items mogen, hangt af van de profielomvang (staffel in
+`instellingen()`: tot 50k tokens drie, tot 100k twee, daarboven één, van
+hooguit vier overwegingen); het staat als één zin onder *Instellingen*, dus in
+de promptversie. Geen schakelaar, geen slider: het model telt zijn bronnen niet
+en verdeelt niet proportioneel. Het vult plafonds vrijwel altijd, ook op
+"vertel eens over jezelf"; dat is gemeten en geaccepteerd.
+
+Voorbeeldoverwegingen in de basis worden sjablonen (de titel "Beschermde
+soorten in beekoevers" kwam 8× letterlijk terug); daarom staan er geen meer.
+Een vaste zinsvorm ("waar…, daar…") zou net zo'n echo worden; de regel
+beschrijft de eigenschap (patroon, geen waarneming van hier), niet de vorm.
+
+`lib/toetsen.mjs` is de ene bron van de regexen die "verrassing" van
+"verzinsel" scheiden; `chat.mjs` zet er `toetsen: true` mee op items van
+buiten het materiaal met een feit-achtig element (badge "uit geheugen · te
+toetsen" in paneel en verslag), en `eval-api.mjs` telt ze als
+klasse-2-kandidaten. Het herkomstlabel zelf is zelfrapportage; vertrouw het
+niet zonder die check.
 
 ## De opening
 
@@ -171,8 +200,12 @@ start de sessie niet.
 ## Meten
 
 Vóór en na elke wijziging aan prompt of compose: `node scripts/eval-compose.mjs`
-(offline structuur) en `./scripts/eval.sh` (tien vragen via de echte function).
-De nulmeting van 24 september staat in `eval/README.md`; leg elke meting
+(offline structuur) en `./scripts/eval.sh` (tien vragen via de echte function;
+`--fixture wak-water --stem standaard` is het rijke profiel, `--vragen prikkel`
+de canary-set). `--heranalyse <json>` rekent alle maten opnieuw uit een
+bestaande run, zonder API: zo maak je een nulmeting gratis. Eén run per
+wijziging is de afspraak (29 september); herhaal alleen bij twijfel. De
+nulmeting van 24 september staat in `eval/README.md`; leg elke meting
 daarnaast. `ENT_PROMPT_LOG=<map> ./scripts/dev.sh` logt tijdens handmatig
 testen per beurt de complete prompt.
 

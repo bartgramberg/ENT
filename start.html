@@ -558,7 +558,7 @@
       const lagen = LAGEN.map(([k, t]) => S.lagen[k].length ? `${t}: ${S.lagen[k].length} stuk${S.lagen[k].length === 1 ? '' : 'ken'}` : null).filter(Boolean).join(' · ') || 'geen materiaal aangeleverd';
       document.getElementById('kaart').innerHTML = [
         ['Representatie', S.representatie + (S.representatie_details ? ' — met bijzonderheden' : '')],
-        ['Stem', `${p.label}, ${S.persoon === 'belichaamd' ? 'is het zelf' : 'spreekt ernamens'}, max ${S.max_woorden} woorden, ${S.spraak !== false ? 'voorlezen' : 'alleen tekst'}`],
+        ['Stem', `${p.label}, ${S.persoon === 'belichaamd' ? 'is het zelf' : 'spreekt ernamens'}, max ${S.max_woorden} woorden, ${S.spraak !== false ? 'voorlezen' : 'alleen tekst'}${S.eigen_max ? `, eigen inbreng hooguit ${S.eigen_max} van 4 overwegingen` : ''}`],
         ['Sessie', [S.sessie.wie, S.sessie.publiek && 'publiek: ' + S.sessie.publiek, S.sessie.rol && 'rol: ' + S.sessie.rol].filter(Boolean).join(' · ') + ` · ${S.aanspreek === 'jullie' ? 'een zaal' : 'één gesprekspartner'}`],
         ['Wat speelt er', S.sessie.casus.slice(0, 160) + (S.sessie.casus.length > 160 ? '…' : '')],
         ['Plek', S.location ? S.location + (S.systeemprofiel ? ` — ${(S.plekselectie || []).length} van ${(S.systeemprofiel.items || []).length} gegevens gebruikt` : ' — gegevens worden bij de start opgehaald') : 'geen'],
@@ -601,7 +601,7 @@
         const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: localStorage.getItem('ent_password') || '', messages: [], config: S, tellen: true }) });
         const d = await r.json();
         if (r.status === 401) { localStorage.removeItem('ent_password_verified'); location.replace('/start'); return; }
-        if (r.ok && d.tokens) { S.tokens = d.tokens; S.promptversie = d.promptversie; }
+        if (r.ok && d.tokens) { S.tokens = d.tokens; S.promptversie = d.promptversie; S.eigen_max = d.eigen_max; }
         if (S.tokens > HARD) throw new Error(`Het profiel is ${S.tokens.toLocaleString('nl-NL')} tokens; boven ${HARD.toLocaleString('nl-NL')} start de sessie niet. Dik de lagen in.`);
         S.bevroren_op = new Date().toISOString(); bewaar();
         // Gesprek: nieuw bij een nieuwe sessie of een zware wijziging; anders blijft het staan.

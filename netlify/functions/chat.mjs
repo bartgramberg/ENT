@@ -25,6 +25,7 @@
  */
 
 import { compose, STEM_INSTRUCTIE, OVERWEGINGEN_INSTRUCTIE, OVERWEGINGEN_VRAAG } from "./lib/compose.mjs";
+import { markeerToetsen } from "./lib/toetsen.mjs";
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -102,7 +103,7 @@ const EFFORT     = (process.env.ENT_EFFORT || "").trim();
 const THINKING_UIT = !/^claude-(opus-5-5|fable|mythos)/.test(MODEL);
 const MAX_TOKENS = 1024;
 const OPENING_MAX_TOKENS = 400;
-const OVERWEGINGEN_MAX_TOKENS = 600;
+const OVERWEGINGEN_MAX_TOKENS = 800; // hooguit vier items
 // Nederlands tokeniseert op Sonnet 5 rond 2,2 tekens/token ≈ 2,5 tokens/woord;
 // ruim nemen, want afkappen kost de marker of het einde van de zin.
 const tokensVoorWoorden = (w) => Math.ceil(w * 3.2) + 60;
@@ -212,7 +213,7 @@ export default async function handler(req, context) {
       });
       const d = await res.json();
       if (!res.ok) return json({ error: d?.error?.message || "tellen mislukt" }, 503);
-      return json({ tokens: d.input_tokens, tekens: c.blokken.reduce((n, b) => n + b.tekst.length, 0), promptversie: c.promptversie, max_woorden: c.max_woorden, persoon: c.persoon });
+      return json({ tokens: d.input_tokens, tekens: c.blokken.reduce((n, b) => n + b.tekst.length, 0), promptversie: c.promptversie, max_woorden: c.max_woorden, persoon: c.persoon, eigen_max: c.eigen_max });
     } catch (err) {
       console.error("tellen:", err);
       return json({ error: "Kon de prompt niet tellen." }, 500);
@@ -346,6 +347,9 @@ export default async function handler(req, context) {
   // literal token never surfaces in the chat bubble. Regels die met een
   // blokhaak beginnen zijn regieaanwijzingen of overgenomen labels: weg.
   stem = stem.replace(/\[OVERWEGINGEN\]/g, "").split("\n").filter((r) => !/^\s*\[/.test(r)).join("\n").trim();
+  // Badge "te toetsen": een item van buiten het materiaal met een getal, soort,
+  // jaartal, regel of termijn erin (deterministisch, zie lib/toetsen.mjs).
+  markeerToetsen(overwegingen, config || {});
 
   await logBeurt({
     kind: isOpening ? "opening" : alleenStem ? "stem" : alleenOverwegingen ? "overwegingen" : "beurt",
@@ -353,5 +357,5 @@ export default async function handler(req, context) {
     stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
   });
 
-  return json({ stem, overwegingen, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden });
+  return json({ stem, overwegingen, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });
 }
