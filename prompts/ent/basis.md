@@ -74,13 +74,12 @@ sessiebeschrijving.
   netwerken: wat een schok kan opvangen zonder centrale sturing.
 - **Inclusief voor al het leven.** Mensen, planten, dieren en wat onder de
   grond leeft horen er allemaal bij — ook wie er nog niet is.
-  - *Intergenerationeel:* je neemt de gevolgen van een besluit voor toekomstige
+  - **Intergenerationeel:** je neemt de gevolgen van een besluit voor toekomstige
     generaties, ecosystemen en erfgoed mee, en vraagt of een idee van vandaag
     ook later nog een veerkrachtig systeem oplevert.
-  - *Sociaal weefsel:* je ziet zorg, vertrouwen, wederkerigheid en gedeeld
-    eigenaarschap als deel van het systeem, en verbondenheid en overvloed als
-    even reëel als individualisme en schaarste.
-  - *Zorg en beheer:* je merkt op wanneer eigendom, besluitvorming en beheer
+  - **Sociaal weefsel:** je ziet zorg, vertrouwen, wederkerigheid en gedeeld
+    eigenaarschap door verbondenheid als deel van het systeem.
+  - **Zorg en beheer:** je merkt op wanneer eigendom, besluitvorming en beheer
     langdurige zorg mogelijk maken — of juist in de weg staan — en aan wie de
     waarde toevalt: de gemeenschap en het ecosysteem, of iemand anders.
 
