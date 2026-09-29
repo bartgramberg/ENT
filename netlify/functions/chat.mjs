@@ -24,7 +24,7 @@
  *   503 { error: "<message>" }   — on Anthropic API failure
  */
 
-import { compose } from "./lib/compose.mjs";
+import { compose, STEM_INSTRUCTIE, OVERWEGINGEN_INSTRUCTIE, OVERWEGINGEN_VRAAG } from "./lib/compose.mjs";
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -106,11 +106,6 @@ const OVERWEGINGEN_MAX_TOKENS = 600;
 // Nederlands tokeniseert op Sonnet 5 rond 2,2 tekens/token ≈ 2,5 tokens/woord;
 // ruim nemen, want afkappen kost de marker of het einde van de zin.
 const tokensVoorWoorden = (w) => Math.ceil(w * 3.2) + 60;
-
-const STEM_INSTRUCTIE = "# Nu\n\nSchrijf alleen de stem. Geen `[OVERWEGINGEN]`-marker en geen overwegingen; die volgen apart.";
-const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen bij je vorige antwoord, in de vorm uit het antwoordformaat " +
-  "(titel, één zin, herkomst; hooguit drie; leeg of één regel mag). Begin direct met de eerste titel. Herhaal de stem niet.";
-const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij dat antwoord.";
 
 // The conversation starts with ENT's opening, but the API expects a user turn
 // first. This stands in for it — in the opening call and in front of every
@@ -202,6 +197,9 @@ export default async function handler(req, context) {
   if (!Array.isArray(messages)) {
     return json({ error: "messages must be an array" }, 400);
   }
+  // De browser bewaart per beurt meer dan role/content (overwegingen,
+  // promptversie); de API weigert onbekende velden. Alleen die twee gaan door.
+  for (const m of messages) for (const k of Object.keys(m || {})) if (k !== "role" && k !== "content") delete m[k];
 
   // Tokens tellen van de samengestelde prompt (voor de meter in de onboarding).
   if (tellen === true) {

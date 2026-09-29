@@ -36,6 +36,7 @@ oppervlaktewater).
 | `lunteren-water-zonder-docs` | Zonder documenten — de basis voor de verbouwing |
 | `lunteren-zelf-ontwerper` | Ontwerper voor zichzelf, co-ontwerpen (flow-B-achtig) |
 | `leeg-facilitator` | Geen plek, geen casus: de opening via de route "doel" |
+| `wak-water` | Joris' echte Water als Kompas-profiel (24 sept 2026): standaardstem namens het watersysteem, 69k tokens (KWR-rapport, meeloopdagverslag, vijf startpakketten), zes plekgegevens. Het rijke profiel; de andere fixtures zijn dun. |
 
 ## Nulmeting — 24 september 2026, vóór de verbouwing
 

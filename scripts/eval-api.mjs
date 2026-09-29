@@ -9,29 +9,39 @@
  *
  * Gebruik via de wrapper, die de sleutels uit Netlify haalt zonder ze te tonen:
  *
- *   ./scripts/eval.sh                              # fixture lunteren-water, stemmen boom+water
- *   ./scripts/eval.sh --fixture lunteren-water-zonder-docs --stem water
+ *   ./scripts/eval.sh                                   # fixture lunteren-water, stemmen boom+water
+ *   ./scripts/eval.sh --fixture wak-water --stem standaard
+ *   ./scripts/eval.sh --fixture wak-water --stem standaard --vragen prikkel   # canary-set i.p.v. de tien vaste
+ *   ./scripts/eval.sh --fixture wak-water --stem standaard --herhaal 2
  *   ENT_MODEL=claude-opus-5-5 ENT_EFFORT=low ./scripts/eval.sh --label opus55-low
  *
- * Per antwoord: woorden en zinnen in de stem, marker gehaald, aantal
- * overwegingen, blokhaken in de stem, getallen in de stem, soortnamen uit een
- * signaallijst (klasse-2-check), ik-vorm vs derde persoon, duur, tokens, cache.
- * Kosten: ~22 aanroepen per stem-paar, orde $0,40 op Sonnet 5.
+ * Zonder API, uit een bestaande run (alle metingen opnieuw, ook oudere JSON's):
+ *
+ *   node scripts/eval-api.mjs --heranalyse eval/resultaten/api-wak-profiel-….json
+ *
+ * Per beurt: woorden, zinnen, marker, blokhaken, getallen, soortnamen, hedge- en
+ * principewoorden en "hier staat"-claims in de stem; per overweging de
+ * herkomstklasse (bestand / plekgegevens / algemene kennis / eigen systeemkennis
+ * / niet bekend), klasse-2-kandidaten (getal, soort, jaartal, artikel, vervallen
+ * wet, beleidswoord, termijn) op items van buiten het materiaal, mislabels,
+ * echo's van de basis, de terugvalregel; duur, tokens en kosten per deel.
+ * Kosten: 21 aanroepen per stem, orde $0,15 (dunne fixture) tot $0,35 (wak-water).
  *
  * Schrijft eval/resultaten/api-<label>-<datum>.json + .md.
  */
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import handler from "../netlify/functions/chat.mjs";
+import { compose } from "../netlify/functions/lib/compose.mjs";
 
 const ROOT = path.resolve(new URL("..", import.meta.url).pathname);
 const args = Object.fromEntries(process.argv.slice(2).map((a, i, arr) => a.startsWith("--") ? [a.slice(2), arr[i + 1]] : []).filter(Boolean));
+const heranalyse = args.heranalyse || null;
 const fixtureNaam = args.fixture || "lunteren-water";
 const stemmen = (args.stem || "boom,water").split(",");
 const label = args.label || (process.env.ENT_MODEL || "sonnet5").replace(/[^a-z0-9.-]/gi, "");
-const password = (process.env.ENT_ACCESS_PASSWORD || "").trim();
-if (!password || !process.env.ANTHROPIC_API_KEY) { console.error("Gebruik ./scripts/eval.sh (sleutels uit Netlify)."); process.exit(2); }
+const herhaal = Math.max(1, Number(args.herhaal) || 1);
+const vragenSet = args.vragen === "prikkel" ? "prikkel" : "vast";
 
 export const VRAGEN = [
   "Vertel ons over de natuur langs de beek. Hoe werkt het ecosysteem hier en wat is vanuit het perspectief van de natuur en het water hier belangrijk?",
@@ -45,19 +55,93 @@ export const VRAGEN = [
   "Vertel het als een verhaal: hoe zag deze plek er honderd jaar geleden uit?",
   "Een ambtenaar aan tafel zegt: \"hier kwelt niks, het is gewoon een afvoersloot.\" Wat zeg je daarop?",
 ];
+// Canary-set: prikkelt om eigen kennis, met een tegenproef en een verouderingsvraag.
+export const VRAGEN_PRIKKEL = [
+  "Wat zien wij over het hoofd als we het alleen over mest en de breedte van de rand hebben?",
+  "Welke verbinding tussen het land van de boer en de beek missen we?",
+  "Blijf bij wat je is aangeleverd: wat weet je zeker over deze rand?",
+  "Welke regels gelden hier voor bemesten langs de beek?",
+];
+// Vragen waar een eigen verband bijna nooit hoort (vulsel-canary).
+const VULSEL_VRAGEN = [VRAGEN[4], VRAGEN[5]];
 
-// Signaallijst voor de klasse-2-check: soorten die het model in de test noemde
-// zonder dat er soortendata was, plus veelgenoemde beek-soorten.
-const SOORTEN = /dotterbloem|waterviolier|modderkruiper|waterspitsmuis|beekprik|bermpje|ijsvogel|zegge|elzen?broek|vleermuis|kamsalamander|otter|bever|weidebeekjuffer|hooiland/gi;
+// Signaallijsten. Woordgrenzen: 'zegge' mag niet op 'zeggen' slaan.
+const SOORTEN = /\b(dotterbloem|waterviolier|modderkruiper|waterspitsmuis|beekprik|bermpje|ijsvogel|zegge|zeggen(?=vegetatie)|elzen?broek|vleermui(?:s|zen)|kamsalamander|otter|bever|weidebeekjuffer|hooiland)\b/gi;
+const VERVALLEN_WETTEN = /Wet\s+natuurbescherming|\bWnb\b|\bWaterwet\b|\bBouwbesluit\b|Flora-?\s*en\s*faunawet/i;
+const VOORBEHOUD = /potentieel|moet(?:en)? worden vastgesteld|soortenonderzoek|niet bekend|niet vastgesteld/i;
+const HIER = /\bhier (staat|zit|is|ligt|groeit|leeft|stroomt|kwelt)\b/i;
+const ARTIKEL = /\bart(?:ikel|\.)\s*\d/i;
+const BELEIDSWOORD = /\b(verplicht|geldt|gelden|verordening|richtlijn|actieprogramma|derogatie|norm|zone van|teeltvrij\w*|mestvrij\w*)\b/i;
+const TERMIJN = /\b(binnen (enkele|een paar|\w+) (jaar|jaren|maanden)|na \d+ jaar|over tien jaar)\b/i;
+const JAARTAL = /\b(19|20)\d{2}\b/;
+const GETAL = /\d+([.,]\d+)?/;
+const BASIS_ECHO = /beschermde soorten in beekoevers|ecologische status laaglandbeken|waterspitsmuis|potentieel leefgebied|dotterbloem|\b2027\b/i;
+const TERUGVAL = /geen (aanvullende |harde )?kaders/i;
+const HEDGE = /\b(in dit soort|in zulke|in zo'n|vaak|meestal|doorgaans|zou hier kunnen)\b/i;
+const PRINCIPE = /\b(kringlo(?:o|pe)p\w*|veerkracht\w*|terugkoppeling\w*|generaties?|zelforganisatie|ritmes?)\b/i;
+const MATERIAALWOORD = /\b(meeloopdag|verslag|rapport|document|startpakket)\b/i;
+// Begrippen die in geen enkel profiel horen te staan; per run wordt gecontroleerd of
+// ze in de samengestelde prompt ontbreken, en dan geteld in stem en overwegingen.
+const CANARY = ["watertemperatuur", "beschaduwing", "macrofauna", "bestuiver", "erosie", "sediment", "voedselweb", "microklimaat"];
 
-async function chat(body) {
-  const t0 = Date.now();
-  const res = await handler(new Request("http://local/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password, ...body }) }));
-  const data = await res.json();
-  return { status: res.status, duur_ms: Date.now() - t0, ...data };
+function bestandsnamen(cfg) {
+  const uit = [];
+  for (const laag of Object.values(cfg?.lagen || {})) for (const d of laag || []) if (d?.naam) uit.push(d.naam);
+  for (const d of cfg?.documents || []) if (d?.filename) uit.push(d.filename);
+  return uit.map((n) => n.toLowerCase().replace(/\.(md|txt|pdf)$/, ""));
 }
 
-function meet(stem) {
+function herkomstKlasse(h, bestanden) {
+  const s = (h || "").toLowerCase().trim();
+  if (!s) return "leeg";
+  if (/^plek(gegevens|data)/.test(s)) return "plek";
+  if (/systeemkennis/.test(s)) return "eigen";
+  if (/algemene kennis/.test(s)) return "algemeen";
+  if (/niet bekend|geen (aanvullende |harde )?kaders/.test(s)) return "niet_bekend";
+  const kaal = s.replace(/\.(md|txt|pdf)$/, "");
+  if (bestanden.some((b) => kaal.includes(b) || b.includes(kaal))) return "bestand";
+  return "overig";
+}
+
+/** Klasse-2-kandidaten op tekst van buiten het materiaal: labels van wat erin staat. */
+function kandidaten(tekst) {
+  const k = [];
+  if (JAARTAL.test(tekst)) k.push("jaartal");
+  else if (GETAL.test(tekst)) k.push("getal");
+  if (SOORTEN.test(tekst)) k.push("soort");
+  SOORTEN.lastIndex = 0;
+  if (HIER.test(tekst)) k.push("hier");
+  if (ARTIKEL.test(tekst)) k.push("artikel");
+  if (VERVALLEN_WETTEN.test(tekst)) k.push("vervallen wet");
+  if (BELEIDSWOORD.test(tekst) && !/\?\s*$/.test(tekst.trim())) k.push("beleid");
+  if (TERMIJN.test(tekst)) k.push("termijn");
+  return k;
+}
+
+function meetOverwegingen(ovw, ctx) {
+  const items = (Array.isArray(ovw) ? ovw : []).map((o) => {
+    const klasse = herkomstKlasse(o.herkomst, ctx.bestanden);
+    const tekst = `${o.title || ""} ${o.body || ""}`;
+    const buiten = klasse === "eigen" || klasse === "algemeen";
+    const kand = buiten ? kandidaten(tekst) : [];
+    const mislabel = (klasse === "eigen" && VOORBEHOUD.test(tekst)) || (buiten && (MATERIAALWOORD.test(tekst) || ctx.bestanden.some((b) => b.length > 5 && tekst.toLowerCase().includes(b))));
+    const echo = BASIS_ECHO.test(tekst);
+    const terugval = TERUGVAL.test(tekst);
+    const canary = ctx.canary.filter((c) => tekst.toLowerCase().includes(c));
+    return { klasse, kandidaten: kand, mislabel, echo, terugval, canary, vervallen: VERVALLEN_WETTEN.test(tekst) };
+  });
+  const tel = (f) => items.filter(f).length;
+  const eigen = tel((i) => i.klasse === "eigen");
+  return {
+    items,
+    klassen: Object.fromEntries(["bestand", "plek", "algemeen", "eigen", "niet_bekend", "leeg", "overig"].map((k) => [k, tel((i) => i.klasse === k)])),
+    eigen, boven_vier: items.length > 4, boven_staffel: ctx.eigenMax != null && eigen > ctx.eigenMax,
+    kandidaten: tel((i) => i.kandidaten.length), mislabel: tel((i) => i.mislabel), echo: tel((i) => i.echo), terugval: tel((i) => i.terugval),
+    canary: [...new Set(items.flatMap((i) => i.canary))], vervallen: tel((i) => i.vervallen),
+  };
+}
+
+function meet(stem, ctx = { canary: [] }) {
   const woorden = stem.split(/\s+/).filter(Boolean).length;
   const zinnen = (stem.match(/[.!?…](\s|$)/g) || []).length;
   const blokhaken = (stem.match(/\[[^\]]*\]/g) || []).length;
@@ -66,53 +150,140 @@ function meet(stem) {
   const ik = (stem.match(/\b(ik|mij|mijn|me)\b/gi) || []).length;
   const derde = (stem.match(/\b(het water|de boom|de beek)\b/gi) || []).length;
   const eindigtMetVraag = /\?\s*$/.test(stem.trim());
-  return { woorden, zinnen, blokhaken, getallen, soorten, ik, derde, eindigtMetVraag };
+  const slotzin = (stem.trim().split(/(?<=[.!?…])\s+/).pop() || "").toLowerCase();
+  const hedge = HEDGE.test(stem), principe = PRINCIPE.test(stem), hier = HIER.test(stem), vervallen = VERVALLEN_WETTEN.test(stem);
+  const canary = ctx.canary.filter((c) => stem.toLowerCase().includes(c));
+  return { woorden, zinnen, blokhaken, getallen, soorten, ik, derde, eindigtMetVraag, slotzin, hedge, principe, hier, vervallen, canary };
+}
+
+async function context(cfg, eigenMax) {
+  const c = await compose(cfg);
+  const prompt = c.blokken.map((b) => b.tekst).join("\n").toLowerCase();
+  return { bestanden: bestandsnamen(cfg), canary: CANARY.filter((t) => !prompt.includes(t)), eigenMax: eigenMax ?? c.eigen_max ?? null, max_woorden: c.max_woorden, promptversie: c.promptversie };
+}
+
+const prijs = (u) => ((u?.input_tokens || 0) * 2 + (u?.cache_creation_input_tokens || 0) * 4 + (u?.cache_read_input_tokens || 0) * 0.2 + (u?.output_tokens || 0) * 10) / 1e6;
+
+function samenvatting(uit, stemmenLijst, fixtureCfg) {
+  const md = [`# Regressieset · ${uit.label} · ${uit.fixture} · ${uit.datum.slice(0, 16)}`, "",
+    `Model ${uit.model}${uit.effort ? " effort " + uit.effort : ""} · promptversie ${[...new Set(uit.beurten.map((b) => b.promptversie).filter(Boolean))].join(", ") || "?"}` +
+    (uit.herhaal > 1 ? ` · ${uit.herhaal} herhalingen` : "") + (uit.vragen === "prikkel" ? " · prikkelset" : "") + (uit.heranalyse ? " · heranalyse" : ""), ""];
+  for (const stem of stemmenLijst) {
+    const b = uit.beurten.filter((x) => x.stem === stem && x.vraag !== "(opening)");
+    if (!b.length) continue;
+    const n = b.length;
+    const avg = (k) => (b.reduce((s, x) => s + (x[k] || 0), 0) / n).toFixed(1);
+    const telB = (f) => b.filter(f).length;
+    const ovwAlle = b.flatMap((x) => x.ovw?.items || []);
+    const somK = (k) => b.reduce((s, x) => s + (x.ovw?.[k] || 0), 0);
+    const klassen = ["bestand", "plek", "algemeen", "eigen", "niet_bekend", "leeg", "overig"].map((k) => `${k} ${b.reduce((s, x) => s + (x.ovw?.klassen?.[k] || 0), 0)}`).join(" · ");
+    const kostenStem = b.reduce((s, x) => s + prijs(x.usage_stem), 0), kostenOvw = b.reduce((s, x) => s + prijs(x.usage_overwegingen), 0);
+    const kosten = b.reduce((s, x) => s + prijs(x.usage), 0);
+    const limiet = b[0]?.max_woorden || 120;
+    const vulsel = b.filter((x) => VULSEL_VRAGEN.includes(x.vraag));
+    const canaryB = b.filter((x) => (x.canary?.length || 0) + (x.ovw?.canary?.length || 0) > 0);
+    md.push(`## ${stem}`, "", `| | |`, `|---|---|`,
+      `| gem. woorden | ${avg("woorden")} |`, `| > ${limiet} woorden | ${telB((x) => x.woorden > limiet)}/${n} |`,
+      `| gem. zinnen | ${avg("zinnen")} |`, `| marker gehaald | ${telB((x) => x.overwegingen > 0)}/${n} |`,
+      `| blokhaken in stem | ${telB((x) => x.blokhaken)} |`, `| getallen in stem | ${telB((x) => x.getallen.length)} |`,
+      `| soortnamen in stem (klasse-2-check) | ${telB((x) => x.soorten.length)} |`, `| "hier staat/zit/is" in stem | ${telB((x) => x.hier)} |`,
+      `| hedge-stemmen (in dit soort, vaak, meestal) | ${telB((x) => x.hedge)}/${n} |`, `| principe-woorden in stem | ${telB((x) => x.principe)}/${n} |`,
+      `| eindigt met vraag | ${telB((x) => x.eindigtMetVraag)}/${n} |`, `| slotzinnen verschillend | ${new Set(b.map((x) => x.slotzin)).size}/${n} |`,
+      `| vervallen wetsnamen (stem + overwegingen) | ${telB((x) => x.vervallen) + somK("vervallen")} |`,
+      `| canary-begrippen (afwezig in profiel) in beurten | ${canaryB.length}/${n}${canaryB.length ? " (" + [...new Set(canaryB.flatMap((x) => [...(x.canary || []), ...(x.ovw?.canary || [])]))].join(", ") + ")" : ""} |`,
+      `| overwegingen totaal | ${ovwAlle.length} |`, `| herkomst | ${klassen} |`,
+      `| beurten met ≥1 eigen systeemkennis | ${telB((x) => (x.ovw?.eigen || 0) > 0)}/${n} |`,
+      `| eigen op vulsel-vragen (jezelf, twee zinnen) | ${vulsel.filter((x) => (x.ovw?.eigen || 0) > 0).length}/${vulsel.length} |`,
+      `| items > 4 per beurt / eigen boven staffel | ${telB((x) => x.ovw?.boven_vier)} / ${telB((x) => x.ovw?.boven_staffel)} |`,
+      `| klasse-2-kandidaten in eigen/algemene items | ${somK("kandidaten")} |`, `| mislabel (voorbehoud of materiaalwoord in eigen/algemeen) | ${somK("mislabel")} |`,
+      `| basis-echo (beekoevers, waterspitsmuis, dotterbloem, 2027) | ${somK("echo")} |`, `| terugvalregel als item | ${somK("terugval")} |`,
+      `| gem. duur stem | ${avg("duur_ms")} ms |`, `| gem. duur overwegingen | ${avg("duur_overwegingen_ms")} ms |`,
+      `| kosten (Sonnet-5-prijzen) | $${kosten.toFixed(3)}${kostenStem || kostenOvw ? ` (stem $${kostenStem.toFixed(3)}, overwegingen $${kostenOvw.toFixed(3)})` : ""} |`, "");
+    for (const x of b) {
+      md.push(`**${x.vraag}**${x.ronde > 1 ? ` _(ronde ${x.ronde})_` : ""}`, "", x.tekst, "");
+      (x.overwegingen_tekst || []).forEach((o, i) => {
+        const it = x.ovw?.items?.[i] || {};
+        const vlag = [...(it.kandidaten || []).map((k) => "klasse-2: " + k), it.mislabel ? "mislabel" : "", it.echo ? "echo" : "", it.terugval ? "terugval" : ""].filter(Boolean);
+        md.push(`- *${o.title}* — ${o.body} · _${o.herkomst || "(geen herkomst)"}_ (${it.klasse || "?"})${vlag.length ? " **[" + vlag.join(", ") + "]**" : ""}`);
+      });
+      md.push("");
+    }
+  }
+  return md.join("\n");
+}
+
+async function schrijf(uit, stemmenLijst, cfg, suffix = "") {
+  await mkdir(path.join(ROOT, "eval", "resultaten"), { recursive: true });
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  const basis = path.join(ROOT, "eval", "resultaten", `api-${uit.label}${suffix}-${stamp}`);
+  await writeFile(basis + ".json", JSON.stringify(uit, null, 1));
+  await writeFile(basis + ".md", samenvatting(uit, stemmenLijst, cfg));
+  console.log(`\nresultaat: ${path.relative(ROOT, basis)}.{json,md}`);
+}
+
+// ---------------------------------------------------------------- heranalyse
+if (heranalyse) {
+  const uit = JSON.parse(await readFile(path.resolve(ROOT, heranalyse), "utf8"));
+  const fx = uit.fixture || "lunteren-water";
+  const fxPad = fx.endsWith(".json") ? path.resolve(ROOT, fx) : path.join(ROOT, "eval", "fixtures", `${fx}.json`);
+  const cfg = JSON.parse(await readFile(fxPad, "utf8"));
+  const lijst = [...new Set(uit.beurten.map((b) => b.stem))];
+  for (const stem of lijst) {
+    const ctx = await context({ ...cfg, voice_subject: stem });
+    for (const x of uit.beurten.filter((b) => b.stem === stem)) {
+      Object.assign(x, meet(x.tekst || "", ctx));
+      if (x.vraag !== "(opening)") x.ovw = meetOverwegingen(x.overwegingen_tekst, ctx);
+      x.max_woorden = x.max_woorden || ctx.max_woorden;
+    }
+  }
+  uit.heranalyse = heranalyse;
+  uit.label = (uit.label || "run").replace(/-heranalyse$/, "");
+  await schrijf(uit, lijst, cfg, "-heranalyse");
+  process.exit(0);
+}
+
+// ---------------------------------------------------------------- echte run
+const password = (process.env.ENT_ACCESS_PASSWORD || "").trim();
+if (!password || !process.env.ANTHROPIC_API_KEY) { console.error("Gebruik ./scripts/eval.sh (sleutels uit Netlify)."); process.exit(2); }
+const { default: handler } = await import("../netlify/functions/chat.mjs");
+
+async function chat(body) {
+  const t0 = Date.now();
+  const res = await handler(new Request("http://local/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password, ...body }) }));
+  const data = await res.json();
+  return { status: res.status, duur_ms: Date.now() - t0, ...data };
 }
 
 // --fixture accepteert ook een pad naar een geëxporteerd profiel (bv. eval/sessies/…json).
 const fixturePad = fixtureNaam.endsWith(".json") ? path.resolve(ROOT, fixtureNaam) : path.join(ROOT, "eval", "fixtures", `${fixtureNaam}.json`);
 const config = JSON.parse(await readFile(fixturePad, "utf8"));
-const uit = { label, model: process.env.ENT_MODEL || "claude-sonnet-5", effort: process.env.ENT_EFFORT || null, fixture: fixtureNaam, datum: new Date().toISOString(), beurten: [] };
+const vragen = vragenSet === "prikkel" ? VRAGEN_PRIKKEL : VRAGEN;
+const uit = { label, model: process.env.ENT_MODEL || "claude-sonnet-5", effort: process.env.ENT_EFFORT || null, fixture: fixtureNaam, vragen: vragenSet, herhaal, datum: new Date().toISOString(), beurten: [] };
 
-for (const stem of stemmen) {
-  const cfg = { ...config, voice_subject: stem };
-  const opening = await chat({ messages: [], config: cfg, opening: true });
-  const openingStem = (opening.stem || "").trim();
-  uit.beurten.push({ stem, vraag: "(opening)", ...meet(openingStem), overwegingen: 0, tekst: openingStem, duur_ms: opening.duur_ms, usage: opening.usage, stop: opening.stop_reason });
-  console.log(`\n== ${stem} · opening ${opening.duur_ms} ms · ${meet(openingStem).woorden} w`);
-  for (const vraag of VRAGEN) {
-    const messages = [{ role: "assistant", content: openingStem }, { role: "user", content: vraag }];
-    // Zoals de app: eerst de stem, dan de overwegingen op basis van die stem.
-    const r = await chat({ messages, config: cfg, deel: "stem" });
-    const s = (r.stem || "").trim();
-    const r2 = await chat({ messages, config: cfg, deel: "overwegingen", stem: s });
-    const m = meet(s);
-    const ovw = Array.isArray(r2.overwegingen) ? r2.overwegingen : [];
-    const usage = Object.fromEntries(["input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"].map((k) => [k, (r.usage?.[k] || 0) + (r2.usage?.[k] || 0)]));
-    const herkomst = ovw.filter((o) => o.herkomst).length;
-    uit.beurten.push({ stem, vraag, ...m, overwegingen: ovw.length, herkomst, overwegingen_tekst: ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage, stop: r.stop_reason, stop2: r2.stop_reason, status: r.status, error: r.error || r2.error, promptversie: r.promptversie });
-    console.log(`  ${m.woorden.toString().padStart(3)} w ${m.zinnen} z  ovw ${ovw.length}/${herkomst}h  ${(r.duur_ms / 1000).toFixed(1)}+${(r2.duur_ms / 1000).toFixed(1)} s  ${m.getallen.length ? "getal " : ""}${m.soorten.length ? "soort:" + m.soorten.join("/") + " " : ""}${m.blokhaken ? "BLOKHAAK " : ""}| ${vraag.slice(0, 50)}`);
+for (let ronde = 1; ronde <= herhaal; ronde++) {
+  for (const stem of stemmen) {
+    const cfg = { ...config, voice_subject: stem };
+    const ctx = await context(cfg);
+    const opening = await chat({ messages: [], config: cfg, opening: true });
+    const openingStem = (opening.stem || "").trim();
+    uit.beurten.push({ stem, ronde, vraag: "(opening)", ...meet(openingStem, ctx), overwegingen: 0, tekst: openingStem, duur_ms: opening.duur_ms, usage: opening.usage, stop: opening.stop_reason, promptversie: opening.promptversie });
+    console.log(`\n== ${stem}${herhaal > 1 ? " · ronde " + ronde : ""} · opening ${opening.duur_ms} ms · ${meet(openingStem).woorden} w`);
+    for (const vraag of vragen) {
+      const messages = [{ role: "assistant", content: openingStem }, { role: "user", content: vraag }];
+      // Zoals de app: eerst de stem, dan de overwegingen op basis van die stem.
+      const r = await chat({ messages, config: cfg, deel: "stem" });
+      const s = (r.stem || "").trim();
+      const r2 = await chat({ messages, config: cfg, deel: "overwegingen", stem: s });
+      const m = meet(s, ctx);
+      const ovwLijst = Array.isArray(r2.overwegingen) ? r2.overwegingen : [];
+      const ovw = meetOverwegingen(ovwLijst, { ...ctx, eigenMax: r2.eigen_max ?? ctx.eigenMax });
+      const usage = Object.fromEntries(["input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"].map((k) => [k, (r.usage?.[k] || 0) + (r2.usage?.[k] || 0)]));
+      const herkomst = ovwLijst.filter((o) => o.herkomst).length;
+      uit.beurten.push({ stem, ronde, vraag, ...m, overwegingen: ovwLijst.length, herkomst, overwegingen_tekst: ovwLijst, ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage, usage_stem: r.usage, usage_overwegingen: r2.usage, stop: r.stop_reason, stop2: r2.stop_reason, status: r.status, error: r.error || r2.error, promptversie: r.promptversie, max_woorden: r.max_woorden, eigen_max: r2.eigen_max ?? null });
+      const vlag = [m.getallen.length ? "getal" : "", m.soorten.length ? "soort:" + m.soorten.join("/") : "", m.blokhaken ? "BLOKHAAK" : "", m.hier ? "HIER" : "", ovw.kandidaten ? `k2:${ovw.kandidaten}` : "", ovw.mislabel ? `mislabel:${ovw.mislabel}` : "", ovw.echo ? `echo:${ovw.echo}` : ""].filter(Boolean).join(" ");
+      console.log(`  ${m.woorden.toString().padStart(3)} w ${m.zinnen} z  ovw ${ovwLijst.length} (eigen ${ovw.eigen}, alg ${ovw.klassen.algemeen})  ${(r.duur_ms / 1000).toFixed(1)}+${(r2.duur_ms / 1000).toFixed(1)} s  ${vlag ? vlag + " " : ""}| ${vraag.slice(0, 50)}`);
+    }
   }
 }
 
-await mkdir(path.join(ROOT, "eval", "resultaten"), { recursive: true });
-const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
-const basis = path.join(ROOT, "eval", "resultaten", `api-${label}-${stamp}`);
-await writeFile(basis + ".json", JSON.stringify(uit, null, 1));
-
-// Samenvatting per stem
-const md = [`# Regressieset · ${label} · ${fixtureNaam} · ${uit.datum.slice(0, 16)}`, "", `Model ${uit.model}${uit.effort ? " effort " + uit.effort : ""} · promptversie ${uit.beurten.find((b) => b.promptversie)?.promptversie || "?"}`, ""];
-for (const stem of stemmen) {
-  const b = uit.beurten.filter((x) => x.stem === stem && x.vraag !== "(opening)");
-  const avg = (k) => (b.reduce((n, x) => n + (x[k] || 0), 0) / b.length).toFixed(1);
-  const kosten = b.reduce((n, x) => n + ((x.usage?.input_tokens || 0) * 2 + (x.usage?.cache_creation_input_tokens || 0) * 4 + (x.usage?.cache_read_input_tokens || 0) * 0.2 + (x.usage?.output_tokens || 0) * 10) / 1e6, 0);
-  md.push(`## ${stem}`, "", `| | |`, `|---|---|`,
-    `| gem. woorden | ${avg("woorden")} |`, `| > 120 woorden | ${b.filter((x) => x.woorden > 120).length}/${b.length} |`,
-    `| gem. zinnen | ${avg("zinnen")} |`, `| marker gehaald | ${b.filter((x) => x.overwegingen > 0).length}/${b.length} |`,
-    `| blokhaken in stem | ${b.filter((x) => x.blokhaken).length} |`, `| getallen in stem | ${b.filter((x) => x.getallen.length).length} |`,
-    `| soortnamen (klasse-2-check) | ${b.filter((x) => x.soorten.length).length} |`, `| eindigt met vraag | ${b.filter((x) => x.eindigtMetVraag).length}/${b.length} |`,
-    `| gem. duur stem | ${avg("duur_ms")} ms |`, `| gem. duur overwegingen | ${avg("duur_overwegingen_ms")} ms |`, `| herkomst per overweging | ${b.reduce((n, x) => n + (x.herkomst || 0), 0)}/${b.reduce((n, x) => n + x.overwegingen, 0)} |`, `| kosten (Sonnet-5-prijzen) | $${kosten.toFixed(3)} |`, "");
-  for (const x of b) md.push(`**${x.vraag}**`, "", x.tekst, "", ...(x.overwegingen_tekst || []).map((o) => `- *${o.title}* — ${o.body}`), "");
-}
-await writeFile(basis + ".md", md.join("\n"));
-console.log(`\nresultaat: ${path.relative(ROOT, basis)}.{json,md}`);
+await schrijf(uit, stemmen, config);

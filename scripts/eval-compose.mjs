@@ -88,6 +88,14 @@ async function evalFixture(naam, config) {
   r.tekens.naslag = naslag;
   zacht("aandeel naslag/materiaal", true, `${Math.round((100 * naslag) / totaal.length)}% (${naslag.toLocaleString("nl-NL")} tekens)`);
   zacht("sessieblok bevat de casus", !config.situation || blokken.session.includes(config.situation.slice(0, 60)), "");
+  // Lijsten worden agenda's: de blik-lijst in de basis mag niet groeien.
+  const blikSectie = (blokken.stable.split("## Hoe je de wereld ziet")[1] || "").split(/\n## /)[0];
+  const blikRegels = (blikSectie.match(/^\s*- /gm) || []).length;
+  zacht("blik-lijst niet gegroeid (hooguit 8 regels)", blikRegels <= 8, `${blikRegels} regels`);
+  // Het herkomstlabel voor eigen kennis staat in het contract precies één keer (of nog niet).
+  const contractDeel = blokken.session.slice(Math.max(0, blokken.session.indexOf("# Antwoordformaat")));
+  const labelN = tel(contractDeel, /eigen systeemkennis/g);
+  zacht("label 'eigen systeemkennis' hooguit één keer in het contract", labelN <= 1, `${labelN}×`);
   return r;
 }
 

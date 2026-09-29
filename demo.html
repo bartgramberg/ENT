@@ -984,6 +984,7 @@
             _addUserBubbleStatic(msg.content);
           } else if (msg.role === 'assistant') {
             _addEntBubbleStatic(parseFullText(msg.content));
+            if (Array.isArray(msg.overwegingen) && msg.overwegingen.length) typeOverwegingen(msg.overwegingen);
           }
         }
         scrollChat();
@@ -1327,8 +1328,10 @@
       stopSpeech();   // don't let the previous answer talk over the new one
 
       // Build messages array: existing conversation + new user message
+      // Naar de API gaan alleen role en content; overwegingen en promptversie
+      // blijven lokaal (zie hieronder).
       const messages = [
-        ...conversation,
+        ...conversation.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: message }
       ];
 
@@ -1341,7 +1344,8 @@
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'stem' })
+        body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'stem' }),
+        signal: AbortSignal.timeout(30000)
       })
       .then(async res => {
         removeThinkingBubble(thinkingId);
@@ -1374,7 +1378,9 @@
         // in de context als iets wat ENT 'wist'.
         conversation.push({ role: 'user', content: message });
         const stemTekst = (data.stem || '').trim() || '…';
-        conversation.push({ role: 'assistant', content: stemTekst });
+        // De promptversie per beurt gaat mee in het verslag; de overwegingen
+        // komen er bij de tweede aanroep bij (alleen lokaal, niet naar de API).
+        conversation.push({ role: 'assistant', content: stemTekst, promptversie: data.promptversie || null });
 
         // Update usage
         const newUsage = data.usage || {};
@@ -1408,7 +1414,8 @@
         fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'overwegingen', stem: stemTekst })
+          body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'overwegingen', stem: stemTekst }),
+          signal: AbortSignal.timeout(30000)
         })
         .then(r => r.json())
         .then(d2 => {
@@ -1421,6 +1428,12 @@
           localStorage.setItem(KEY_VERBRUIK, JSON.stringify(usage));
           updateKlimaatimpact(usage);
           if (Array.isArray(d2.overwegingen) && d2.overwegingen.length) typeOverwegingen(d2.overwegingen);
+          // Bewaren bij de beurt, zodat herladen en het verslag ze terugvinden.
+          const laatste = conversation[conversation.length - 1];
+          if (laatste && laatste.role === 'assistant' && laatste.content === stemTekst) {
+            laatste.overwegingen = Array.isArray(d2.overwegingen) ? d2.overwegingen : [];
+            localStorage.setItem(KEY_GESPREK, JSON.stringify(conversation));
+          }
         })
         .catch(() => {});
       })
@@ -1489,6 +1502,8 @@
         if (intakeConfig.tokens) kop.push(`Omvang profiel: ${intakeConfig.tokens.toLocaleString('nl-NL')} tokens`);
         if (intakeConfig.promptversie) kop.push(`Promptversie: ${intakeConfig.promptversie}`);
       }
+      const versies = [...new Set(conversation.map(m => m.promptversie).filter(Boolean))];
+      if (versies.length) kop.push(`Promptversie per beurt: ${versies.join(', ')}`);
       let txt = kop.join('\n') + `\n${'─'.repeat(60)}\n\nGESPREK\n\n`;
 
       if (!conversation.length) {
@@ -1502,7 +1517,9 @@
           txt += `${cfg.personaName}\n${parseFullText(msg.content)}\n\n`;
           // De overwegingen horen bij deze beurt: dit is de analist-lens met de
           // feiten en actiepunten, en juist dat deel wil je terugzien in een verslag.
-          const ovw = parseOverwegingenText(msg.content);
+          const ovw = Array.isArray(msg.overwegingen) && msg.overwegingen.length
+            ? msg.overwegingen.map(o => `${o.title}\n${o.body}${o.herkomst ? '\nHerkomst: ' + o.herkomst : ''}`).join('\n\n')
+            : parseOverwegingenText(msg.content);
           if (ovw) txt += `  Overwegingen\n${ovw.split('\n').map(r => r ? '  ' + r : '').join('\n')}\n\n`;
         }
       }
