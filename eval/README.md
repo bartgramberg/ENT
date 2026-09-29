@@ -276,6 +276,17 @@ nulmeting. Drie herkomsten met de slug van een startpakket ("ent-water",
 "ent-beleid-waterschap-vallei-en-veluwe") telde het script als "overig"; de
 matcher kent nu ook de bronbestandsnaam.
 
+Tegencontrole op `lunteren-v2-standaard` (dun profiel, staffel drie, één run):
+27 overwegingen, bestand 2 · plek 6 · algemeen 14 · eigen 5; beurten met eigen
+5/10; vulsel 1/2; klasse-2-kandidaten 2 (allebei onschuldig: "beleid" in een
+item dat juist zegt dat de norm niet in het materiaal staat, en "hier" in het
+citaat "hier kwelt niks" van de ambtenaar); basis-echo 0; canary "sediment"
+één keer, hoorbaar algemeen; gemiddeld 84,9 woorden; "hier staat"-treffers 2,
+beide klasse 1 (bodem uit de plekgegevens); kosten $0,12. Op een dun profiel
+neemt het model de ruimte van drie eigen items dus níet vol; veel van wat het
+"algemene kennis" noemt is een gat ("niets aangeleverd over…"), wat eerder
+klasse 3 is. Dat label-onderscheid is een punt voor een volgende ronde.
+
 Niet getest: de badge "te toetsen" en de bewaarde overwegingen in `demo.html`
 zijn alleen op syntaxis gecontroleerd, niet in de browser; de staffel is alleen
 op WaK (twee) en Lunteren (drie) gemeten, niet op een profiel boven 100k.
