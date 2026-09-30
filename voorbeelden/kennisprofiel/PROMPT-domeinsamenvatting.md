@@ -30,19 +30,50 @@ Kies het domein:
 
 ## Werk in drie stappen
 
-**Stap 1. Bronnenlijst.** Noem elke bron met: korte naam, soort (rapport,
-beleidsstuk, meting, artikel, website, verslag, interview), auteur of
-organisatie, datum of jaar, en in één zin hoe betrouwbaar en hoe specifiek
-voor deze plek hij is. Let op datums: alles van vóór 2024 over regels moet je
-markeren, want sinds 1 januari 2024 geldt de Omgevingswet en bestaan de Wet
-natuurbescherming, de Waterwet en het Bouwbesluit niet meer. Als twee bronnen
-elkaar tegenspreken, noteer dat hier al.
+**Stap 1. Bronnenlijst.** Noem elke bron met: korte naam, soort (zie de
+bronsoorten hieronder), auteur of organisatie of "auteur onbekend", datum of
+jaar (uit het document, de bestandsgegevens of geschat op de inhoud, en zeg
+welke van de drie), en in één zin hoe specifiek voor deze plek hij is en met
+welk voorbehoud je hem gebruikt. Let op datums: alles van vóór 2024 over
+regels moet je markeren, want sinds 1 januari 2024 geldt de Omgevingswet en
+bestaan de Wet natuurbescherming, de Waterwet en het Bouwbesluit niet meer.
+Als twee bronnen elkaar tegenspreken, noteer dat hier al; als een latere bron
+een eerdere achterhaalt, is dat geen tegenspraak maar ontwikkeling.
 
 **Stap 2. Het bestand.** Schrijf het markdownbestand volgens de structuur
 hieronder. Alleen wat in de bronnen staat; niets uit eigen kennis erbij, ook
 geen "algemeen bekende" ecologie of beleidskaders. ENT heeft die kennis zelf
 en krijgt daar aparte ruimte voor. Wat erin hoort, is wat over déze plek gaat,
 of wat een bron specifiek over het systeem van deze plek zegt.
+
+## Soorten bronnen, en hoe je ze gebruikt
+
+Niet alleen officiële rapporten tellen. Werkdocumenten, gespreksverslagen,
+jaarverslagteksten, oude rondleidersinstructies, een profielwerkstuk, een
+filmtranscript: ze bevatten vaak de meest plekgebonden kennis die er is. Het
+verschil zit niet in wél of niet gebruiken, maar in hoe je het opschrijft.
+Geef elk feit een **status** en een **datum**, dan kan ENT het juiste gewicht
+geven.
+
+| Bronsoort | Hoe je hem gebruikt | Bronvermelding |
+|---|---|---|
+| Officieel onderzoek of besluit (bureau, gemeente, waterschap, universiteit) | Als vastgesteld feit, met datum | (naam bureau of instantie, jaar) |
+| Eigen onderzoek of meting van de organisatie (bijv. HXRF-metingen door De Ceuvel) | Als gerapporteerd feit, met de methode en het voorbehoud dat de bron zelf noemt ("nog niet statistisch aantoonbaar") | (eigen onderzoek De Ceuvel, titel, jaar) |
+| Intern werkdocument, plan, actielijst, voorstel | Wat gedáán of gemeten is als feit; wat gepland of geadviseerd is als **voornemen** of **advies**, nooit als uitgevoerd | (werkdocument De Ceuvel, titel, datum) |
+| Gespreksverslag, notulen | Uitspraken toeschrijven aan de rol van de spreker ("de bodemdeskundige van de omgevingsdienst, oktober 2025"), als **standpunt** of **inschatting** | (verslag gesprek, datum) |
+| Publiekstekst: jaarverslag, nieuwsbrief, rondleidersinstructie, website | Feiten en cijfers met jaar; de toon van de bron is niet de toon van het bestand | (jaarverslagtekst De Ceuvel, jaar) |
+| Verhaal, interview, film, profielwerkstuk, column | Naar "Verhalen en betekenis" en "Beelden en waarnemingen"; feiten eruit alleen als ze elders bevestigd worden, anders als "volgens (bron)" | (soort bron, spreker of maker in rol, jaar) |
+| Ouder dan tien jaar | Volwaardig gebruiken, maar altijd als **destijds**: "in 2016 werd de vervuiling vooral in de bovenste 50 tot 80 cm aangetroffen". Nooit als huidige stand | zoals hierboven, met het jaar |
+
+Twee gevolgen. Ten eerste: per onderwerp geef je de **laatst bekende stand** met
+datum, en de weg ernaartoe als tijdlijn. Zo zegt ENT "in 2019 bleek… en het
+laatste wat bekend is, uit december 2025, is…", niet iets van 2016 als feit
+van nu. Ten tweede: wat een bron zelf als onzeker aanmerkt, blijft onzeker;
+maak het niet steviger dan de bron doet, en niet zwakker.
+
+Namen: organisaties, functies en publieke rollen mogen (de landschapsarchitect,
+de coördinator van het park, een bodemdeskundige van instantie X). Namen van
+studenten, vrijwilligers, buren en andere particulieren niet; noem hun rol.
 
 **Stap 3. Notitie voor de maker.** Sluit af met een korte, aparte notitie
 (buiten het bestand): welke bronnen je niet of nauwelijks gebruikte en waarom,
@@ -59,6 +90,14 @@ elk feit verwijst ernaar met (bronnaam, jaar).
 ## Deze plek
 Wat de bronnen concreet over dit terrein zeggen: ligging, omvang, wat er is,
 wat er gemeten, afgesproken of vastgesteld is. Feiten, elk met bron en jaar.
+Per onderwerp de laatst bekende stand vooraan, met datum.
+
+## Beelden en waarnemingen
+Wat er hier te zien, te ruiken, te horen en te voelen is volgens de bronnen,
+met jaar: de populieren die boven de boten uitkomen, de schaduw op een hete
+dag, welke dieren er gezien zijn, hoe de grond eruitziet. Zintuiglijk en
+plekgebonden; dit is wat de stem van ENT nodig heeft om als deze plek te
+klinken. Geen algemeenheden.
 
 ## Hoe het systeem hier werkt
 Wat de bronnen zeggen over samenhang en werking op deze plek: oorzaak en
@@ -68,9 +107,14 @@ over deze plek zegt; algemene mechanismen laat je weg.
 ## Kaders, afspraken en cijfers
 Een tabel: | wat | waarde of inhoud | status | datum | bron |
 Status is één van: wetgeving, verordening of omgevingsplan, vergunning,
-contract of afspraak, beleid, richtlijn, advies, meting, model, schatting.
+contract of afspraak, beleid, richtlijn, advies, voornemen, meting (officieel),
+meting (eigen onderzoek), model, schatting, standpunt, verhaal.
 Getallen altijd met eenheid en datum. Geen artikelnummers die niet letterlijk
 in de bron staan.
+
+## Tijdlijn
+Per jaar wat er gebeurde, gemeten of besloten werd, met bron. Ook uit oude en
+informele stukken; daar komt de ontwikkeling van de plek vandaan.
 
 ## Verhalen en betekenis        (vooral historisch; bij andere domeinen alleen als de bronnen het geven)
 Tijdlijn met jaartallen, en wat de plek voor wie betekent, in de woorden van
@@ -91,8 +135,10 @@ Genummerde lijst: naam, auteur of organisatie, soort, datum, en waar te vinden.
 ## Regels voor de tekst
 
 - **Alleen uit de bronnen.** Elk feit, getal en jaartal is herleidbaar tot een
-  bron in de lijst, met (bronnaam, jaar) achter de zin of in de tabel. Als een
-  bron iets beweert zonder onderbouwing, schrijf je "volgens (bron, jaar)".
+  bron in de lijst, met (bronnaam, jaar) achter de zin of in de tabel. Een
+  werkdocument zonder auteur is ook een bron: dan staat er (werkdocument De
+  Ceuvel, titel, datum). Als een bron iets beweert zonder onderbouwing,
+  schrijf je "volgens (bron, jaar)".
 - **Geen algemene kennis.** Geen uitleg van hoe bodemsanering, fytoremediatie
   of stadsecologie in het algemeen werkt, tenzij een bron dat specifiek voor
   deze plek beschrijft. Geen algemeen beleidskader dat niet in een bron staat.
@@ -104,7 +150,8 @@ Genummerde lijst: naam, auteur of organisatie, soort, datum, en waar te vinden.
   je scherper, niet langer: liever tien harde feiten met bron dan dertig vage.
 - **Datums en status overal.** Een regel of plan zonder jaar en status is
   onbruikbaar. Markeer wat vóór 2024 dateert en over regels gaat als
-  "mogelijk vervallen, te toetsen".
+  "mogelijk vervallen, te toetsen". Een plan of actielijst is een voornemen
+  totdat een latere bron zegt dat het is gedaan.
 - **Geen instructies aan ENT.** Schrijf nooit "ENT moet", "de boom zegt",
   "benadruk dat". Het bestand is materiaal, geen script.
 - **Geen labels tussen blokhaken** zoals `[feit]` of `[beleid]`; gebruik de
