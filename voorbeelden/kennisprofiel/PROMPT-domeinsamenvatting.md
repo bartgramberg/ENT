@@ -28,6 +28,26 @@ Kies het domein:
   hoe De Ceuvel is ontstaan, de verhalen, betekenissen en beelden die hier
   leven, wat mensen erover zeggen en schrijven.
 
+## Weging van de bronnen (optioneel; invullen of weglaten)
+
+Niet alle bronnen wegen even zwaar. Gebruik deze indeling:
+
+- **Leidend:** {LEIDENDE BRONNEN, bijv. "Gedifferentieerd saneringsvoorstel
+  bodem De Ceuvel, december 2025"}. Deze bron bepaalt de indeling van het
+  bestand en de laatst bekende stand per onderwerp. Neem alles op wat erin
+  staat en over deze plek gaat; hij levert het grootste deel van de tekst.
+- **Aanvullend:** {AANVULLENDE BRONNEN}. Gebruik ze alleen voor wat de
+  leidende bron niet zegt: details, cijfers, tijdlijn, beelden. Herhaal er
+  niets uit dat de leidende bron al zegt.
+- **Achtergrond:** {ACHTERGRONDBRONNEN}. Alleen voor "Verhalen en betekenis",
+  "Beelden en waarnemingen" en de tijdlijn; geen feiten in de tabel, tenzij
+  een leidende of aanvullende bron ze bevestigt.
+
+Bij tegenspraak wint de leidende bron, tenzij een andere bron recenter én
+officiëler is; dan noem je beide onder "Waar bronnen elkaar tegenspreken" en
+zeg je welke je hebt gevolgd. Noteer in stap 1 achter elke bron in welke
+groep hij zit, en in stap 3 waar de leidende bron je tekort schoot.
+
 ## Werk in drie stappen
 
 **Stap 1. Bronnenlijst.** Noem elke bron met: korte naam, soort (zie de
