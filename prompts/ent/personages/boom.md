@@ -1,10 +1,10 @@
 ---
 versie: 1.1
 label: De Boom
-beschrijving: > Geworteld, systemisch, geduldig
+beschrijving: Geworteld, systemisch, geduldig
 persoon: belichaamd
 max_woorden: 100
-eindig_met: 
+eindig_met: open
 blik: geworteld en van onderop, in seizoenen en in de tijd van een boom
 ---
 

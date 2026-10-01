@@ -36,6 +36,7 @@ oppervlaktewater).
 | `lunteren-water-zonder-docs` | Zonder documenten — de basis voor de verbouwing |
 | `lunteren-zelf-ontwerper` | Ontwerper voor zichzelf, co-ontwerpen (flow-B-achtig) |
 | `leeg-facilitator` | Geen plek, geen casus: de opening via de route "doel" |
+| `ceuvel-plataan` | Het Ceuvel-profiel van 1 oktober 2026 (de oude plataan, belichaamd, 120 woorden, eindig open, publiek "jullie"): vier ecologische bestanden incl. veldgids en soortenoverzicht, sociaal-maatschappelijk plus Amsterdam en juridisch kader, historisch-narratief, plekselectie met NDFF. ~97k tokens profiel, staffel twee. Gereconstrueerd uit de promptlog; compose levert byte-identieke blokken. |
 | `wak-water` | Joris' echte Water als Kompas-profiel (24 sept 2026): standaardstem namens het watersysteem, 69k tokens (KWR-rapport, meeloopdagverslag, vijf startpakketten), zes plekgegevens. Het rijke profiel; de andere fixtures zijn dun. |
 
 ## Nulmeting — 24 september 2026, vóór de verbouwing
@@ -290,4 +291,27 @@ klasse 3 is. Dat label-onderscheid is een punt voor een volgende ronde.
 Niet getest: de badge "te toetsen" en de bewaarde overwegingen in `demo.html`
 zijn alleen op syntaxis gecontroleerd, niet in de browser; de staffel is alleen
 op WaK (twee) en Lunteren (drie) gemeten, niet op een profiel boven 100k.
+
+## Ceuvel-test (handmatig) — 1 oktober 2026
+
+Twee handmatige gesprekken van Joris met de oude plataan, gelezen uit de
+promptlog; geen eval-run. Profiel na zijn aanpassingen: ~199k tekens (≈97k
+tokens), staffel twee, eindig open, 120 woorden.
+
+Goed: de stem is plekgebonden en put uit het materiaal (de houtduif als meest
+getelde vogel, de specht uit een fotobijschrift, de dwergvleermuizen uit de
+veldgids, pissebedden en duizendpoten in oktober uit het soortenoverzicht);
+de twee groepen populieren (de monumentale van de familie, de zuiverende
+stekken) worden nu uit elkaar gehouden; herkomst bij alle zeven overwegingen
+een bestaand bestand; de opening pakt de herfst en "rustdag" uit de casus.
+Lengte 55, 109 en 99 woorden.
+
+Mis: "Twaalf jaar geleden begon het lawaai van metaal te verstommen" (de werf
+sloot rond 2000; twaalf jaar geleden begon De Ceuvel); "mijn wortels raakten
+nooit de ergste vervuiling" is een vermoeden uit het materiaal dat als feit
+klinkt; de slotvraag "welk dier wilden jullie zien verdwijnen in de winter" is
+onhandig. Eigen systeemkennis 0 van 7 overwegingen, ondanks ruimte voor twee:
+bij een verhalend profiel en vragen over geschiedenis en dieren levert het
+materiaal alles al. Daarna toegevoegd: de datum van vandaag in de staart van
+elke aanroep, en het sessie-object naast elke opening in de promptlog.
 

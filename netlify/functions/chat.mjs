@@ -84,6 +84,11 @@ async function logBeurt(entry) {
     L.push(JSON.stringify(entry.overwegingen, null, 2));
     const bestand = path.join(LOG_DIR, `${stamp}-${entry.kind}.md`);
     await writeFile(bestand, L.join("\n"), "utf8");
+    // Bij de opening het complete sessie-object ernaast, zodat een handmatige
+    // test meteen een fixture kan worden (eval/fixtures/). Alleen lokaal.
+    if (entry.kind === "opening") {
+      await writeFile(path.join(LOG_DIR, `${stamp}-config.json`), JSON.stringify(entry.config || {}, null, 1), "utf8");
+    }
     const u = entry.usage || {};
     await appendFile(path.join(LOG_DIR, "index.log"),
       `${new Date().toISOString()} ${entry.kind} ${entry.duur_ms}ms in=${u.input_tokens} out=${u.output_tokens} ` +
@@ -113,6 +118,16 @@ const tokensVoorWoorden = (w) => Math.ceil(w * 3.2) + 60;
 // later history — so the model sees the same start each time.
 // Plain words, no brackets: the model copies the form of what it is given.
 const OPENING_SIGNAL = "Het gesprek begint.";
+
+// De datum van vandaag, ná de cachebreekpunten (de blokken blijven gelijk). In de
+// Ceuvel-test van 1 oktober sprak de boom van "kale takken" en rekende hij
+// "twaalf jaar geleden" verkeerd: zonder datum weet het model niet wanneer nu is.
+const MAANDEN = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+const SEIZOEN = ["winter", "winter", "lente", "lente", "lente", "zomer", "zomer", "zomer", "herfst", "herfst", "herfst", "winter"];
+function vandaag() {
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Amsterdam" }));
+  return `Vandaag is het ${d.getDate()} ${MAANDEN[d.getMonth()]} ${d.getFullYear()} (${SEIZOEN[d.getMonth()]}).`;
+}
 
 // Honour a provider base URL if one is injected (e.g. Netlify AI Gateway sets
 // ANTHROPIC_BASE_URL + a gateway-scoped ANTHROPIC_API_KEY). Otherwise call the
@@ -234,9 +249,9 @@ export default async function handler(req, context) {
   try {
     composed = await compose(config || {}, { opening: isOpening });
     system = composed.blokken.map((b) => ({ type: "text", text: b.tekst, cache_control: { type: "ephemeral", ttl: "1h" } }));
-    if (composed.opening) system.push({ type: "text", text: composed.opening });
-    else if (alleenStem) system.push({ type: "text", text: STEM_INSTRUCTIE });
-    else if (alleenOverwegingen) system.push({ type: "text", text: OVERWEGINGEN_INSTRUCTIE });
+    if (composed.opening) system.push({ type: "text", text: vandaag() + "\n\n" + composed.opening });
+    else if (alleenStem) system.push({ type: "text", text: vandaag() + "\n\n" + STEM_INSTRUCTIE });
+    else if (alleenOverwegingen) system.push({ type: "text", text: vandaag() + "\n\n" + OVERWEGINGEN_INSTRUCTIE });
   } catch (err) {
     console.error("compose error:", err);
     return json({ error: "Kon de systeemprompt niet samenstellen." }, 500);

@@ -207,7 +207,12 @@ bestaande run, zonder API: zo maak je een nulmeting gratis. Eén run per
 wijziging is de afspraak (29 september); herhaal alleen bij twijfel. De
 nulmeting van 24 september staat in `eval/README.md`; leg elke meting
 daarnaast. `ENT_PROMPT_LOG=<map> ./scripts/dev.sh` logt tijdens handmatig
-testen per beurt de complete prompt.
+testen per beurt de complete prompt, en bij elke opening het complete
+sessie-object als `<tijd>-config.json`: dat bestand is direct een fixture.
+
+Elke aanroep krijgt "Vandaag is het … (seizoen)" mee, ná de cachebreekpunten,
+zodat de blokken gelijk blijven; zonder datum rekende de boom tijden verkeerd
+en liet hij in oktober kale takken zien.
 
 ## Werkwijze
 
