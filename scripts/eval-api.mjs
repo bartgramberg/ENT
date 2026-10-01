@@ -19,6 +19,12 @@
  *
  *   node scripts/eval-api.mjs --heranalyse eval/resultaten/api-wak-profiel-….json
  *
+ * Doorlopend gesprek (zoals de app: elke beurt krijgt de hele geschiedenis mee),
+ * om gespreksgedrag te meten: terugverwijzen, herhalen, korte reacties kort,
+ * meta-overwegingen:
+ *
+ *   ./scripts/eval.sh --fixture ceuvel-plataan --stem boom --gesprek ceuvel
+ *
  * Per beurt: woorden, zinnen, marker, blokhaken, getallen, soortnamen, hedge- en
  * principewoorden en "hier staat"-claims in de stem; per overweging de
  * herkomstklasse (bestand / plekgegevens / algemene kennis / eigen systeemkennis
@@ -63,6 +69,27 @@ export const VRAGEN_PRIKKEL = [
   "Blijf bij wat je is aangeleverd: wat weet je zeker over deze rand?",
   "Welke regels gelden hier voor bemesten langs de beek?",
 ];
+// Scriptgesprekken: één doorlopend gesprek, met een provocatie, een vervolgvraag
+// die naar een eerdere beurt verwijst, en een bedankje (dat kort moet blijven).
+export const GESPREKKEN = {
+  ceuvel: [
+    "Ik ben zo benieuwd hoe jij het hier hebt zien en voelen veranderen",
+    "Wat proeven je wortels dan nu?",
+    "Ik vind bomen stom",
+    "Oké sorry. Welke dieren wonen er eigenlijk bij jou?",
+    "En wat doen die in de winter?",
+    "Je zei net iets over de populieren, wat is daarmee?",
+    "Dank je wel",
+    "Nog één ding: wat gebeurt er met jou in 2028?",
+    "Mooi. Tot ziens!",
+  ],
+};
+// Zelfde regel als demo.html (korteReactie): hooguit vier woorden, geen vraagteken.
+const korteBeurt = (t) => !/\?/.test(t) && t.trim().split(/\s+/).filter(Boolean).length <= 4;
+const VERWIJST = /\b(net|daarnet|zonet|eerder|zoals (je|jij|jullie|ik)|je vroeg|jullie vroegen|zei je|zei ik|waar we het over hadden|kom(t)? terug op|we hadden het)\b/i;
+const HAAST = /\bhaast\w*/gi;
+function vierGrammen(t) { const w = t.toLowerCase().replace(/[^a-zà-ÿ' ]/g, " ").split(/\s+/).filter(Boolean); const g = new Set(); for (let i = 0; i + 3 < w.length; i++) g.add(w.slice(i, i + 4).join(" ")); return g; }
+
 // Vragen waar een eigen verband bijna nooit hoort (vulsel-canary).
 const VULSEL_VRAGEN = [VRAGEN[4], VRAGEN[5]];
 
@@ -215,6 +242,58 @@ async function chat(body) {
 // --fixture accepteert ook een pad naar een geëxporteerd profiel (bv. eval/sessies/…json).
 const fixturePad = fixtureNaam.endsWith(".json") ? path.resolve(ROOT, fixtureNaam) : path.join(ROOT, "eval", "fixtures", `${fixtureNaam}.json`);
 const config = JSON.parse(await readFile(fixturePad, "utf8"));
+
+// ---------------------------------------------------------------- scriptgesprek
+if (args.gesprek) {
+  const script = GESPREKKEN[args.gesprek];
+  if (!script) { console.error(`Onbekend gesprek: ${args.gesprek}. Keuze: ${Object.keys(GESPREKKEN).join(", ")}`); process.exit(2); }
+  const stem = stemmen[0];
+  const cfg = { ...config, voice_subject: stem };
+  const ctx = await context(cfg);
+  const uitG = { label, model: process.env.ENT_MODEL || "claude-sonnet-5", fixture: fixtureNaam, gesprek: args.gesprek, datum: new Date().toISOString(), beurten: [] };
+  const opening = await chat({ messages: [], config: cfg, opening: true });
+  const conversation = [{ role: "assistant", content: (opening.stem || "").trim() }];
+  const gezien = vierGrammen(conversation[0].content);
+  console.log(`\n== ${stem} · gesprek ${args.gesprek} · opening ${opening.duur_ms} ms\n  ENT: ${conversation[0].content}`);
+  let kosten = prijs(opening.usage);
+  for (const vraag of script) {
+    const messages = [...conversation, { role: "user", content: vraag }];
+    const r = await chat({ messages, config: cfg, deel: "stem" });
+    const s = (r.stem || "").trim();
+    const kort = korteBeurt(vraag);
+    // Zoals de app: bij een korte reactie geen overwegingen-aanroep.
+    const r2 = kort ? { overwegingen: [], duur_ms: 0, usage: null } : await chat({ messages, config: cfg, deel: "overwegingen", stem: s });
+    const m = meet(s, ctx);
+    const ovwLijst = Array.isArray(r2.overwegingen) ? r2.overwegingen : [];
+    const ovw = meetOverwegingen(ovwLijst, { ...ctx, eigenMax: r2.eigen_max ?? ctx.eigenMax });
+    const eigenGram = vierGrammen(s);
+    const herhaalt = [...eigenGram].filter((g) => gezien.has(g)).length;
+    for (const g of eigenGram) gezien.add(g);
+    const beurt = { vraag, kort, ...m, verwijst: VERWIJST.test(s), herhaalt, haast: (s.match(HAAST) || []).length, meta_weggefilterd: r2.meta_weggefilterd || 0, overwegingen: ovwLijst.length, overwegingen_tekst: ovwLijst, ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage_stem: r.usage, usage_overwegingen: r2.usage, promptversie: r.promptversie };
+    kosten += prijs(r.usage) + prijs(r2.usage);
+    uitG.beurten.push(beurt);
+    conversation.push({ role: "user", content: vraag }, { role: "assistant", content: s || "…" });
+    console.log(`\n  VRAAG: ${vraag}\n  ENT (${m.woorden} w, ${m.zinnen} z${kort ? ", korte beurt" : ""}${beurt.verwijst ? ", verwijst terug" : ""}${herhaalt ? ", herhaalt " + herhaalt : ""}${beurt.haast ? ", haast ×" + beurt.haast : ""}${beurt.meta_weggefilterd ? ", meta weggefilterd " + beurt.meta_weggefilterd : ""}): ${s}`);
+    for (const o of ovwLijst) console.log(`    - ${o.title} — ${o.body} <${o.herkomst}>`);
+  }
+  const b = uitG.beurten, n = b.length;
+  const md = [`# Scriptgesprek · ${label} · ${fixtureNaam} · ${args.gesprek} · ${uitG.datum.slice(0, 16)}`, "", `Model ${uitG.model} · promptversie ${b[0]?.promptversie || "?"}`, "", "| | |", "|---|---|",
+    `| beurten | ${n} |`, `| gem. woorden | ${(b.reduce((x, y) => x + y.woorden, 0) / n).toFixed(1)} |`,
+    `| woorden op korte beurten | ${b.filter((x) => x.kort).map((x) => x.woorden).join(", ") || "–"} |`,
+    `| verwijst naar eerder | ${b.filter((x) => x.verwijst).length}/${n} |`, `| herhaalde 4-woordreeksen (totaal) | ${b.reduce((x, y) => x + y.herhaalt, 0)} |`,
+    `| "haast" in de stem | ${b.reduce((x, y) => x + y.haast, 0)} |`, `| meta-overwegingen weggefilterd | ${b.reduce((x, y) => x + y.meta_weggefilterd, 0)} |`,
+    `| overwegingen op korte beurten | ${b.filter((x) => x.kort).map((x) => x.overwegingen).join(", ") || "–"} |`,
+    `| herkomst eigen / algemeen / bestand | ${b.reduce((x, y) => x + (y.ovw?.klassen?.eigen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.algemeen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.bestand || 0) + (y.ovw?.klassen?.plek || 0), 0)} |`,
+    `| kosten | $${kosten.toFixed(3)} |`, "", `**Opening:** ${conversation[0].content}`, ""];
+  for (const x of b) { md.push(`**${x.vraag}**`, "", x.tekst + ` _(${x.woorden} w${x.verwijst ? ", verwijst terug" : ""}${x.herhaalt ? ", herhaalt " + x.herhaalt : ""}${x.meta_weggefilterd ? ", meta weg " + x.meta_weggefilterd : ""})_`, "", ...(x.overwegingen_tekst || []).map((o) => `- *${o.title}* — ${o.body} · _${o.herkomst || ""}_`), ""); }
+  await mkdir(path.join(ROOT, "eval", "resultaten"), { recursive: true });
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  const basisPad = path.join(ROOT, "eval", "resultaten", `api-${label}-gesprek-${stamp}`);
+  await writeFile(basisPad + ".json", JSON.stringify(uitG, null, 1));
+  await writeFile(basisPad + ".md", md.join("\n"));
+  console.log(`\nresultaat: ${path.relative(ROOT, basisPad)}.{json,md}`);
+  process.exit(0);
+}
 const vragen = vragenSet === "prikkel" ? VRAGEN_PRIKKEL : VRAGEN;
 const uit = { label, model: process.env.ENT_MODEL || "claude-sonnet-5", effort: process.env.ENT_EFFORT || null, fixture: fixtureNaam, vragen: vragenSet, herhaal, datum: new Date().toISOString(), beurten: [] };
 

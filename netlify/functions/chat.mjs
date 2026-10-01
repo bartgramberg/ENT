@@ -25,7 +25,7 @@
  */
 
 import { compose, STEM_INSTRUCTIE, OVERWEGINGEN_INSTRUCTIE, OVERWEGINGEN_VRAAG } from "./lib/compose.mjs";
-import { markeerToetsen } from "./lib/toetsen.mjs";
+import { markeerToetsen, zonderMeta } from "./lib/toetsen.mjs";
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -156,10 +156,11 @@ function parseOverwegingen(raw) {
     if (lines.length >= 2 && /^herkomst\s*:/i.test(lines[lines.length - 1])) {
       herkomst = lines.pop().replace(/^herkomst\s*:\s*/i, "").trim();
     }
+    // Eén regel is geen overweging (titel + zin + herkomst is de vorm). De oude
+    // terugvalregel is weg; wat nu nog als één regel komt, is uitleg waarom er
+    // niets te zeggen is ("er lag geen inhoudelijke vraag…"). Weglaten.
     if (lines.length >= 2) {
       blocks.push({ title: lines[0], body: lines.slice(1).join(" "), herkomst });
-    } else if (lines.length === 1) {
-      blocks.push({ title: lines[0], body: lines[0], herkomst });
     }
   }
   // Leeg mag: geen overwegingen is een geldig antwoord (geen stub met een
@@ -365,6 +366,10 @@ export default async function handler(req, context) {
   // Badge "te toetsen": een item van buiten het materiaal met een getal, soort,
   // jaartal, regel of termijn erin (deterministisch, zie lib/toetsen.mjs).
   markeerToetsen(overwegingen, config || {});
+  // Vangnet tegen overwegingen over het gesprek zelf (toon, reactie, afscheid).
+  const metaWeg = overwegingen.length;
+  overwegingen = zonderMeta(overwegingen);
+  const meta_weggefilterd = metaWeg - overwegingen.length;
 
   await logBeurt({
     kind: isOpening ? "opening" : alleenStem ? "stem" : alleenOverwegingen ? "overwegingen" : "beurt",
@@ -372,5 +377,5 @@ export default async function handler(req, context) {
     stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
   });
 
-  return json({ stem, overwegingen, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });
+  return json({ stem, overwegingen, meta_weggefilterd, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });
 }

@@ -120,6 +120,20 @@ soorten in beekoevers" kwam 8× letterlijk terug); daarom staan er geen meer.
 Een vaste zinsvorm ("waar…, daar…") zou net zo'n echo worden; de regel
 beschrijft de eigenschap (patroon, geen waarneming van hier), niet de vorm.
 
+De overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf. In
+de Ceuvel-stresstest van 1 oktober beschreef de analist zijn eigen gedrag
+("Toon van het gesprek", "Reactie op provocatie", "Afscheid zonder
+samenvatting"), vooral bij beurten zonder inhoud. De instructie verbiedt het en
+`zonderMeta()` in `lib/toetsen.mjs` filtert wat er toch doorkomt
+(`meta_weggefilterd` in de response). Bij een groet, bedankje of provocatie
+hoort de analist leeg te blijven; de stem antwoordt dan in één of twee zinnen.
+
+De hele geschiedenis gaat elke beurt mee (alleen de stem), maar zonder regel
+gedroeg ENT zich als een reeks losse antwoorden. De basis zegt nu: één
+gesprek, voortbouwen en terugkomen, niets uit een eerdere beurt herhalen.
+`scripts/eval.sh --gesprek ceuvel` meet dat in een doorlopend scriptgesprek
+(terugverwijzen, herhaalde woordreeksen, lengte van korte beurten).
+
 `lib/toetsen.mjs` is de ene bron van de regexen die "verrassing" van
 "verzinsel" scheiden; `chat.mjs` zet er `toetsen: true` mee op items van
 buiten het materiaal met een feit-achtig element (badge "uit geheugen · te

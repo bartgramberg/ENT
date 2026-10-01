@@ -1339,6 +1339,9 @@
       _doSend(message);
     }
 
+    // Een groet, bedankje of korte reactie: hooguit vier woorden en geen vraagteken.
+    function korteReactie(tekst) { return !/\?/.test(tekst) && tekst.trim().split(/\s+/).filter(Boolean).length <= 4; }
+
     function _doSend(message) {
       lastUserMessage = message;
       stopSpeech();   // don't let the previous answer talk over the new one
@@ -1426,7 +1429,10 @@
         // the audio is ready instead of waiting for the animation.
         if (speechPromise) attachSpeech(bubbleEl, speechPromise);
 
-        // Tweede aanroep, niet-blokkerend: de overwegingen.
+        // Tweede aanroep, niet-blokkerend: de overwegingen. Niet bij een korte
+        // reactie zonder vraag ("Dank je wel", "Tot ziens"): daar is niets te
+        // wegen, en het model vulde het paneel dan toch (Ceuvel-test 1 oktober).
+        if (korteReactie(message)) return;
         fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

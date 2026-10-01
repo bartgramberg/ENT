@@ -311,7 +311,7 @@
     }
 
     /* navigatie */
-    function ga(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0, 0); if (id === 'lagen') renderLagen(); }
+    function ga(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0, 0); if (id === 'lagen') renderLagen(); if (id === 's-stem') renderStem(); }
     function kiesFlow(f) { S.flow = f; if (f === 'A') { vulSessie(); ga('s-sessie'); } else { S.aanspreek = 'je'; ga('s-zelf'); } }
 
     /* A1 sessie */

@@ -78,3 +78,21 @@ export function markeerToetsen(overwegingen, cfg) {
   }
   return overwegingen;
 }
+
+/**
+ * Meta-overwegingen: de analist die zijn eigen gedrag beschrijft ("Toon van het
+ * gesprek", "Reactie op provocatie", "De boom sluit af met een beeld"). Gezien
+ * in de Ceuvel-stresstest van 1 oktober 2026. Ze gaan niet over de plek en
+ * horen niet in het paneel; de instructie verbiedt ze, dit is het vangnet.
+ */
+const META_TITEL = /^(toon\b|reactie\b|afscheid\b|opstelling\b|houding\b|gespreks(toon|verloop|houding))/i;
+const META_TEKST = /\b(provocatie|vijandigheid|vraagsteller|zonder samenvatting|geen inhoudelijke vraag|om op te wegen|zonder zaakinhoud|in (het|dit|mijn) antwoord\b|als (algemeen )?gegeven ingebracht|zoals de grenzen voorschrijven|(de |mijn )?(emotionele )?(lading|toon) (niet )?(terug|mee)|mee ?veren in toon)\b/i;
+const META_GEDRAG = /\b(ik|de stem|de boom|de plataan|het water|ENT)\b[^.]{0,50}\b(blijf|blijft) bij\b|\b(ik|de stem|de boom|de plataan)\b[^.]{0,40}\b(spiegel|spiegelt|sluit af|sluit het|reageer|reageert|verwijs|verwijst|nodig uit|nodigt uit|spreekt uit eigen ervaring)\b/i;
+export function isMeta(o) {
+  const t = `${o?.title || ""}`, b = `${o?.body || ""}`, alles = `${t} ${b}`;
+  return META_TITEL.test(t) || META_TEKST.test(alles) || META_GEDRAG.test(alles);
+}
+export function zonderMeta(overwegingen) {
+  return (overwegingen || []).filter((o) => !isMeta(o));
+}
+

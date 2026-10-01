@@ -217,7 +217,9 @@ const LAGEN = [
 // het model als instructie ziet, moet in de hash.
 export const STEM_INSTRUCTIE = "# Nu\n\nSchrijf alleen de stem. Geen `[OVERWEGINGEN]`-marker en geen overwegingen; die volgen apart.";
 export const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen bij deze beurt, in de vorm uit het antwoordformaat " +
-  "(titel, één zin, herkomst; het aantal staat onder Instellingen; leeg of minder mag). Begin direct met de eerste titel. Herhaal de stem niet.";
+  "(titel, één zin, herkomst; het aantal staat onder Instellingen; leeg of minder mag). Begin direct met de eerste titel. Herhaal de stem niet. " +
+  "Overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf: niet over je toon, je woordkeuze, hoe je reageerde of hoe je afsloot. " +
+  "Bij een groet, een bedankje, een korte reactie of een provocatie zonder inhoud schrijf je niets.";
 export const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij deze beurt.";
 
 const MATERIAAL_KOP =

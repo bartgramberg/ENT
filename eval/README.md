@@ -315,3 +315,41 @@ bij een verhalend profiel en vragen over geschiedenis en dieren levert het
 materiaal alles al. Daarna toegevoegd: de datum van vandaag in de staart van
 elke aanroep, en het sessie-object naast elke opening in de promptlog.
 
+## Ceuvel: gespreksgedrag en meta-overwegingen — 1 oktober 2026
+
+Kims twee gesprekken (export in Dropbox, "review en logs") lieten zien: de
+analist beschrijft zijn eigen gedrag ("Toon van het gesprek", "Reactie op
+provocatie", "Afscheid zonder samenvatting"), elk antwoord is even lang (vijf
+zinnen op "Dank je wel"), "haast" komt in bijna elke beurt terug, en de beurten
+hangen los van elkaar. Daarna: overwegingen-instructie ("nooit over het gesprek
+zelf; bij een groet, bedankje of provocatie niets"), `zonderMeta()` als
+vangnet, eenregelige items weg uit de parser, in de basis "één gesprek:
+voortbouwen, terugkomen, niets herhalen; korte reactie kort", "haast" uit de
+tijdschaal-alinea van boom.md, en in de app geen overwegingen-aanroep bij een
+korte reactie zonder vraagteken.
+
+Gemeten met het nieuwe scriptgesprek (`--gesprek ceuvel`, negen beurten als één
+gesprek, fixture `ceuvel-plataan`, promptversie f739ec33, vóór de
+parser/skip-wijziging, één run, $0,91):
+
+| | |
+|---|---|
+| woorden op "Ik vind bomen stom" / "Dank je wel" / "Tot ziens" | 17 / 12 / 9 (inhoudelijke beurten 77–111) |
+| "haast" in de stem | 0 (Kims gesprek: in 6 van 7 beurten) |
+| meta-overwegingen | 1, als eenregelig item zonder herkomst ("er lag geen inhoudelijke vraag…"); daarna de parser aangescherpt |
+| verwijst naar eerder / herhaalde 4-woordreeksen | 1/9 / 1 |
+| herkomst bestand / eigen / algemeen | 20 / 2 / 0 |
+| overwegingen op "Dank je wel" / "Tot ziens" | 0 / 2 (herhaling van de 2028-items); daarna de aanroep overgeslagen |
+
+Wat opviel: "Stom. Dat zei die duif ook, elke winter weer, vlak voor hij in
+mijn takken ging slapen." De vervolgvraag "je zei net iets over de populieren"
+werd goed opgepakt en hield de twee groepen populieren uit elkaar. De opening
+verzon opnieuw een tijdsduur ("Twaalf jaar lang stonden er mannen op
+hellingen"; de veldgids zegt "twaalf jaar geleden" over De Ceuvel) en een
+beeld ("die mijn bast dicht teerden"). Niet opgelost; bij een slechte opening
+op de dag de sessie opnieuw starten.
+
+Niet getest na de laatste wijziging: de parser zonder eenregelige items, het
+overslaan van de overwegingen-aanroep in de browser, en de tegel-bug in de
+onboarding (alleen op syntaxis gecontroleerd).
+
