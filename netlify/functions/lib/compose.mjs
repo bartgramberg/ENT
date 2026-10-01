@@ -165,20 +165,15 @@ function representatie(config, personage) {
  */
 // Staffel voor eigen systeemkennis in de overwegingen: hoe dunner het
 // kennisprofiel, hoe meer ruimte voor wat het model zelf van systemen weet
-// (besluit Joris, 29 september 2026). Tokens uit de meting bij vastzetten;
-// anders geschat op 2,2 tekens per token over lagen en documenten.
-function profielTokens(config) {
-  const t = Number(config.tokens);
-  if (Number.isFinite(t) && t > 0) return t;
-  let tekens = 0;
-  for (const laag of Object.values(config.lagen || {})) for (const d of laag || []) tekens += (d?.tekst || "").length;
-  for (const d of config.documents || []) tekens += (d?.text || "").length;
-  return Math.round(tekens / 2.2);
-}
+// (besluit Joris, 29 september 2026). Gemeten aan het profielblok zelf, niet aan
+// config.tokens: dat is de hele prompt (basis + sessie erbij), waardoor de
+// Ceuvel-test van 1 oktober met ~86k tokens profiel als ">100k" telde.
+// Gemeten verhouding op Sonnet 5: ~2,05 tekens per token (205k tekens → 101k).
+const TEKENS_PER_TOKEN = 2.05;
 export function eigenMax(tokens) { return tokens >= 100000 ? 1 : tokens >= 50000 ? 2 : 3; }
 const WOORD = ["nul", "één", "twee", "drie", "vier"];
 
-function instellingen(config, personage) {
+function instellingen(config, personage, profielTekens = 0) {
   const p = personage.params;
   const gevraagd = Number(config.max_woorden);
   let woorden = Number.isFinite(gevraagd) && gevraagd > 0 ? gevraagd : p.max_woorden;
@@ -198,7 +193,7 @@ function instellingen(config, personage) {
     : "Er praat één persoon met je: spreek die aan met \"je\".";
   const blikZin = p.blik ? `Je blik: ${p.blik}. Dat is vanwaar je kijkt, niet waarover je praat.` : "";
 
-  const eigen = eigenMax(profielTokens(config));
+  const eigen = eigenMax(Math.round(profielTekens / TEKENS_PER_TOKEN));
   const tekst = "# Instellingen\n\n" + [
     persoonZin,
     `Nooit meer dan ${woorden} woorden en ${zinnen} zinnen in de stem.`,
@@ -301,14 +296,14 @@ async function composeOpening(config) {
 export async function compose(config = {}, { opening = false } = {}) {
   const personage = await loadPersonage(config.voice_subject || config.personage || DEFAULT_PERSONAGE);
   const [basis, contract] = await Promise.all([readPrompt("basis.md"), readPrompt("contract.md")]);
-  const inst = instellingen(config, personage);
+  const profiel = profielBlok(config, personage);
+  const inst = instellingen(config, personage, (profiel || "").length);
   const blokken = [];
 
   // 1. basis + personage — byte-identical for everyone on this personage
   blokken.push({ naam: "basis", tekst: [basis, `# Personage: ${personage.label}\n\n${personage.tekst}`].filter(Boolean).join("\n\n---\n\n") });
 
   // 2. kennisprofiel — per project
-  const profiel = profielBlok(config, personage);
   if (profiel) blokken.push({ naam: "profiel", tekst: profiel });
 
   // 3. sessie + representatie + instellingen + contract (always last)
@@ -316,7 +311,7 @@ export async function compose(config = {}, { opening = false } = {}) {
     sessieBlok(config),
     "# Wat je representeert\n\n" + representatie(config, personage) +
       ((config.representatie_details || "").trim()
-        ? "\n\n**Over deze representant** (aangeleverd, klasse 1 — naam, leeftijd, geschiedenis, wat er is gebeurd):\n" + config.representatie_details.trim()
+        ? "\n\n**Over deze representant** (aangeleverd, klasse 1 — naam, leeftijd, geschiedenis, wat er is gebeurd; herkomst in de overwegingen: \"representant\"):\n" + config.representatie_details.trim()
         : ""),
     inst.tekst,
     `Taal / language: ${config.lang || "nl"}`,
