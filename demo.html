@@ -1339,6 +1339,12 @@
       _doSend(message);
     }
 
+    // Titel en zin van alle eerdere overwegingen in dit gesprek, voor de analist
+    // ("al genoemd") en het vangnet tegen herhaling. Niet de geschiedenis zelf.
+    function eerdereOverwegingen() {
+      return conversation.flatMap(m => Array.isArray(m.overwegingen) ? m.overwegingen.map(o => ({ title: o.title, body: o.body })) : []);
+    }
+
     // Een groet, bedankje of korte reactie: hooguit vier woorden en geen vraagteken.
     function korteReactie(tekst) { return !/\?/.test(tekst) && tekst.trim().split(/\s+/).filter(Boolean).length <= 4; }
 
@@ -1436,7 +1442,7 @@
         fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'overwegingen', stem: stemTekst }),
+          body: JSON.stringify({ password, messages, config: intakeConfig, deel: 'overwegingen', stem: stemTekst, eerdere_overwegingen: eerdereOverwegingen() }),
           signal: AbortSignal.timeout(30000)
         })
         .then(r => r.json())

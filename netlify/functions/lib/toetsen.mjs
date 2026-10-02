@@ -96,3 +96,28 @@ export function zonderMeta(overwegingen) {
   return (overwegingen || []).filter((o) => !isMeta(o));
 }
 
+/**
+ * Herhaling: een overweging die (vrijwel) hetzelfde zegt als een eerdere in dit
+ * gesprek. De analist ziet zijn eerdere items niet (de geschiedenis naar het
+ * model is alleen de stem) en vond in Joris' Ceuvel-gesprek van 1 oktober de
+ * kade en het zoute water drie beurten op rij opnieuw. Conservatief: dezelfde
+ * titel, of meer dan de helft van de inhoudswoorden gedeeld.
+ */
+const STOP = new Set(["deze", "dat", "die", "het", "een", "van", "voor", "met", "zonder", "niet", "wordt", "worden", "zijn", "is", "als", "bij", "door", "naar", "over", "aan", "ook", "nog", "wel", "hier", "daar", "wat", "dit", "maar", "want", "meer", "veel", "kan", "kunnen", "staat", "staan", "heeft", "hebben", "terrein", "plek", "boom", "plataan", "ceuvel"]);
+const woorden = (t) => new Set((t || "").toLowerCase().replace(/[^a-zà-ÿ ]/g, " ").split(/\s+/).filter((w) => w.length >= 4 && !STOP.has(w)));
+const normTitel = (t) => (t || "").toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+export function isHerhaling(o, eerder) {
+  const t = normTitel(o?.title), w = woorden(`${o?.title || ""} ${o?.body || ""}`);
+  for (const e of eerder || []) {
+    if (t && t === normTitel(e?.title)) return true;
+    const we = woorden(`${e?.title || ""} ${e?.body || ""}`);
+    if (w.size < 4 || we.size < 4) continue;
+    let gedeeld = 0; for (const x of w) if (we.has(x)) gedeeld++;
+    if (gedeeld / Math.min(w.size, we.size) >= 0.34) return true; // ruim een derde gedeeld: parafrase
+  }
+  return false;
+}
+export function zonderHerhaling(overwegingen, eerder) {
+  return (overwegingen || []).filter((o) => !isHerhaling(o, eerder));
+}
+

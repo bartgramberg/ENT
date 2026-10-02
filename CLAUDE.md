@@ -134,6 +134,14 @@ gesprek, voortbouwen en terugkomen, niets uit een eerdere beurt herhalen.
 `scripts/eval.sh --gesprek ceuvel` meet dat in een doorlopend scriptgesprek
 (terugverwijzen, herhaalde woordreeksen, lengte van korte beurten).
 
+De analist ziet zijn eerdere overwegingen niet in de geschiedenis (bewust: een
+vermoeden werd anders "weten"), en vond daardoor in Joris' gesprek van 1
+oktober de kade en het zoute water drie beurten op rij opnieuw. Daarom stuurt
+de browser bij de overwegingen-aanroep `eerdere_overwegingen` mee (titel en
+zin van alles wat eerder in het paneel stond); de analist krijgt alleen de
+titels in de staart ("al genoemd, noem niet opnieuw"), en `zonderHerhaling()`
+in `lib/toetsen.mjs` filtert wat toch terugkomt (`herhaald_weggefilterd`).
+
 `lib/toetsen.mjs` is de ene bron van de regexen die "verrassing" van
 "verzinsel" scheiden; `chat.mjs` zet er `toetsen: true` mee op items van
 buiten het materiaal met een feit-achtig element (badge "uit geheugen · te

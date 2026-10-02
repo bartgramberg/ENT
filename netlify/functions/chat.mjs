@@ -25,7 +25,7 @@
  */
 
 import { compose, STEM_INSTRUCTIE, OVERWEGINGEN_INSTRUCTIE, OVERWEGINGEN_VRAAG } from "./lib/compose.mjs";
-import { markeerToetsen, zonderMeta } from "./lib/toetsen.mjs";
+import { markeerToetsen, zonderMeta, zonderHerhaling } from "./lib/toetsen.mjs";
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -198,6 +198,11 @@ export default async function handler(req, context) {
   }
 
   const { password, messages, config, opening, deel, stem: vorigeStem, tellen } = body;
+  // Eerdere overwegingen uit dit gesprek (titel + zin), door de browser meegestuurd.
+  // De analist krijgt alleen de titels te zien ("al genoemd"); de zinnen dienen
+  // voor het vangnet tegen herhaling. Niet in de geschiedenis naar het model.
+  const eerdere = (Array.isArray(body.eerdere_overwegingen) ? body.eerdere_overwegingen : []).slice(-60)
+    .map((o) => ({ title: String(o?.title || "").slice(0, 120), body: String(o?.body || "").slice(0, 400) })).filter((o) => o.title);
   const isOpening = opening === true;
   const alleenStem = deel === "stem";
   const alleenOverwegingen = deel === "overwegingen";
@@ -252,7 +257,12 @@ export default async function handler(req, context) {
     system = composed.blokken.map((b) => ({ type: "text", text: b.tekst, cache_control: { type: "ephemeral", ttl: "1h" } }));
     if (composed.opening) system.push({ type: "text", text: vandaag() + "\n\n" + composed.opening });
     else if (alleenStem) system.push({ type: "text", text: vandaag() + "\n\n" + STEM_INSTRUCTIE });
-    else if (alleenOverwegingen) system.push({ type: "text", text: vandaag() + "\n\n" + OVERWEGINGEN_INSTRUCTIE });
+    else if (alleenOverwegingen) {
+      const alGenoemd = eerdere.length
+        ? "\n\nEerder in dit gesprek al als overweging genoemd:\n" + eerdere.map((o) => `- ${o.title}`).join("\n") + "\nNoem die niet opnieuw, ook niet in andere woorden; alleen wat nieuw is bij deze beurt. Is er niets nieuws, schrijf dan niets."
+        : "";
+      system.push({ type: "text", text: vandaag() + "\n\n" + OVERWEGINGEN_INSTRUCTIE + alGenoemd });
+    }
   } catch (err) {
     console.error("compose error:", err);
     return json({ error: "Kon de systeemprompt niet samenstellen." }, 500);
@@ -370,6 +380,10 @@ export default async function handler(req, context) {
   const metaWeg = overwegingen.length;
   overwegingen = zonderMeta(overwegingen);
   const meta_weggefilterd = metaWeg - overwegingen.length;
+  // Vangnet tegen herhaling van eerdere overwegingen in dit gesprek.
+  const herhaalWeg = overwegingen.length;
+  overwegingen = zonderHerhaling(overwegingen, eerdere);
+  const herhaald_weggefilterd = herhaalWeg - overwegingen.length;
 
   await logBeurt({
     kind: isOpening ? "opening" : alleenStem ? "stem" : alleenOverwegingen ? "overwegingen" : "beurt",
@@ -377,5 +391,5 @@ export default async function handler(req, context) {
     stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
   });
 
-  return json({ stem, overwegingen, meta_weggefilterd, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });
+  return json({ stem, overwegingen, meta_weggefilterd, herhaald_weggefilterd, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });
 }

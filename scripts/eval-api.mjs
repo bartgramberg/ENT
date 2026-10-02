@@ -254,6 +254,7 @@ if (args.gesprek) {
   const opening = await chat({ messages: [], config: cfg, opening: true });
   const conversation = [{ role: "assistant", content: (opening.stem || "").trim() }];
   const gezien = vierGrammen(conversation[0].content);
+  const eerdere = [];
   console.log(`\n== ${stem} · gesprek ${args.gesprek} · opening ${opening.duur_ms} ms\n  ENT: ${conversation[0].content}`);
   let kosten = prijs(opening.usage);
   for (const vraag of script) {
@@ -262,14 +263,15 @@ if (args.gesprek) {
     const s = (r.stem || "").trim();
     const kort = korteBeurt(vraag);
     // Zoals de app: bij een korte reactie geen overwegingen-aanroep.
-    const r2 = kort ? { overwegingen: [], duur_ms: 0, usage: null } : await chat({ messages, config: cfg, deel: "overwegingen", stem: s });
+    const r2 = kort ? { overwegingen: [], duur_ms: 0, usage: null } : await chat({ messages, config: cfg, deel: "overwegingen", stem: s, eerdere_overwegingen: eerdere });
     const m = meet(s, ctx);
     const ovwLijst = Array.isArray(r2.overwegingen) ? r2.overwegingen : [];
     const ovw = meetOverwegingen(ovwLijst, { ...ctx, eigenMax: r2.eigen_max ?? ctx.eigenMax });
     const eigenGram = vierGrammen(s);
     const herhaalt = [...eigenGram].filter((g) => gezien.has(g)).length;
     for (const g of eigenGram) gezien.add(g);
-    const beurt = { vraag, kort, ...m, verwijst: VERWIJST.test(s), herhaalt, haast: (s.match(HAAST) || []).length, meta_weggefilterd: r2.meta_weggefilterd || 0, overwegingen: ovwLijst.length, overwegingen_tekst: ovwLijst, ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage_stem: r.usage, usage_overwegingen: r2.usage, promptversie: r.promptversie };
+    for (const o of ovwLijst) eerdere.push({ title: o.title, body: o.body });
+    const beurt = { vraag, kort, ...m, verwijst: VERWIJST.test(s), herhaalt, haast: (s.match(HAAST) || []).length, meta_weggefilterd: r2.meta_weggefilterd || 0, herhaald_weggefilterd: r2.herhaald_weggefilterd || 0, overwegingen: ovwLijst.length, overwegingen_tekst: ovwLijst, ovw, tekst: s, duur_ms: r.duur_ms, duur_overwegingen_ms: r2.duur_ms, usage_stem: r.usage, usage_overwegingen: r2.usage, promptversie: r.promptversie };
     kosten += prijs(r.usage) + prijs(r2.usage);
     uitG.beurten.push(beurt);
     conversation.push({ role: "user", content: vraag }, { role: "assistant", content: s || "…" });
@@ -281,7 +283,7 @@ if (args.gesprek) {
     `| beurten | ${n} |`, `| gem. woorden | ${(b.reduce((x, y) => x + y.woorden, 0) / n).toFixed(1)} |`,
     `| woorden op korte beurten | ${b.filter((x) => x.kort).map((x) => x.woorden).join(", ") || "–"} |`,
     `| verwijst naar eerder | ${b.filter((x) => x.verwijst).length}/${n} |`, `| herhaalde 4-woordreeksen (totaal) | ${b.reduce((x, y) => x + y.herhaalt, 0)} |`,
-    `| "haast" in de stem | ${b.reduce((x, y) => x + y.haast, 0)} |`, `| meta-overwegingen weggefilterd | ${b.reduce((x, y) => x + y.meta_weggefilterd, 0)} |`,
+    `| "haast" in de stem | ${b.reduce((x, y) => x + y.haast, 0)} |`, `| meta-overwegingen weggefilterd | ${b.reduce((x, y) => x + y.meta_weggefilterd, 0)} |`, `| herhaalde overwegingen weggefilterd | ${b.reduce((x, y) => x + y.herhaald_weggefilterd, 0)} |`,
     `| overwegingen op korte beurten | ${b.filter((x) => x.kort).map((x) => x.overwegingen).join(", ") || "–"} |`,
     `| herkomst eigen / algemeen / bestand | ${b.reduce((x, y) => x + (y.ovw?.klassen?.eigen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.algemeen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.bestand || 0) + (y.ovw?.klassen?.plek || 0), 0)} |`,
     `| kosten | $${kosten.toFixed(3)} |`, "", `**Opening:** ${conversation[0].content}`, ""];
