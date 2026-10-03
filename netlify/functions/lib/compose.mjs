@@ -186,7 +186,7 @@ function instellingen(config, personage, profielTekens = 0) {
     ? `Je bent ${wat}, en je spreekt als ${wat} zelf: "ik" is ${wat}.`
     : `Je spreekt namens ${wat}, en je bént het niet. "Ik" is ENT, de vertegenwoordiger; over wat je representeert spreek je in de derde persoon ("het", "zijn", "daar"). Nooit "ik stroom", "ik zak", "mijn oevers": dat is wat je representeert, niet jij.`;
 
-  const eindig = { vraag: "Eindig met één open vraag.", open: "Eindig open: met een vraag of een observatie, nooit met een samenvatting.", vrij: "" }[p.eindig_met] ?? "Eindig met één open vraag.";
+  const eindig = { vraag: "Eindig met één open vraag.", open: "Eindig open: meestal met een observatie of een beeld, soms met een vraag, nooit twee beurten achter elkaar met een vraag, en nooit met een samenvatting.", vrij: "" }[p.eindig_met] ?? "Eindig met één open vraag.";
   const aanspreek = config.aanspreek || (config.audience_mode === "group" ? "jullie" : "je");
   const aanspreekZin = aanspreek === "jullie"
     ? "Er luistert een groep: spreek de aanwezigen aan met \"jullie\"."
@@ -202,7 +202,7 @@ function instellingen(config, personage, profielTekens = 0) {
     aanspreekZin,
     blikZin,
   ].filter(Boolean).join("\n");
-  return { tekst, max_woorden: woorden, persoon, aanspreek, eigen_max: eigen };
+  return { tekst, max_woorden: woorden, persoon, aanspreek, eigen_max: eigen, eindig_met: p.eindig_met || "vraag" };
 }
 
 const LAGEN = [
@@ -218,7 +218,9 @@ const LAGEN = [
 export const STEM_INSTRUCTIE = "# Nu\n\nSchrijf alleen de stem. Geen `[OVERWEGINGEN]`-marker en geen overwegingen; die volgen apart.";
 export const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen bij deze beurt, in de vorm uit het antwoordformaat " +
   "(titel, één zin, herkomst; het aantal staat onder Instellingen; leeg of minder mag). Begin direct met de eerste titel. Herhaal de stem niet. " +
-  "Overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf: niet over je toon, je woordkeuze, hoe je reageerde of hoe je afsloot. " +
+  "Overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf: niet over je toon, je woordkeuze, hoe je reageerde of hoe je afsloot, " +
+  "niet over wat de aanwezigen zeggen, willen of voelen, en niet over wat nieuw is in dit gesprek. " +
+  "Zegt het materiaal iets over deze plek dat bij deze beurt past, dan staat dat erbij. " +
   "Bij een groet, een bedankje, een korte reactie of een provocatie zonder inhoud schrijf je niets.";
 export const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij deze beurt.";
 
@@ -325,7 +327,7 @@ export async function compose(config = {}, { opening = false } = {}) {
   // wijziging daar (zoals de persoon-zin) bleef anders onzichtbaar in de hash.
   const promptversie = createHash("sha1").update([basis, personage.tekst, inst.tekst, contract, MATERIAAL_KOP, STEM_INSTRUCTIE, OVERWEGINGEN_INSTRUCTIE, OVERWEGINGEN_VRAAG].join("\n")).digest("hex").slice(0, 8);
 
-  const result = { blokken, max_woorden: inst.max_woorden, persoon: inst.persoon, eigen_max: inst.eigen_max, personage: personage.naam, promptversie };
+  const result = { blokken, max_woorden: inst.max_woorden, persoon: inst.persoon, eigen_max: inst.eigen_max, eindig_met: inst.eindig_met, personage: personage.naam, promptversie };
   if (opening) result.opening = await composeOpening(config);
   return result;
 }

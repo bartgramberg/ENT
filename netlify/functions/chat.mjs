@@ -256,10 +256,19 @@ export default async function handler(req, context) {
     composed = await compose(config || {}, { opening: isOpening });
     system = composed.blokken.map((b) => ({ type: "text", text: b.tekst, cache_control: { type: "ephemeral", ttl: "1h" } }));
     if (composed.opening) system.push({ type: "text", text: vandaag() + "\n\n" + composed.opening });
-    else if (alleenStem) system.push({ type: "text", text: vandaag() + "\n\n" + STEM_INSTRUCTIE });
+    else if (alleenStem) {
+      // Bij 'eindig open' koos het model toch elke beurt een vraag (14 van 14 in
+      // de Ceuvel-test van 3 oktober). Deterministisch: eindigde het vorige
+      // antwoord met een vraag, dan dit antwoord niet.
+      const laatsteStem = [...messages].reverse().find((m) => m.role === "assistant")?.content || "";
+      const geenVraag = composed.eindig_met !== "vraag" && /\?\s*$/.test(laatsteStem.trim())
+        ? "\n\nJe vorige antwoord eindigde met een vraag. Eindig dit antwoord niet met een vraag, maar met een observatie of een beeld."
+        : "";
+      system.push({ type: "text", text: vandaag() + "\n\n" + STEM_INSTRUCTIE + geenVraag });
+    }
     else if (alleenOverwegingen) {
       const alGenoemd = eerdere.length
-        ? "\n\nEerder in dit gesprek al als overweging genoemd:\n" + eerdere.map((o) => `- ${o.title}`).join("\n") + "\nNoem die niet opnieuw, ook niet in andere woorden; alleen wat nieuw is bij deze beurt. Is er niets nieuws, schrijf dan niets."
+        ? "\n\nEerder in dit gesprek al als overweging genoemd:\n" + eerdere.map((o) => `- ${o.title}`).join("\n") + "\nWat hier al staat, laat je weg, ook in andere woorden. Je schrijft niet op wat er nieuw of anders is; alleen de overwegingen zelf."
         : "";
       system.push({ type: "text", text: vandaag() + "\n\n" + OVERWEGINGEN_INSTRUCTIE + alGenoemd });
     }

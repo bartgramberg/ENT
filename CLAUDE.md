@@ -141,6 +141,14 @@ de browser bij de overwegingen-aanroep `eerdere_overwegingen` mee (titel en
 zin van alles wat eerder in het paneel stond); de analist krijgt alleen de
 titels in de staart ("al genoemd, noem niet opnieuw"), en `zonderHerhaling()`
 in `lib/toetsen.mjs` filtert wat toch terugkomt (`herhaald_weggefilterd`).
+Zeg daarbij niet "alleen wat nieuw is": het model ging dan de nieuwheid zelf
+beschrijven ("is nog niet eerder genoemd", "een nieuw thema in deze beurt").
+
+"Eindig open" (`eindig_met: open`) werd door het model gelezen als "eindig met
+een vraag": 14 van 14 in de Ceuvel-test van 3 oktober. Daarom zet `chat.mjs`
+bij de stem-aanroep een regel in de staart als het vorige antwoord met een
+vraag eindigde: dit antwoord niet. Deterministisch, afwisselend, alleen als
+het personage niet op `vraag` staat.
 
 `lib/toetsen.mjs` is de ene bron van de regexen die "verrassing" van
 "verzinsel" scheiden; `chat.mjs` zet er `toetsen: true` mee op items van
