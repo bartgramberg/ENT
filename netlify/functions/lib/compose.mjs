@@ -186,7 +186,7 @@ function instellingen(config, personage, profielTekens = 0) {
     ? `Je bent ${wat}, en je spreekt als ${wat} zelf: "ik" is ${wat}.`
     : `Je spreekt namens ${wat}, en je bént het niet. "Ik" is ENT, de vertegenwoordiger; over wat je representeert spreek je in de derde persoon ("het", "zijn", "daar"). Nooit "ik stroom", "ik zak", "mijn oevers": dat is wat je representeert, niet jij.`;
 
-  const eindig = { vraag: "Eindig met één open vraag.", open: "Eindig open: meestal met een observatie of een beeld, soms met een vraag, nooit twee beurten achter elkaar met een vraag, en nooit met een samenvatting.", vrij: "" }[p.eindig_met] ?? "Eindig met één open vraag.";
+  const eindig = { vraag: "Eindig met één open vraag.", open: "Eindig open: afwisselend met een vraag en met een observatie of beeld, niet elke beurt een vraag, en nooit met een samenvatting.", vrij: "" }[p.eindig_met] ?? "Eindig met één open vraag.";
   const aanspreek = config.aanspreek || (config.audience_mode === "group" ? "jullie" : "je");
   const aanspreekZin = aanspreek === "jullie"
     ? "Er luistert een groep: spreek de aanwezigen aan met \"jullie\"."
@@ -220,7 +220,7 @@ export const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen b
   "(titel, één zin, herkomst; het aantal staat onder Instellingen; leeg of minder mag). Begin direct met de eerste titel. Herhaal de stem niet. " +
   "Overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf: niet over je toon, je woordkeuze, hoe je reageerde of hoe je afsloot, " +
   "niet over wat de aanwezigen zeggen, willen of voelen, en niet over wat nieuw is in dit gesprek. " +
-  "Zegt het materiaal iets over deze plek dat bij deze beurt past, dan staat dat erbij. " +
+  "Zegt het materiaal iets over deze plek dat bij deze beurt past, dan staat dat erbij; het materiaal gaat vóór wat eerder in het gesprek is gezegd. " +
   "Bij een inhoudelijke beurt zijn twee of drie overwegingen de maat; alleen bij een groet of een bedankje schrijf je niets.";
 export const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij deze beurt.";
 

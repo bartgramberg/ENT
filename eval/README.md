@@ -353,3 +353,39 @@ Niet getest na de laatste wijziging: de parser zonder eenregelige items, het
 overslaan van de overwegingen-aanroep in de browser, en de tegel-bug in de
 onboarding (alleen op syntaxis gecontroleerd).
 
+## Generale voor de Ceuvel-demo — 3 oktober 2026
+
+Scriptgesprek `ceuvel-demo` (twaalf beurten als één gesprek: generieke start,
+winterkoninkje, provocatie, de Ceuvel, werfverhalen, terugverwijzing naar de
+populieren, 2028, water, lucht, beestjes, bedankje, tot ziens) op
+`ceuvel-plataan`, na de wijzigingen van 2 en 3 oktober (al-genoemd-lijst,
+herhalingsfilter, analist niet over het gesprek of de aanwezigen, afwisselend
+eindigen, materiaal vóór eerder gezegd). Twee runs: de eerste (promptversie
+d33355fa) liet zien dat "meestal een observatie" tot nul vragen leidde en dat
+de stem zijn eigen fout over de populieren doorzette; na de correctie de
+tweede (8e0dc3f9), $1,00.
+
+| | run 1 | run 2 |
+|---|---|---|
+| eindigt met vraag, per beurt | · · · · · · · · · · · · | · · ? · ? · ? · · ? · · |
+| overwegingen per beurt | 3 2 0 2 3 2 2 2 2 3 0 0 | 2 2 0 2 2 1 2 2 3 2 0 0 |
+| herkomst bestand / eigen / algemeen | 20 / 1 / 0 | 17 / 0 / 1 |
+| meta weggefilterd / herhaald weggefilterd | 0 / 0 | 0 / 1 |
+| woorden op "bomen stom" / "dank je wel" / "tot ziens" | 27 / 16 / 11 | 42 / 25 / 17 |
+| "haast" | 1 | 0 |
+| populieren (materiaal: drie geplant, twee staan) | stem: "nog maar één over", daarna "twee gevallen" | "Twee van de drie staan er nog. Eén viel" |
+
+Wat opviel in run 2: de winterkoning komt nu uit de veldgids (nest boven een
+bootingang), de twee generaties populieren worden uit elkaar gehouden, 2028
+blijft bij het materiaal ("ik zeg liever niets dan iets dat niet klopt"), de
+luchtvraag krijgt zweefvliegen en dwergvleermuizen uit de veldgids in plaats
+van een herhaling van het water. Op "Ik vind bomen stom": *"Dat zei een kind
+weleens vaker tegen een boom die te oud leek om nog iets te weten."* De
+opening blijft de zwakste beurt (run 1: "jullie ruiken de bierstal", "tien
+jaar hing de belofte dat ik hier zou blijven staan"); bij een slechte opening
+op de dag de sessie opnieuw starten.
+
+Niet in de browser getest: het overslaan van de overwegingen-aanroep bij een
+korte reactie en het meesturen van eerdere overwegingen; de meetset bootst
+beide na.
+
