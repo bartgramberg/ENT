@@ -94,6 +94,7 @@ async function logBeurt(entry) {
       `${new Date().toISOString()} ${entry.kind} ${entry.duur_ms}ms in=${u.input_tokens} out=${u.output_tokens} ` +
       `cache_w=${u.cache_creation_input_tokens || 0} cache_r=${u.cache_read_input_tokens || 0} ` +
       `systeem=${(entry.system || []).reduce((n, b) => n + b.text.length, 0)}t beurten=${entry.messages.length} ` +
+      (entry.kind === "overwegingen" ? `ovw=${(entry.overwegingen || []).length} meta_weg=${entry.meta_weggefilterd || 0} herhaald_weg=${entry.herhaald_weggefilterd || 0} ` : "") +
       `→ ${path.basename(bestand)}\n   vraag: ${KNIP(entry.messages[entry.messages.length - 1]?.content, 120)}\n`, "utf8");
   } catch (err) {
     console.error("promptlog faalde:", err);
@@ -397,7 +398,7 @@ export default async function handler(req, context) {
   await logBeurt({
     kind: isOpening ? "opening" : alleenStem ? "stem" : alleenOverwegingen ? "overwegingen" : "beurt",
     config, system, messages: apiMessages,
-    stem, overwegingen, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
+    stem, overwegingen, meta_weggefilterd, herhaald_weggefilterd, usage, stop_reason: stopReason, duur_ms: Date.now() - t0,
   });
 
   return json({ stem, overwegingen, meta_weggefilterd, herhaald_weggefilterd, usage, stop_reason: stopReason, promptversie: composed.promptversie, max_woorden: composed.max_woorden, eigen_max: composed.eigen_max });

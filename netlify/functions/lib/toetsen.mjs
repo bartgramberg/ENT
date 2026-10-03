@@ -113,7 +113,7 @@ export function isHerhaling(o, eerder) {
     const we = woorden(`${e?.title || ""} ${e?.body || ""}`);
     if (w.size < 4 || we.size < 4) continue;
     let gedeeld = 0; for (const x of w) if (we.has(x)) gedeeld++;
-    if (gedeeld / Math.min(w.size, we.size) >= 0.34) return true; // ruim een derde gedeeld: parafrase
+    if (gedeeld / Math.min(w.size, we.size) >= 0.45) return true; // bijna de helft gedeeld: parafrase (0,34 maakte het paneel te leeg, 3 okt)
   }
   return false;
 }

@@ -72,6 +72,22 @@ export const VRAGEN_PRIKKEL = [
 // Scriptgesprekken: één doorlopend gesprek, met een provocatie, een vervolgvraag
 // die naar een eerdere beurt verwijst, en een bedankje (dat kort moet blijven).
 export const GESPREKKEN = {
+  // Generale voor de demo van 4 oktober: generieke start, provocatie, bedankje,
+  // terugverwijzen, 2028, water dan lucht (herhaling), korte reacties.
+  "ceuvel-demo": [
+    "Wij vieren hier de start van de herfst, met een alternatieve dierendag",
+    "Het winterkoninkje bijvoorbeeld, waar gaat dat heen als ik naar huis ben?",
+    "Ik vind bomen stom",
+    "Oké sorry. Vertel eens iets over de Ceuvel?",
+    "Heb je ook minder bekende verhalen over de werf?",
+    "Je zei net iets over de populieren, wat is daarmee?",
+    "Wat gebeurt er met jou in 2028?",
+    "Vertel eens over het water waar je dichtbij staat",
+    "En iets over de lucht?",
+    "Welke beestjes leven hier nu?",
+    "Dank je wel",
+    "Tot ziens!",
+  ],
   ceuvel: [
     "Ik ben zo benieuwd hoe jij het hier hebt zien en voelen veranderen",
     "Wat proeven je wortels dan nu?",
@@ -283,6 +299,7 @@ if (args.gesprek) {
     `| beurten | ${n} |`, `| gem. woorden | ${(b.reduce((x, y) => x + y.woorden, 0) / n).toFixed(1)} |`,
     `| woorden op korte beurten | ${b.filter((x) => x.kort).map((x) => x.woorden).join(", ") || "–"} |`,
     `| verwijst naar eerder | ${b.filter((x) => x.verwijst).length}/${n} |`, `| herhaalde 4-woordreeksen (totaal) | ${b.reduce((x, y) => x + y.herhaalt, 0)} |`,
+    `| eindigt met vraag (per beurt) | ${b.map((x) => (x.eindigtMetVraag ? "?" : "·")).join(" ")} |`, `| overwegingen per beurt | ${b.map((x) => x.overwegingen).join(" ")} |`,
     `| "haast" in de stem | ${b.reduce((x, y) => x + y.haast, 0)} |`, `| meta-overwegingen weggefilterd | ${b.reduce((x, y) => x + y.meta_weggefilterd, 0)} |`, `| herhaalde overwegingen weggefilterd | ${b.reduce((x, y) => x + y.herhaald_weggefilterd, 0)} |`,
     `| overwegingen op korte beurten | ${b.filter((x) => x.kort).map((x) => x.overwegingen).join(", ") || "–"} |`,
     `| herkomst eigen / algemeen / bestand | ${b.reduce((x, y) => x + (y.ovw?.klassen?.eigen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.algemeen || 0), 0)} / ${b.reduce((x, y) => x + (y.ovw?.klassen?.bestand || 0) + (y.ovw?.klassen?.plek || 0), 0)} |`,

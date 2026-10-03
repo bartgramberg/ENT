@@ -221,7 +221,7 @@ export const OVERWEGINGEN_INSTRUCTIE = "# Nu\n\nSchrijf alleen de overwegingen b
   "Overwegingen gaan over de plek en de zaak, nooit over het gesprek zelf: niet over je toon, je woordkeuze, hoe je reageerde of hoe je afsloot, " +
   "niet over wat de aanwezigen zeggen, willen of voelen, en niet over wat nieuw is in dit gesprek. " +
   "Zegt het materiaal iets over deze plek dat bij deze beurt past, dan staat dat erbij. " +
-  "Bij een groet, een bedankje, een korte reactie of een provocatie zonder inhoud schrijf je niets.";
+  "Bij een inhoudelijke beurt zijn twee of drie overwegingen de maat; alleen bij een groet of een bedankje schrijf je niets.";
 export const OVERWEGINGEN_VRAAG = "Nu de overwegingen bij deze beurt.";
 
 const MATERIAAL_KOP =
