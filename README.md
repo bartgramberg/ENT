@@ -42,6 +42,10 @@ Set environment variables via the **Netlify dashboard → Site settings → Envi
 - `ELEVENLABS_API_KEY`
 - `ELEVENLABS_VOICE_ID`
 
+### Supabase keep-alive
+
+The NDFF layer runs on a free Supabase project, which Supabase pauses after 7 days without activity. `netlify/functions/keepalive.mjs` is a Netlify Scheduled Function that runs one real RPC query (`ndff_dekking`) every Monday and Thursday at 06:17 UTC. It needs no extra environment variable, because it uses the public anon key from `data/bronnen.json`. It only runs on the production deploy (`main`); check the runs under **Netlify → Functions → keepalive**. Don't remove it as unused. If the project is already paused, restore it in the Supabase dashboard; the ping doesn't wake it up.
+
 ---
 
 ## Architecture
